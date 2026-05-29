@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { LogOutIcon, UserIcon } from "lucide-react"
+import { LogOutIcon, UserIcon, SearchIcon, MenuIcon, ShoppingBasketIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -63,19 +63,44 @@ export function Navbar() {
   }
 
   return (
-    <header className="border-b">
-      <nav className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <Link to="/" className="text-base font-semibold">
-          GrocerGo
+    <header className="sticky top-0 z-50 border-b bg-white shadow-sm">
+      <nav className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
+        {/* Hamburger — placeholder for future sidebar */}
+        <button
+          className="rounded-md p-1.5 text-foreground hover:bg-muted md:hidden"
+          aria-label="Open menu"
+        >
+          <MenuIcon className="size-5" />
+        </button>
+
+        {/* Logo */}
+        <Link to="/" className="flex shrink-0 items-center gap-1.5">
+          <ShoppingBasketIcon className="size-6 text-primary" />
+          <span className="text-base font-bold tracking-tight">GrocerGo</span>
         </Link>
+
+        {/* Search bar: hidden on mobile, visible on md+ */}
+        <div className="relative hidden flex-1 items-center md:flex">
+          <SearchIcon className="absolute left-3.5 size-4 text-muted-foreground" />
+          <input
+            type="search"
+            placeholder="Search products and stores"
+            className="h-10 w-full rounded-full border border-input bg-muted/50 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
+            readOnly
+          />
+        </div>
+
+        {/* Auth zone */}
         {status === "authenticated" && user ? (
-          <UserMenu user={user} onLogout={handleLogout} />
+          <div className="ml-auto">
+            <UserMenu user={user} onLogout={handleLogout} />
+          </div>
         ) : (
-          <div className="flex gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/login">Sign in</Link>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <Button asChild variant="outline" className="rounded-full" size="sm">
+              <Link to="/login">Log in</Link>
             </Button>
-            <Button asChild size="sm">
+            <Button asChild className="rounded-full" size="sm">
               <Link to="/register">Sign up</Link>
             </Button>
           </div>

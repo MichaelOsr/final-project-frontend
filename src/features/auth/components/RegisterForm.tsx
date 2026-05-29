@@ -29,8 +29,8 @@ export function RegisterForm() {
           <TextField name="name" label="Full name" placeholder="Jane Doe" autoComplete="name" />
           <TextField name="email" label="Email" type="email" placeholder="you@example.com" autoComplete="email" />
           <TextField name="referralCode" label="Referral code (optional)" placeholder="ABC123" />
-          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating account..." : "Create account"}
+          <Button type="submit" className="h-12 w-full rounded-full text-base" disabled={isSubmitting}>
+            {isSubmitting ? "Creating account..." : "Continue"}
           </Button>
         </Form>
       )}

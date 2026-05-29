@@ -20,7 +20,7 @@ function Section({ title, description, children }: { title: string; description:
 export function ProfilePage() {
   usePageTitle("Profile")
   return (
-    <div className="mx-auto grid max-w-xl gap-6">
+    <div className="mx-auto grid max-w-xl gap-6 px-4 py-8">
       <h1 className="text-2xl font-semibold">Your profile</h1>
       <Section title="Personal information" description="Update your name and photo">
         <ProfileForm />

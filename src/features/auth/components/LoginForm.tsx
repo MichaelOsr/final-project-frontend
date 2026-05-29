@@ -35,8 +35,8 @@ export function LoginForm() {
         <Form className="grid gap-4">
           <TextField name="email" label="Email" type="email" placeholder="you@example.com" autoComplete="email" />
           <TextField name="password" label="Password" type="password" autoComplete="current-password" />
-          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign in"}
+          <Button type="submit" className="h-12 w-full rounded-full text-base" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in..." : "Continue"}
           </Button>
         </Form>
       )}
