@@ -2,11 +2,11 @@ import { Fragment } from "react";
 import { Route } from "react-router-dom";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { NotFound } from "@/components/NotFound";
-import { AdminLoginPage } from "@/features/admin/auth/pages/AdminLogin.Page";
+import { AdminLoginPage } from "@/features/admin/auth/pages/AdminLoginPage";
 import { AdminPublicOnlyRoute } from "@/features/admin/auth/components/AdminPublicOnlyRoute";
 import { AdminProtectedRoute } from "@/features/admin/auth/components/AdminProtectedRoute";
-import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage";
+import { AdminNotFound } from "@/features/admin/auth/components/AdminNotFound";
+import { AdminDashboardPage } from "@/features/admin/dashboard/pages/AdminDashboardPage";
 
 export const adminRoutes = (
   <Fragment>
@@ -25,13 +25,19 @@ export const adminRoutes = (
       <Route
         path="/admin/dashboard"
         element={
-          <AdminProtectedRoute>
+          <AdminProtectedRoute allowedRoles={["superAdmin"]}>
             <AdminDashboardPage />
           </AdminProtectedRoute>
         }
       />
+      <Route
+        path="/admin/*"
+        element={
+          <AdminProtectedRoute>
+            <AdminNotFound />
+          </AdminProtectedRoute>
+        }
+      />
     </Route>
-
-    <Route path="/admin/*" element={<NotFound />} />
   </Fragment>
 );

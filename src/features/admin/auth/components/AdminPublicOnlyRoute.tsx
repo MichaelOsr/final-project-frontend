@@ -1,21 +1,19 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
+import { FullScreenLoader } from "@/components/FullScreenLoader";
 import { useAdminSessionStore } from "@/store/adminSession.store";
+import { getAdminLandingPath } from "../utils/adminRouting";
 
-export function AdminPublicOnlyRoute({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function AdminPublicOnlyRoute({ children }: { children: ReactNode }) {
   const user = useAdminSessionStore((state) => state.user);
-  const isHydrated = useAdminSessionStore((state) => state.isHydrated);
+  const status = useAdminSessionStore((state) => state.status);
 
-  if (!isHydrated) {
-    return null;
+  if (status === "loading") {
+    return <FullScreenLoader />;
   }
 
-  if (user) {
-    return <Navigate to="/admin/dashboard" replace />;
+  if (status === "authenticated" && user) {
+    return <Navigate to={getAdminLandingPath(user)} replace />;
   }
 
   return <>{children}</>;
