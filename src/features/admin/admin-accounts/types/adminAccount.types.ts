@@ -1,4 +1,5 @@
 import type { AdminRoleName } from "@/types/adminAuthStore.types";
+export type { AdminRoleOption } from "@/features/admin/shared/types/admin.types";
 
 export interface AdminAccountPayload {
   name: string;
@@ -28,11 +29,4 @@ export interface EditAdminAccountFormValues {
   password: string;
   roleName: Extract<AdminRoleName, "superAdmin" | "storeAdmin"> | "";
   storeId: string;
-}
-
-export interface AdminRoleOption {
-  id: string;
-  name: AdminRoleName;
-  createdAt?: string;
-  updatedAt?: string;
 }

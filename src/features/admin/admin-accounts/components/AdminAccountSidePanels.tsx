@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { ShieldCheckIcon, StoreIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AdminUserOverview } from "@/features/admin/dashboard/types/adminDashboard.types";
-import { formatRoleName } from "../utils/adminAccountFormat";
+import type { AdminUserOverview } from "@/features/admin/shared/types/admin.types";
+import { formatRoleName } from "@/features/admin/shared/utils/adminFormat";
 
 export function CreateAccountGuide({
   rolesCount,

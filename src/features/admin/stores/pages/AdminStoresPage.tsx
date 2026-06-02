@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
-import { AdminDashboardShell } from "@/features/admin/dashboard/components/AdminDashboardShell";
-import type { PaginationMeta } from "@/features/admin/dashboard/types/adminDashboard.types";
+import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
+import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
-import { DeleteStoreDialog } from "../components/DeleteStoreDialog";
 import { StoreDetailDialog } from "../components/StoreDetailDialog";
 import { StoreFilters, type StoreSortBy } from "../components/StoreFilters";
 import { StoresTable } from "../components/StoresTable";
@@ -20,10 +19,8 @@ const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 
 export function AdminStoresPage() {
   usePageTitle("Stores");
   const [searchParams, setSearchParams] = useSearchParams();
-  const [deleteTarget, setDeleteTarget] = useState<AdminStore | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailStore, setDetailStore] = useState<AdminStore | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [meta, setMeta] = useState(defaultMeta);
@@ -69,19 +66,8 @@ export function AdminStoresPage() {
     }
   }
 
-  async function confirmDelete() {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
-    try {
-      await adminStoreService.delete(deleteTarget.id);
-      toast.success("Store deleted successfully");
-      setDeleteTarget(null);
-      loadStores();
-    } catch (error) {
-      toast.error(getAdminErrorMessage(error));
-    } finally {
-      setIsDeleting(false);
-    }
+  function showNotImplemented() {
+    toast.info("Store management is not implemented yet");
   }
 
   function updateFilters(updates: Record<string, string | number>) {
@@ -95,7 +81,10 @@ export function AdminStoresPage() {
           <h1 className="text-xl font-semibold">Stores</h1>
           <p className="text-sm text-muted-foreground">Manage store locations and coordinates.</p>
         </div>
-        <Button asChild><Link to="/admin/stores/new"><PlusIcon className="size-4" />Create Store</Link></Button>
+        <Button type="button" onClick={showNotImplemented}>
+          <PlusIcon className="size-4" />
+          Create Store
+        </Button>
       </div>
       <section className="overflow-hidden rounded-lg border border-border bg-background">
         <StoreFilters
@@ -105,11 +94,16 @@ export function AdminStoresPage() {
           onChangeQuery={(value) => updateFilters({ q: value, page: 1 })}
           onChangeSortBy={(value) => updateFilters({ sort: value, page: 1 })}
         />
-        <StoresTable stores={stores} isLoading={isLoading} onDelete={setDeleteTarget} onView={openDetail} />
+        <StoresTable
+          stores={stores}
+          isLoading={isLoading}
+          onDelete={showNotImplemented}
+          onEdit={showNotImplemented}
+          onView={openDetail}
+        />
         <PaginationFooter meta={meta} onPageChange={(nextPage) => updateFilters({ page: nextPage })} />
       </section>
       <StoreDetailDialog store={detailStore} isLoading={isDetailLoading} open={detailOpen} onOpenChange={setDetailOpen} />
-      <DeleteStoreDialog storeName={deleteTarget?.name ?? ""} isDeleting={isDeleting} open={Boolean(deleteTarget)} onConfirm={confirmDelete} onOpenChange={(open) => !open && setDeleteTarget(null)} />
     </AdminDashboardShell>
   );
 }

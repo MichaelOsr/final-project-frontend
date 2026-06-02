@@ -8,7 +8,7 @@ import type {
   AdminUserOverview,
   StoreOverview,
 } from "../types/adminDashboard.types";
-import { formatDate } from "../utils/dashboardFormat";
+import { formatDate } from "@/features/admin/shared/utils/adminFormat";
 
 function TableShell({
   title,

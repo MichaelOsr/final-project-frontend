@@ -8,7 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatNumber } from "../utils/dashboardFormat";
+import { formatNumber } from "@/features/admin/shared/utils/adminFormat";
 import type { DashboardSummary } from "../types/adminDashboard.types";
 
 const metricConfig: Array<{

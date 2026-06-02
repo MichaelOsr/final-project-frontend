@@ -5,20 +5,20 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
-import { AdminDashboardShell } from "@/features/admin/dashboard/components/AdminDashboardShell";
-import type { AdminUserOverview, PaginationMeta, StoreOverview } from "@/features/admin/dashboard/types/adminDashboard.types";
+import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
+import type { AdminRoleOption, AdminUserOverview, PaginationMeta, StoreOption } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
 import { adminAccountService } from "@/features/admin/admin-accounts/services/adminAccount.service";
-import type { AdminRoleOption } from "@/features/admin/admin-accounts/types/adminAccount.types";
-import { AdminUserDetailDialog } from "../components/AdminUserDetailDialog";
-import { AdminUserFilters, type AdminUserSortBy } from "../components/AdminUserFilters";
-import { AdminUsersTable } from "../components/AdminUsersTable";
-import { adminUserService } from "../services/adminUser.service";
+import { adminOptionsService } from "@/features/admin/shared/services/adminOptions.service";
+import { AccountDetailDialog } from "../components/AccountDetailDialog";
+import { AccountFilters, type AccountSortBy } from "../components/AccountFilters";
+import { AccountsTable } from "../components/AccountsTable";
+import { accountService } from "../services/account.service";
 import { DeleteAdminAccountDialog } from "@/features/admin/admin-accounts/components/DeleteAdminAccountDialog";
 
 const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
 
-export function AdminUsersPage() {
+export function AdminAccountsPage() {
   usePageTitle("Accounts");
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,7 +30,7 @@ export function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [meta, setMeta] = useState(defaultMeta);
   const [roles, setRoles] = useState<AdminRoleOption[]>([]);
-  const [stores, setStores] = useState<StoreOverview[]>([]);
+  const [stores, setStores] = useState<StoreOption[]>([]);
   const [users, setUsers] = useState<AdminUserOverview[]>([]);
   const page = getPageParam(searchParams);
   const query = searchParams.get("q") ?? "";
@@ -43,8 +43,8 @@ export function AdminUsersPage() {
     async function loadFilterOptions() {
       try {
         const [rolesResponse, storesResponse] = await Promise.all([
-          adminAccountService.listRoles(),
-          adminAccountService.listStores(),
+          adminOptionsService.listRoles(),
+          adminOptionsService.listStores(),
         ]);
         if (!isMounted) return;
         setRoles(rolesResponse.data.data ?? []);
@@ -62,7 +62,7 @@ export function AdminUsersPage() {
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await adminUserService.list({
+      const response = await accountService.list({
         page,
         limit: 10,
         sortBy,
@@ -89,7 +89,7 @@ export function AdminUsersPage() {
     setDetailOpen(true);
     setIsDetailLoading(true);
     try {
-      const response = await adminUserService.getById(user.id);
+      const response = await accountService.getById(user.id);
       setDetailUser(response.data.data ?? user);
     } catch (error) {
       toast.error(getAdminErrorMessage(error));
@@ -140,10 +140,10 @@ export function AdminUsersPage() {
           <h1 className="text-xl font-semibold">Accounts</h1>
           <p className="text-sm text-muted-foreground">Browse users, super admins, and store admins.</p>
         </div>
-        <Button asChild><Link to="/admin/admin-accounts/new"><PlusIcon className="size-4" />Create Account</Link></Button>
+        <Button asChild><Link to="/admin/admin-accounts/new"><PlusIcon className="size-4" />Create Admin Account</Link></Button>
       </div>
       <section className="overflow-hidden rounded-lg border border-border bg-background">
-        <AdminUserFilters
+        <AccountFilters
           query={query}
           roleName={roleName}
           roles={roles}
@@ -156,22 +156,22 @@ export function AdminUsersPage() {
           onChangeSortBy={(value) => updateFilters({ sort: value, page: 1 })}
           onChangeStoreName={(value) => updateFilters({ store: value, page: 1 })}
         />
-        <AdminUsersTable
+        <AccountsTable
           isLoading={isLoading}
-          users={users}
+          accounts={users}
           onDelete={handleDelete}
           onEdit={handleEdit}
           onView={openDetail}
         />
         <PaginationFooter meta={meta} onPageChange={(nextPage) => updateFilters({ page: nextPage })} />
       </section>
-      <AdminUserDetailDialog user={detailUser} isLoading={isDetailLoading} open={detailOpen} onOpenChange={setDetailOpen} />
+      <AccountDetailDialog account={detailUser} isLoading={isDetailLoading} open={detailOpen} onOpenChange={setDetailOpen} />
       <DeleteAdminAccountDialog accountName={deleteTarget?.name ?? ""} isDeleting={isDeleting} open={Boolean(deleteTarget)} onConfirm={confirmDelete} onOpenChange={(open) => !open && setDeleteTarget(null)} />
     </AdminDashboardShell>
   );
 }
 
-function getSortParam(value: string | null): AdminUserSortBy {
+function getSortParam(value: string | null): AccountSortBy {
   return value === "roleName" || value === "storeName" ? value : "createdAt";
 }
 

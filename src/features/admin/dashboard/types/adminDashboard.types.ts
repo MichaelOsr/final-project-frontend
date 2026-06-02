@@ -1,9 +1,6 @@
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+import type { AdminUserOverview, StoreOverview } from "@/features/admin/shared/types/admin.types";
+
+export type { AdminUserOverview, PaginationMeta, StoreOverview } from "@/features/admin/shared/types/admin.types";
 
 export interface DashboardSummary {
   totalStores: number;
@@ -12,31 +9,6 @@ export interface DashboardSummary {
   totalAdminAccounts: number;
   totalStoreAdmins: number;
   totalSuperAdmins: number;
-}
-
-export interface StoreOverview {
-  id: string;
-  name: string;
-  latitude: string | null;
-  longitude: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface AccountRole {
-  id: string;
-  name: string;
-}
-
-export interface AdminUserOverview {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string | null;
-  isVerified: boolean;
-  createdAt?: string;
-  role?: AccountRole | null;
-  store?: StoreOverview | null;
 }
 
 export interface DashboardState {

@@ -2,27 +2,27 @@ import type { ReactNode } from "react";
 import { SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { StoreOverview } from "@/features/admin/dashboard/types/adminDashboard.types";
-import type { AdminRoleOption } from "@/features/admin/admin-accounts/types/adminAccount.types";
-import { formatRoleName } from "@/features/admin/admin-accounts/utils/adminAccountFormat";
+import type { StoreOption } from "@/features/admin/shared/types/admin.types";
+import type { AdminRoleOption } from "@/features/admin/shared/types/admin.types";
+import { formatRoleName } from "@/features/admin/shared/utils/adminFormat";
 
-export type AdminUserSortBy = "createdAt" | "roleName" | "storeName";
+export type AccountSortBy = "createdAt" | "roleName" | "storeName";
 
-interface AdminUserFiltersProps {
+interface AccountFiltersProps {
   query: string;
   roleName: string;
   roles: AdminRoleOption[];
-  sortBy: AdminUserSortBy;
+  sortBy: AccountSortBy;
   storeName: string;
-  stores: StoreOverview[];
+  stores: StoreOption[];
   onChangePage: (page: number) => void;
   onChangeQuery: (value: string) => void;
   onChangeRoleName: (value: string) => void;
-  onChangeSortBy: (value: AdminUserSortBy) => void;
+  onChangeSortBy: (value: AccountSortBy) => void;
   onChangeStoreName: (value: string) => void;
 }
 
-export function AdminUserFilters(props: AdminUserFiltersProps) {
+export function AccountFilters(props: AccountFiltersProps) {
   const updateFilter = (setter: (value: string) => void, value: string) => {
     props.onChangePage(1);
     setter(value);
@@ -39,7 +39,7 @@ export function AdminUserFilters(props: AdminUserFiltersProps) {
         <option value="">All stores</option>
         {props.stores.map((store) => <option key={store.id} value={store.name}>{store.name}</option>)}
       </FilterSelect>
-      <FilterSelect label="Sort by" value={props.sortBy} onChange={(value) => { props.onChangePage(1); props.onChangeSortBy(value as AdminUserSortBy); }}>
+      <FilterSelect label="Sort by" value={props.sortBy} onChange={(value) => { props.onChangePage(1); props.onChangeSortBy(value as AccountSortBy); }}>
         <option value="createdAt">Created</option>
         <option value="roleName">Role name</option>
         <option value="storeName">Store name</option>

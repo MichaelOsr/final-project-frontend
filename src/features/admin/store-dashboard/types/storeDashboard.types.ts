@@ -1,4 +1,4 @@
-import type { StoreOverview } from "@/features/admin/dashboard/types/adminDashboard.types";
+import type { StoreOverview } from "@/features/admin/shared/types/admin.types";
 
 export interface StoreDashboardAdmin {
   id: string;

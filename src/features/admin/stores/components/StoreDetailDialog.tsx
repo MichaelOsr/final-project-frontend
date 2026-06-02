@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatDate } from "@/features/admin/dashboard/utils/dashboardFormat";
+import { formatDate } from "@/features/admin/shared/utils/adminFormat";
 import type { AdminStore } from "../types/adminStore.types";
 
 interface StoreDetailDialogProps {

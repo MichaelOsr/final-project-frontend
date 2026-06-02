@@ -1,17 +1,18 @@
 import { Link } from "react-router-dom";
 import { EyeIcon, LayoutDashboardIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/features/admin/dashboard/utils/dashboardFormat";
+import { formatDate } from "@/features/admin/shared/utils/adminFormat";
 import type { AdminStore } from "../types/adminStore.types";
 
 interface StoresTableProps {
   isLoading: boolean;
   stores: AdminStore[];
-  onDelete: (store: AdminStore) => void;
+  onDelete: () => void;
+  onEdit: () => void;
   onView: (store: AdminStore) => void;
 }
 
-export function StoresTable({ isLoading, stores, onDelete, onView }: StoresTableProps) {
+export function StoresTable({ isLoading, stores, onDelete, onEdit, onView }: StoresTableProps) {
   if (isLoading) {
     return <div className="px-4 py-10 text-center text-sm text-muted-foreground">Loading stores...</div>;
   }
@@ -34,14 +35,26 @@ export function StoresTable({ isLoading, stores, onDelete, onView }: StoresTable
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {stores.map((store) => <StoreRow key={store.id} store={store} onDelete={onDelete} onView={onView} />)}
+          {stores.map((store) => (
+            <StoreRow key={store.id} store={store} onDelete={onDelete} onEdit={onEdit} onView={onView} />
+          ))}
         </tbody>
       </table>
     </div>
   );
 }
 
-function StoreRow({ store, onDelete, onView }: { store: AdminStore; onDelete: (store: AdminStore) => void; onView: (store: AdminStore) => void }) {
+function StoreRow({
+  store,
+  onDelete,
+  onEdit,
+  onView,
+}: {
+  store: AdminStore;
+  onDelete: () => void;
+  onEdit: () => void;
+  onView: (store: AdminStore) => void;
+}) {
   return (
     <tr>
       <td className="px-4 py-3 font-medium">{store.name}</td>
@@ -58,10 +71,10 @@ function StoreRow({ store, onDelete, onView }: { store: AdminStore; onDelete: (s
       <td className="px-4 py-3">
         <div className="flex justify-center gap-1">
           <Button variant="ghost" size="icon-sm" onClick={() => onView(store)} aria-label="View store"><EyeIcon className="size-4" /></Button>
-          <Button asChild variant="ghost" size="icon-sm" aria-label="Edit store">
-            <Link to={`/admin/stores/${store.id}/edit`}><PencilIcon className="size-4" /></Link>
+          <Button variant="ghost" size="icon-sm" onClick={onEdit} aria-label="Edit store">
+            <PencilIcon className="size-4" />
           </Button>
-          <Button variant="ghost" size="icon-sm" onClick={() => onDelete(store)} aria-label="Delete store">
+          <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Delete store">
             <Trash2Icon className="size-4 text-destructive" />
           </Button>
         </div>

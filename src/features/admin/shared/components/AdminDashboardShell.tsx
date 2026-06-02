@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { useAdminSessionStore } from "@/store/adminSession.store";
 import type { IAdminSessionUser } from "@/types/adminAuthStore.types";
 import { getAdminLandingPath } from "@/features/admin/auth/utils/adminRouting";
-import { getInitials } from "../utils/dashboardFormat";
+import { getInitials } from "../utils/adminFormat";
 
 const superAdminNavItems = [
   { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboardIcon },

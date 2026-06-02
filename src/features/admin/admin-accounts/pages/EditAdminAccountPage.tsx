@@ -7,15 +7,17 @@ import { TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
-import { AdminDashboardShell } from "@/features/admin/dashboard/components/AdminDashboardShell";
-import type { AdminUserOverview, StoreOverview } from "@/features/admin/dashboard/types/adminDashboard.types";
+import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
+import type { AdminUserOverview, StoreOption } from "@/features/admin/shared/types/admin.types";
+import { adminOptionsService } from "@/features/admin/shared/services/adminOptions.service";
 import { AdminAccountSelectField } from "../components/AdminAccountSelectField";
 import { EditAccountSummary } from "../components/AdminAccountSidePanels";
 import { DeleteAdminAccountDialog } from "../components/DeleteAdminAccountDialog";
 import { editAdminAccountSchema } from "../schemas/adminAccount.schemas";
 import { adminAccountService } from "../services/adminAccount.service";
 import type { AdminRoleOption, EditAdminAccountFormValues } from "../types/adminAccount.types";
-import { formatRoleName, resolveAdminRoles } from "../utils/adminAccountFormat";
+import { formatRoleName } from "@/features/admin/shared/utils/adminFormat";
+import { resolveAdminRoles } from "../utils/adminAccountFormat";
 
 const emptyValues: EditAdminAccountFormValues = { name: "", password: "", roleName: "", storeId: "" };
 
@@ -28,7 +30,7 @@ export function EditAdminAccountPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [roles, setRoles] = useState<AdminRoleOption[]>([]);
-  const [stores, setStores] = useState<StoreOverview[]>([]);
+  const [stores, setStores] = useState<StoreOption[]>([]);
   const roleByName = useMemo(() => new Map(roles.map((role) => [role.name, role])), [roles]);
 
   useEffect(() => {
@@ -39,8 +41,8 @@ export function EditAdminAccountPage() {
       try {
         const [accountResponse, rolesResponse, storesResponse] = await Promise.all([
           adminAccountService.getById(accountId),
-          adminAccountService.listRoles(),
-          adminAccountService.listStores(),
+          adminOptionsService.listRoles(),
+          adminOptionsService.listStores(),
         ]);
         if (!isMounted) return;
         setAccount(accountResponse.data.data ?? null);
@@ -147,7 +149,7 @@ export function EditAdminAccountPage() {
 function EditAdminAccountForm({ initialValues, roles, stores, onSubmit }: {
   initialValues: EditAdminAccountFormValues;
   roles: AdminRoleOption[];
-  stores: StoreOverview[];
+  stores: StoreOption[];
   onSubmit: (
     values: EditAdminAccountFormValues,
     helpers: FormikHelpers<EditAdminAccountFormValues>,

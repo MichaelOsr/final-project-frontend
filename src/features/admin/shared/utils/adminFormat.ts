@@ -26,3 +26,10 @@ export function getInitials(name?: string) {
     .slice(0, 2)
     .toUpperCase();
 }
+
+export function formatRoleName(roleName?: string) {
+  if (roleName === "superAdmin") return "Super Admin";
+  if (roleName === "storeAdmin") return "Store Admin";
+  if (roleName === "user") return "User";
+  return roleName ?? "-";
+}

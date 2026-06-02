@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAdminSessionStore } from "@/store/adminSession.store";
-import { AdminDashboardShell } from "../components/AdminDashboardShell";
+import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
 import {
   DashboardErrorState,
   DashboardLoadingState,

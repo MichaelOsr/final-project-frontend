@@ -6,13 +6,11 @@ import { AdminLoginPage } from "@/features/admin/auth/pages/AdminLoginPage";
 import { AdminPublicOnlyRoute } from "@/features/admin/auth/components/AdminPublicOnlyRoute";
 import { AdminProtectedRoute } from "@/features/admin/auth/components/AdminProtectedRoute";
 import { AdminNotFound } from "@/features/admin/auth/components/AdminNotFound";
+import { AdminAccountsPage } from "@/features/admin/admin-accounts/pages/AdminAccountsPage";
 import { CreateAdminAccountPage } from "@/features/admin/admin-accounts/pages/CreateAdminAccountPage";
 import { EditAdminAccountPage } from "@/features/admin/admin-accounts/pages/EditAdminAccountPage";
 import { AdminDashboardPage } from "@/features/admin/dashboard/pages/AdminDashboardPage";
-import { AdminUsersPage } from "@/features/admin/users/pages/AdminUsersPage";
 import { AdminStoresPage } from "@/features/admin/stores/pages/AdminStoresPage";
-import { CreateStorePage } from "@/features/admin/stores/pages/CreateStorePage";
-import { EditStorePage } from "@/features/admin/stores/pages/EditStorePage";
 import { StoreDashboardPage } from "@/features/admin/store-dashboard/pages/StoreDashboardPage";
 
 export const adminRoutes = (
@@ -53,28 +51,12 @@ export const adminRoutes = (
           </AdminProtectedRoute>
         }
       />
-      <Route
-        path="/admin/stores/new"
-        element={
-          <AdminProtectedRoute allowedRoles={["superAdmin"]}>
-            <CreateStorePage />
-          </AdminProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/stores/:id/edit"
-        element={
-          <AdminProtectedRoute allowedRoles={["superAdmin"]}>
-            <EditStorePage />
-          </AdminProtectedRoute>
-        }
-      />
       <Route path="/admin/users" element={<Navigate to="/admin/admin-accounts" replace />} />
       <Route
         path="/admin/admin-accounts"
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin"]}>
-            <AdminUsersPage />
+            <AdminAccountsPage />
           </AdminProtectedRoute>
         }
       />

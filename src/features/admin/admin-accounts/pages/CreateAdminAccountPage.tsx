@@ -12,14 +12,16 @@ import { TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
-import { AdminDashboardShell } from "@/features/admin/dashboard/components/AdminDashboardShell";
-import type { StoreOverview } from "@/features/admin/dashboard/types/adminDashboard.types";
+import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
+import type { StoreOption } from "@/features/admin/shared/types/admin.types";
+import { adminOptionsService } from "@/features/admin/shared/services/adminOptions.service";
 import { AdminAccountSelectField } from "../components/AdminAccountSelectField";
 import { CreateAccountGuide } from "../components/AdminAccountSidePanels";
 import { createAdminAccountSchema } from "../schemas/adminAccount.schemas";
 import { adminAccountService } from "../services/adminAccount.service";
 import type { AdminRoleOption, CreateAdminAccountFormValues } from "../types/adminAccount.types";
-import { formatRoleName, resolveAdminRoles } from "../utils/adminAccountFormat";
+import { formatRoleName } from "@/features/admin/shared/utils/adminFormat";
+import { resolveAdminRoles } from "../utils/adminAccountFormat";
 
 const initialValues: CreateAdminAccountFormValues = { name: "", email: "", password: "", roleName: "", storeId: "" };
 
@@ -29,7 +31,7 @@ export function CreateAdminAccountPage() {
   usePageTitle("Create admin account");
   const navigate = useNavigate();
   const [roles, setRoles] = useState<AdminRoleOption[]>([]);
-  const [stores, setStores] = useState<StoreOverview[]>([]);
+  const [stores, setStores] = useState<StoreOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -38,8 +40,8 @@ export function CreateAdminAccountPage() {
     async function loadOptions() {
       try {
         const [rolesResponse, storesResponse] = await Promise.all([
-          adminAccountService.listRoles(),
-          adminAccountService.listStores(),
+          adminOptionsService.listRoles(),
+          adminOptionsService.listStores(),
         ]);
 
         if (!isMounted) return;
@@ -138,7 +140,7 @@ function CreateAdminAccountForm({
 }: {
   isLoading: boolean;
   roles: AdminRoleOption[];
-  stores: StoreOverview[];
+  stores: StoreOption[];
   onSubmit: (
     values: CreateAdminAccountFormValues,
     helpers: FormikHelpers<CreateAdminAccountFormValues>,

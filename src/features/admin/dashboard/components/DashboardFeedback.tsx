@@ -1,7 +1,7 @@
 import { Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AdminDashboardShell } from "./AdminDashboardShell";
+import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
 
 export function DashboardLoadingState() {
   return (
