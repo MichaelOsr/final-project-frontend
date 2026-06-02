@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { LayoutDashboardIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type {
   AdminUserOverview,
@@ -46,6 +49,7 @@ export function StoresTable({ stores }: { stores: StoreOverview[] }) {
             <th className="px-4 py-2 font-medium">Latitude</th>
             <th className="px-4 py-2 font-medium">Longitude</th>
             <th className="px-4 py-2 font-medium">Created</th>
+            <th className="px-4 py-2 text-center font-medium">Dashboard</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -55,6 +59,15 @@ export function StoresTable({ stores }: { stores: StoreOverview[] }) {
               <td className="px-4 py-3 text-muted-foreground">{store.latitude ?? "-"}</td>
               <td className="px-4 py-3 text-muted-foreground">{store.longitude ?? "-"}</td>
               <td className="px-4 py-3 text-muted-foreground">{formatDate(store.createdAt)}</td>
+              <td className="px-4 py-3">
+                <div className="flex justify-center">
+                  <Button asChild variant="ghost" size="icon-sm" aria-label="Open store dashboard">
+                    <Link to={`/admin/store/dashboard?storeId=${store.id}`}>
+                      <LayoutDashboardIcon className="size-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>

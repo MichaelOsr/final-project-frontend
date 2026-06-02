@@ -1,9 +1,9 @@
 import type { IAdminSessionUser } from "@/types/adminAuthStore.types";
 
 export function getAdminStoreDashboardPath(user: IAdminSessionUser) {
-  const storeId = user.store?.id ?? "dummy-store";
+  const storeId = user.store?.id;
 
-  return `/admin/store/dashboard?storeId=${encodeURIComponent(storeId)}`;
+  return storeId ? `/admin/store/dashboard?storeId=${encodeURIComponent(storeId)}` : "/admin/store/dashboard";
 }
 
 export function getAdminLandingPath(user: IAdminSessionUser) {
