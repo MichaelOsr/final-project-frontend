@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { LayoutDashboardIcon } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AdminDataTable } from "@/features/admin/shared/components/AdminDataTable";
 import type {
   AdminUserOverview,
   StoreOverview,
@@ -27,51 +29,10 @@ function TableShell({
   );
 }
 
-function EmptyRows({ label }: { label: string }) {
-  return (
-    <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-      No {label} found.
-    </div>
-  );
-}
-
 export function StoresTable({ stores }: { stores: StoreOverview[] }) {
-  if (stores.length === 0) {
-    return <TableShell title="Recent Stores"><EmptyRows label="stores" /></TableShell>;
-  }
-
   return (
     <TableShell title="Recent Stores">
-      <table className="w-full min-w-[540px] text-left text-sm">
-        <thead className="bg-muted/60 text-xs text-muted-foreground">
-          <tr>
-            <th className="px-4 py-2 font-medium">Store</th>
-            <th className="px-4 py-2 font-medium">Latitude</th>
-            <th className="px-4 py-2 font-medium">Longitude</th>
-            <th className="px-4 py-2 font-medium">Created</th>
-            <th className="px-4 py-2 text-center font-medium">Dashboard</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {stores.map((store) => (
-            <tr key={store.id}>
-              <td className="px-4 py-3 font-medium">{store.name}</td>
-              <td className="px-4 py-3 text-muted-foreground">{store.latitude ?? "-"}</td>
-              <td className="px-4 py-3 text-muted-foreground">{store.longitude ?? "-"}</td>
-              <td className="px-4 py-3 text-muted-foreground">{formatDate(store.createdAt)}</td>
-              <td className="px-4 py-3">
-                <div className="flex justify-center">
-                  <Button asChild variant="ghost" size="icon-sm" aria-label="Open store dashboard">
-                    <Link to={`/admin/store/dashboard?storeId=${store.id}`}>
-                      <LayoutDashboardIcon className="size-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <AdminDataTable columns={storeColumns} data={stores} emptyMessage="No stores found." minWidth="min-w-[540px]" />
     </TableShell>
   );
 }
@@ -98,34 +59,46 @@ export function PeopleTable({
   people: AdminUserOverview[];
   showStore?: boolean;
 }) {
-  if (people.length === 0) {
-    return <TableShell title={title}><EmptyRows label={title.toLowerCase()} /></TableShell>;
-  }
+  const columns = getPeopleColumns(showStore);
 
   return (
     <TableShell title={title}>
-      <table className="w-full min-w-[620px] text-left text-sm">
-        <thead className="bg-muted/60 text-xs text-muted-foreground">
-          <tr>
-            <th className="px-4 py-2 font-medium">Name</th>
-            <th className="px-4 py-2 font-medium">Email</th>
-            <th className="px-4 py-2 font-medium">Role</th>
-            {showStore ? <th className="px-4 py-2 font-medium">Store</th> : null}
-            <th className="px-4 py-2 font-medium">Verified</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {people.map((person) => (
-            <tr key={person.id}>
-              <td className="px-4 py-3 font-medium">{person.name}</td>
-              <td className="px-4 py-3 text-muted-foreground">{person.email}</td>
-              <td className="px-4 py-3 text-muted-foreground">{person.role?.name ?? "-"}</td>
-              {showStore ? <td className="px-4 py-3 text-muted-foreground">{person.store?.name ?? "-"}</td> : null}
-              <td className="px-4 py-3"><VerificationBadge isVerified={person.isVerified} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <AdminDataTable columns={columns} data={people} emptyMessage={`No ${title.toLowerCase()} found.`} minWidth="min-w-[620px]" />
     </TableShell>
+  );
+}
+
+const storeColumns: ColumnDef<StoreOverview>[] = [
+  { accessorKey: "name", header: "Store", cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
+  { accessorKey: "latitude", header: "Latitude", cell: ({ row }) => <span className="text-muted-foreground">{row.original.latitude ?? "-"}</span> },
+  { accessorKey: "longitude", header: "Longitude", cell: ({ row }) => <span className="text-muted-foreground">{row.original.longitude ?? "-"}</span> },
+  { id: "created", header: "Created", cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.createdAt)}</span> },
+  { id: "dashboard", header: () => <div className="text-center">Dashboard</div>, cell: ({ row }) => <DashboardAction store={row.original} /> },
+];
+
+function getPeopleColumns(showStore: boolean): ColumnDef<AdminUserOverview>[] {
+  const columns: ColumnDef<AdminUserOverview>[] = [
+    { accessorKey: "name", header: "Name", cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
+    { accessorKey: "email", header: "Email", cell: ({ row }) => <span className="text-muted-foreground">{row.original.email}</span> },
+    { id: "role", header: "Role", cell: ({ row }) => <span className="text-muted-foreground">{row.original.role?.name ?? "-"}</span> },
+  ];
+
+  if (showStore) {
+    columns.push({ id: "store", header: "Store", cell: ({ row }) => <span className="text-muted-foreground">{row.original.store?.name ?? "-"}</span> });
+  }
+
+  columns.push({ id: "verified", header: "Verified", cell: ({ row }) => <VerificationBadge isVerified={row.original.isVerified} /> });
+  return columns;
+}
+
+function DashboardAction({ store }: { store: StoreOverview }) {
+  return (
+    <div className="flex justify-center">
+      <Button asChild variant="ghost" size="icon-sm" aria-label="Open store dashboard">
+        <Link to={`/admin/store/dashboard?storeId=${store.id}`}>
+          <LayoutDashboardIcon className="size-4" />
+        </Link>
+      </Button>
+    </div>
   );
 }

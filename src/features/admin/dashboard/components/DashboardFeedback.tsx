@@ -6,7 +6,7 @@ import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDas
 export function DashboardLoadingState() {
   return (
     <AdminDashboardShell>
-      <div className="grid min-h-[420px] place-items-center rounded-lg border border-border bg-card">
+      <div className="grid min-h-105 place-items-center rounded-lg border border-border bg-card">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2Icon className="size-4 animate-spin" />
           Loading dashboard data

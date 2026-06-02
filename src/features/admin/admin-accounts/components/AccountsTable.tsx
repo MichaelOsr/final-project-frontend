@@ -1,7 +1,10 @@
 import { EyeIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { AdminUserOverview } from "@/features/admin/shared/types/admin.types";
+import { AdminDataTable } from "@/features/admin/shared/components/AdminDataTable";
+import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable";
+import type { AdminUserOverview, PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { formatDate, formatRoleName } from "@/features/admin/shared/utils/adminFormat";
 
 interface AccountsTableProps {
@@ -9,41 +12,61 @@ interface AccountsTableProps {
   accounts: AdminUserOverview[];
   onDelete: (account: AdminUserOverview) => void;
   onEdit: (account: AdminUserOverview) => void;
+  onPageChange: (page: number) => void;
+  onSortChange: (sortBy: AccountSortBy, sortOrder: SortOrder) => void;
   onView: (account: AdminUserOverview) => void;
+  paginationMeta: PaginationMeta;
+  sortBy: AccountSortBy;
+  sortOrder: SortOrder;
 }
 
-export function AccountsTable({ accounts, isLoading, onDelete, onEdit, onView }: AccountsTableProps) {
-  if (isLoading) {
-    return <div className="px-4 py-10 text-center text-sm text-muted-foreground">Loading accounts...</div>;
-  }
+export type AccountSortBy = "name" | "email" | "roleName" | "storeName" | "createdAt";
 
-  if (accounts.length === 0) {
-    return <div className="px-4 py-10 text-center text-sm text-muted-foreground">No accounts found.</div>;
-  }
+export function AccountsTable({
+  accounts,
+  isLoading,
+  onDelete,
+  onEdit,
+  onPageChange,
+  onSortChange,
+  onView,
+  paginationMeta,
+  sortBy,
+  sortOrder,
+}: AccountsTableProps) {
+  const columns = getAccountColumns({ onDelete, onEdit, onView });
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[760px] text-left text-sm">
-        <thead className="bg-muted/60 text-xs text-muted-foreground">
-          <tr>
-            <th className="px-4 py-2 font-medium">Name</th>
-            <th className="px-4 py-2 font-medium">Email</th>
-            <th className="px-4 py-2 font-medium">Role</th>
-            <th className="px-4 py-2 font-medium">Store</th>
-            <th className="px-4 py-2 font-medium">Status</th>
-            <th className="px-4 py-2 font-medium">Created</th>
-            <th className="px-4 py-2 text-center font-medium">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {accounts.map((account) => <AccountRow key={account.id} account={account} onDelete={onDelete} onEdit={onEdit} onView={onView} />)}
-        </tbody>
-      </table>
-    </div>
+    <AdminDataTable
+      columns={columns}
+      data={accounts}
+      emptyMessage="No accounts found."
+      isLoading={isLoading}
+      loadingMessage="Loading accounts..."
+      minWidth="min-w-[760px]"
+      pagination={{ meta: paginationMeta, onPageChange }}
+      sorting={{ sortBy, sortOrder, onSortChange: (nextSortBy, nextOrder) => onSortChange(nextSortBy as AccountSortBy, nextOrder) }}
+    />
   );
 }
 
-function AccountRow({ account, onDelete, onEdit, onView }: {
+function getAccountColumns({
+  onDelete,
+  onEdit,
+  onView,
+}: Pick<AccountsTableProps, "onDelete" | "onEdit" | "onView">): ColumnDef<AdminUserOverview>[] {
+  return [
+    { accessorKey: "name", header: "Name", enableSorting: true, cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
+    { accessorKey: "email", header: "Email", enableSorting: true, cell: ({ row }) => <span className="text-muted-foreground">{row.original.email}</span> },
+    { id: "roleName", header: "Role", enableSorting: true, cell: ({ row }) => <span className="text-muted-foreground">{formatRoleName(row.original.role?.name)}</span> },
+    { id: "storeName", header: "Store", enableSorting: true, cell: ({ row }) => <span className="text-muted-foreground">{row.original.store?.name ?? "-"}</span> },
+    { id: "status", header: "Status", cell: ({ row }) => <VerificationBadge isVerified={row.original.isVerified} /> },
+    { id: "createdAt", header: "Created", enableSorting: true, cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.createdAt)}</span> },
+    { id: "actions", header: () => <div className="text-center">Actions</div>, cell: ({ row }) => <AccountActions account={row.original} onDelete={onDelete} onEdit={onEdit} onView={onView} /> },
+  ];
+}
+
+function AccountActions({ account, onDelete, onEdit, onView }: {
   account: AdminUserOverview;
   onDelete: (account: AdminUserOverview) => void;
   onEdit: (account: AdminUserOverview) => void;
@@ -52,25 +75,15 @@ function AccountRow({ account, onDelete, onEdit, onView }: {
   const isUserAccount = account.role?.name === "user";
 
   return (
-    <tr>
-      <td className="px-4 py-3 font-medium">{account.name}</td>
-      <td className="px-4 py-3 text-muted-foreground">{account.email}</td>
-      <td className="px-4 py-3 text-muted-foreground">{formatRoleName(account.role?.name)}</td>
-      <td className="px-4 py-3 text-muted-foreground">{account.store?.name ?? "-"}</td>
-      <td className="px-4 py-3"><VerificationBadge isVerified={account.isVerified} /></td>
-      <td className="px-4 py-3 text-muted-foreground">{formatDate(account.createdAt)}</td>
-      <td className="px-4 py-3">
-        <div className="flex justify-center gap-1">
-          <Button variant="ghost" size="icon-sm" onClick={() => onView(account)} aria-label="View account"><EyeIcon className="size-4" /></Button>
-          {!isUserAccount ? (
-            <>
-              <Button variant="ghost" size="icon-sm" onClick={() => onEdit(account)} aria-label="Edit account"><PencilIcon className="size-4" /></Button>
-              <Button variant="ghost" size="icon-sm" onClick={() => onDelete(account)} aria-label="Delete account"><Trash2Icon className="size-4 text-destructive" /></Button>
-            </>
-          ) : null}
-        </div>
-      </td>
-    </tr>
+    <div className="flex justify-center gap-1">
+      <Button variant="ghost" size="icon-sm" onClick={() => onView(account)} aria-label="View account"><EyeIcon className="size-4" /></Button>
+      {!isUserAccount ? (
+        <>
+          <Button variant="ghost" size="icon-sm" onClick={() => onEdit(account)} aria-label="Edit account"><PencilIcon className="size-4" /></Button>
+          <Button variant="ghost" size="icon-sm" onClick={() => onDelete(account)} aria-label="Delete account"><Trash2Icon className="size-4 text-destructive" /></Button>
+        </>
+      ) : null}
+    </div>
   );
 }
 

@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
 import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
+import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
 import { StoreDetailDialog } from "../components/StoreDetailDialog";
-import { StoreFilters, type StoreSortBy } from "../components/StoreFilters";
-import { StoresTable } from "../components/StoresTable";
+import { StoreFilters } from "../components/StoreFilters";
+import { StoresTable, type StoreSortBy } from "../components/StoresTable";
 import { adminStoreService } from "../services/adminStore.service";
 import type { AdminStore } from "../types/adminStore.types";
 
@@ -28,6 +29,7 @@ export function AdminStoresPage() {
   const page = getPageParam(searchParams);
   const query = searchParams.get("q") ?? "";
   const sortBy = getSortParam(searchParams.get("sort"));
+  const sortOrder = getSortOrderParam(searchParams.get("order"), sortBy);
 
   const loadStores = useCallback(async () => {
     setIsLoading(true);
@@ -36,7 +38,7 @@ export function AdminStoresPage() {
         page,
         limit: 10,
         sortBy,
-        sortOrder: sortBy === "name" ? "asc" : "desc",
+        sortOrder,
         ...(query.trim() ? { q: query.trim() } : {}),
       });
       setStores(response.data.data ?? []);
@@ -46,7 +48,7 @@ export function AdminStoresPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, query, sortBy]);
+  }, [page, query, sortBy, sortOrder]);
 
   useEffect(() => {
     loadStores();
@@ -89,19 +91,21 @@ export function AdminStoresPage() {
       <section className="overflow-hidden rounded-lg border border-border bg-background">
         <StoreFilters
           query={query}
-          sortBy={sortBy}
           onChangePage={(nextPage) => updateFilters({ page: nextPage })}
           onChangeQuery={(value) => updateFilters({ q: value, page: 1 })}
-          onChangeSortBy={(value) => updateFilters({ sort: value, page: 1 })}
         />
         <StoresTable
           stores={stores}
           isLoading={isLoading}
           onDelete={showNotImplemented}
           onEdit={showNotImplemented}
+          onPageChange={(nextPage) => updateFilters({ page: nextPage })}
+          onSortChange={(nextSortBy, nextOrder) => updateFilters({ sort: nextSortBy, order: nextOrder, page: 1 })}
           onView={openDetail}
+          paginationMeta={meta}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
         />
-        <PaginationFooter meta={meta} onPageChange={(nextPage) => updateFilters({ page: nextPage })} />
       </section>
       <StoreDetailDialog store={detailStore} isLoading={isDetailLoading} open={detailOpen} onOpenChange={setDetailOpen} />
     </AdminDashboardShell>
@@ -113,14 +117,7 @@ function getSortParam(value: string | null): StoreSortBy {
   return "name";
 }
 
-function PaginationFooter({ meta, onPageChange }: { meta: PaginationMeta; onPageChange: (page: number) => void }) {
-  return (
-    <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm">
-      <span className="text-muted-foreground">Page {meta.page} of {meta.totalPages || 1}</span>
-      <div className="flex gap-2">
-        <Button variant="outline" disabled={meta.page <= 1} onClick={() => onPageChange(meta.page - 1)}>Previous</Button>
-        <Button variant="outline" disabled={meta.page >= meta.totalPages} onClick={() => onPageChange(meta.page + 1)}>Next</Button>
-      </div>
-    </div>
-  );
+function getSortOrderParam(value: string | null, sortBy: StoreSortBy): SortOrder {
+  if (value === "asc" || value === "desc") return value;
+  return sortBy === "name" ? "asc" : "desc";
 }

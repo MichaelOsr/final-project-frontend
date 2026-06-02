@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
 import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
+import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable";
 import type { AdminRoleOption, AdminUserOverview, PaginationMeta, StoreOption } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
 import { adminAccountService } from "@/features/admin/admin-accounts/services/adminAccount.service";
 import { adminOptionsService } from "@/features/admin/shared/services/adminOptions.service";
 import { AccountDetailDialog } from "../components/AccountDetailDialog";
-import { AccountFilters, type AccountSortBy } from "../components/AccountFilters";
-import { AccountsTable } from "../components/AccountsTable";
+import { AccountFilters } from "../components/AccountFilters";
+import { AccountsTable, type AccountSortBy } from "../components/AccountsTable";
 import { accountService } from "../services/account.service";
 import { DeleteAdminAccountDialog } from "@/features/admin/admin-accounts/components/DeleteAdminAccountDialog";
 
@@ -36,6 +37,7 @@ export function AdminAccountsPage() {
   const query = searchParams.get("q") ?? "";
   const roleName = searchParams.get("role") ?? "";
   const sortBy = getSortParam(searchParams.get("sort"));
+  const sortOrder = getSortOrderParam(searchParams.get("order"));
   const storeName = searchParams.get("store") ?? "";
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export function AdminAccountsPage() {
         page,
         limit: 10,
         sortBy,
-        sortOrder: "desc",
+        sortOrder,
         ...(query.trim() ? { q: query.trim() } : {}),
         ...(roleName ? { roleName } : {}),
         ...(storeName ? { storeName } : {}),
@@ -78,7 +80,7 @@ export function AdminAccountsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, query, roleName, sortBy, storeName]);
+  }, [page, query, roleName, sortBy, sortOrder, storeName]);
 
   useEffect(() => {
     loadUsers();
@@ -147,13 +149,11 @@ export function AdminAccountsPage() {
           query={query}
           roleName={roleName}
           roles={roles}
-          sortBy={sortBy}
           storeName={storeName}
           stores={stores}
           onChangePage={(nextPage) => updateFilters({ page: nextPage })}
           onChangeQuery={(value) => updateFilters({ q: value, page: 1 })}
           onChangeRoleName={(value) => updateFilters({ role: value, page: 1 })}
-          onChangeSortBy={(value) => updateFilters({ sort: value, page: 1 })}
           onChangeStoreName={(value) => updateFilters({ store: value, page: 1 })}
         />
         <AccountsTable
@@ -161,9 +161,13 @@ export function AdminAccountsPage() {
           accounts={users}
           onDelete={handleDelete}
           onEdit={handleEdit}
+          onPageChange={(nextPage) => updateFilters({ page: nextPage })}
+          onSortChange={(nextSortBy, nextOrder) => updateFilters({ sort: nextSortBy, order: nextOrder, page: 1 })}
           onView={openDetail}
+          paginationMeta={meta}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
         />
-        <PaginationFooter meta={meta} onPageChange={(nextPage) => updateFilters({ page: nextPage })} />
       </section>
       <AccountDetailDialog account={detailUser} isLoading={isDetailLoading} open={detailOpen} onOpenChange={setDetailOpen} />
       <DeleteAdminAccountDialog accountName={deleteTarget?.name ?? ""} isDeleting={isDeleting} open={Boolean(deleteTarget)} onConfirm={confirmDelete} onOpenChange={(open) => !open && setDeleteTarget(null)} />
@@ -172,21 +176,14 @@ export function AdminAccountsPage() {
 }
 
 function getSortParam(value: string | null): AccountSortBy {
-  return value === "roleName" || value === "storeName" ? value : "createdAt";
+  if (value === "name" || value === "email" || value === "roleName" || value === "storeName") return value;
+  return "createdAt";
+}
+
+function getSortOrderParam(value: string | null): SortOrder {
+  return value === "asc" ? "asc" : "desc";
 }
 
 function isAdminAccount(user: AdminUserOverview) {
   return user.role?.name === "superAdmin" || user.role?.name === "storeAdmin";
-}
-
-function PaginationFooter({ meta, onPageChange }: { meta: PaginationMeta; onPageChange: (page: number) => void }) {
-  return (
-    <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm">
-      <span className="text-muted-foreground">Page {meta.page} of {meta.totalPages || 1}</span>
-      <div className="flex gap-2">
-        <Button variant="outline" disabled={meta.page <= 1} onClick={() => onPageChange(meta.page - 1)}>Previous</Button>
-        <Button variant="outline" disabled={meta.page >= meta.totalPages} onClick={() => onPageChange(meta.page + 1)}>Next</Button>
-      </div>
-    </div>
-  );
 }

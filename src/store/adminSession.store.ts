@@ -73,7 +73,6 @@ export const useAdminSessionStore = create<IAdminSessionStore>()(
         try {
           await adminAxios.post<ApiResponse>("/admin/auth/logout");
         } catch {
-          // Local state is cleared either way so route guards can react.
         } finally {
           set({ user: null, status: "unauthenticated" });
         }

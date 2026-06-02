@@ -6,19 +6,15 @@ import type { StoreOption } from "@/features/admin/shared/types/admin.types";
 import type { AdminRoleOption } from "@/features/admin/shared/types/admin.types";
 import { formatRoleName } from "@/features/admin/shared/utils/adminFormat";
 
-export type AccountSortBy = "createdAt" | "roleName" | "storeName";
-
 interface AccountFiltersProps {
   query: string;
   roleName: string;
   roles: AdminRoleOption[];
-  sortBy: AccountSortBy;
   storeName: string;
   stores: StoreOption[];
   onChangePage: (page: number) => void;
   onChangeQuery: (value: string) => void;
   onChangeRoleName: (value: string) => void;
-  onChangeSortBy: (value: AccountSortBy) => void;
   onChangeStoreName: (value: string) => void;
 }
 
@@ -29,7 +25,7 @@ export function AccountFilters(props: AccountFiltersProps) {
   };
 
   return (
-    <div className="grid items-end gap-3 border-b border-border p-4 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_12rem_10rem]">
+    <div className="grid items-end gap-3 border-b border-border p-4 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_12rem]">
       <FilterSearch value={props.query} onChange={(value) => updateFilter(props.onChangeQuery, value)} />
       <FilterSelect label="Role" value={props.roleName} onChange={(value) => updateFilter(props.onChangeRoleName, value)}>
         <option value="">All roles</option>
@@ -38,11 +34,6 @@ export function AccountFilters(props: AccountFiltersProps) {
       <FilterSelect label="Store" value={props.storeName} onChange={(value) => updateFilter(props.onChangeStoreName, value)}>
         <option value="">All stores</option>
         {props.stores.map((store) => <option key={store.id} value={store.name}>{store.name}</option>)}
-      </FilterSelect>
-      <FilterSelect label="Sort by" value={props.sortBy} onChange={(value) => { props.onChangePage(1); props.onChangeSortBy(value as AccountSortBy); }}>
-        <option value="createdAt">Created</option>
-        <option value="roleName">Role name</option>
-        <option value="storeName">Store name</option>
       </FilterSelect>
     </div>
   );
