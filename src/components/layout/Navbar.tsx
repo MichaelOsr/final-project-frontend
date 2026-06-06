@@ -1,6 +1,7 @@
+import { useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { LogOutIcon, UserIcon, SearchIcon, MenuIcon, ShoppingBasketIcon } from "lucide-react"
+import { LogOutIcon, UserIcon, SearchIcon, MenuIcon, ShoppingBasketIcon, ShoppingCartIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -12,6 +13,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { useAuthStore } from "@/store/auth.store"
+import { useCartStore } from "@/store/cart.store"
 import type { User } from "@/types/user.types"
 
 function initials(name: string) {
@@ -56,8 +58,20 @@ export function Navbar() {
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
 
+  const totalItems = useCartStore((s) => s.totalItems)
+  const fetchCart = useCartStore((s) => s.fetchCart)
+  const clearCart = useCartStore((s) => s.clear)
+
+  // Fetch cart sekali saat user baru authenticated agar badge langsung muncul.
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchCart()
+    }
+  }, [status, fetchCart])
+
   const handleLogout = async () => {
     await logout()
+    clearCart()
     toast.success("Signed out")
     navigate("/login")
   }
@@ -90,13 +104,25 @@ export function Navbar() {
           />
         </div>
 
+        {/* Cart icon + badge */}
+        <Link
+          to={status === "authenticated" ? "/cart" : "/login"}
+          className="relative ml-auto rounded-full p-2 text-foreground transition-colors hover:bg-muted"
+          aria-label={`Cart${totalItems > 0 ? `, ${totalItems} item` : ""}`}
+        >
+          <ShoppingCartIcon className="size-5" />
+          {status === "authenticated" && totalItems > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-white">
+              {totalItems > 99 ? "99+" : totalItems}
+            </span>
+          )}
+        </Link>
+
         {/* Auth zone */}
         {status === "authenticated" && user ? (
-          <div className="ml-auto">
-            <UserMenu user={user} onLogout={handleLogout} />
-          </div>
+          <UserMenu user={user} onLogout={handleLogout} />
         ) : (
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Button asChild variant="outline" className="rounded-full" size="sm">
               <Link to="/login">Log in</Link>
             </Button>
