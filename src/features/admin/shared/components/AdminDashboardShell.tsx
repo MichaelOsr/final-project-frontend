@@ -5,7 +5,9 @@ import {
   LayoutDashboardIcon,
   Loader2Icon,
   LogOutIcon,
+  PackageIcon,
   StoreIcon,
+  TagsIcon,
   UserCogIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +20,8 @@ import { getInitials } from "../utils/adminFormat";
 
 const superAdminNavItems = [
   { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboardIcon },
+  { label: "Products", to: "/admin/products", icon: PackageIcon },
+  { label: "Categories", to: "/admin/categories", icon: TagsIcon },
   { label: "Stores", to: "/admin/stores", icon: StoreIcon },
   { label: "Accounts", to: "/admin/admin-accounts", icon: UserCogIcon },
 ];
