@@ -28,7 +28,7 @@ export function AdminProtectedRoute({
       return <Navigate to={getAdminStoreDashboardPath(user)} replace />;
     }
 
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return <>{children}</>;

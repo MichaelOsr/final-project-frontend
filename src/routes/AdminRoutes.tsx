@@ -17,6 +17,10 @@ import { CreateProductPage } from "@/features/admin/products/pages/CreateProduct
 import { EditProductPage } from "@/features/admin/products/pages/EditProductPage";
 import { AdminStoresPage } from "@/features/admin/stores/pages/AdminStoresPage";
 import { StoreDashboardPage } from "@/features/admin/store-dashboard/pages/StoreDashboardPage";
+import { StoreCategoriesPage } from "@/features/admin/store-dashboard/pages/StoreCategoriesPage";
+import { StoreStockPage } from "@/features/admin/store-dashboard/pages/StoreStockPage";
+import { StoreStaffPage } from "@/features/admin/store-dashboard/pages/StoreStaffPage";
+import { StoreProductDetailPage } from "@/features/admin/store-dashboard/pages/StoreProductDetailPage";
 
 export const adminRoutes = (
   <Fragment>
@@ -45,6 +49,38 @@ export const adminRoutes = (
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
             <StoreDashboardPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/categories"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <StoreCategoriesPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/stock"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <StoreStockPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/staff"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <StoreStaffPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/products/:slug"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <StoreProductDetailPage />
           </AdminProtectedRoute>
         }
       />

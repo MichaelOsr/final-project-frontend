@@ -19,10 +19,7 @@ export function ProductFilters(props: ProductFiltersProps) {
         <Label className="text-xs text-muted-foreground">Search</Label>
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="h-9 pl-9" placeholder="Search products" value={props.query} onChange={(event) => {
-            props.onChangePage(1);
-            props.onChangeQuery(event.target.value);
-          }} />
+          <Input className="h-9 pl-9" placeholder="Search products" value={props.query} onChange={(event) => props.onChangeQuery(event.target.value)} />
         </div>
       </div>
       <div className="grid gap-1.5">

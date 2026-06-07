@@ -1,0 +1,174 @@
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { useDebouncedSearchParam } from "@/features/admin/shared/hooks/useDebouncedSearchParam";
+import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
+import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
+import type { AdminUserOverview, PaginationMeta } from "@/features/admin/shared/types/admin.types";
+import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
+import { formatDate, getInitials } from "@/features/admin/shared/utils/adminFormat";
+import { adminAccountService } from "@/features/admin/admin-accounts/services/adminAccount.service";
+
+const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
+
+export function StoreStaffPage() {
+  usePageTitle("Store Staff");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isLoading, setIsLoading] = useState(true);
+  const [staff, setStaff] = useState<AdminUserOverview[]>([]);
+  const [meta, setMeta] = useState(defaultMeta);
+  const page = getPageParam(searchParams);
+  const query = searchParams.get("q") ?? "";
+  const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadStaff() {
+      try {
+        const response = await adminAccountService.list({
+          page,
+          limit: 10,
+          ...(query.trim() ? { q: query.trim() } : {}),
+        });
+        if (!isMounted) return;
+        setStaff(response.data.data ?? []);
+        setMeta(response.data.meta ?? defaultMeta);
+      } catch (error) {
+        if (isMounted) toast.error(getAdminErrorMessage(error));
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+    loadStaff();
+    return () => {
+      isMounted = false;
+    };
+  }, [page, query]);
+
+  function updateFilters(updates: Record<string, string | number>) {
+    setSearchParams(updateSearchParams(searchParams, updates));
+  }
+
+  return (
+    <AdminDashboardShell>
+      <div>
+        <h1 className="text-xl font-semibold">Store Staff</h1>
+        <p className="text-sm text-muted-foreground">View admin staff assigned to your store.</p>
+      </div>
+
+      <Card className="rounded-lg p-0">
+        <CardContent className="overflow-hidden p-0">
+          <div className="border-b border-border px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold">Staff Members</h2>
+              <input
+                type="text"
+                placeholder="Search staff..."
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-muted/30">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold">Name</th>
+                  <th className="px-4 py-3 text-left font-semibold">Email</th>
+                  <th className="px-4 py-3 text-left font-semibold">Role</th>
+                  <th className="px-4 py-3 text-left font-semibold">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold">Joined</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {isLoading && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-3 text-center text-muted-foreground">
+                      Loading...
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && staff.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-3 text-center text-muted-foreground">
+                      No staff members found
+                    </td>
+                  </tr>
+                )}
+                {!isLoading &&
+                  staff.map((member) => (
+                    <tr key={member.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="size-8">
+                            <AvatarImage src={member.avatar ?? undefined} alt={member.name} />
+                            <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                          </Avatar>
+                          <p className="font-medium">{member.name}</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-primary">
+                          {member.role?.name ?? "User"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                            member.isVerified
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {member.isVerified ? "Verified" : "Pending"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {member.createdAt ? formatDate(member.createdAt) : "-"}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+
+          {!isLoading && staff.length > 0 && (
+            <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm">
+              <p className="text-muted-foreground">
+                Showing {staff.length} of {meta.total} staff members
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 1}
+                  onClick={() => updateFilters({ page: page - 1 })}
+                >
+                  Previous
+                </Button>
+                <span className="flex items-center px-2 text-xs text-muted-foreground">
+                  Page {page} of {meta.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= meta.totalPages}
+                  onClick={() => updateFilters({ page: page + 1 })}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </AdminDashboardShell>
+  );
+}

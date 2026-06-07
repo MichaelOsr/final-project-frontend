@@ -20,3 +20,44 @@ export interface StoreDashboardSummary {
   };
   storeAdmins: StoreDashboardAdmin[];
 }
+
+export interface StockProduct {
+  id: string;
+  name: string;
+  slug: string;
+  categoryId: string;
+  brand: string | null;
+  variant: string | null;
+  size: string | null;
+  description: string | null;
+  sku: string;
+  price: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  category: {
+    id: string;
+    name: string;
+  };
+  images: Array<{
+    id: string;
+    image: string;
+    position: number;
+  }>;
+}
+
+export interface StoreStock {
+  id: string;
+  productId: string;
+  storeId: string;
+  stock: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  product: StockProduct;
+  store: {
+    id: string;
+    name: string;
+  };
+}
+

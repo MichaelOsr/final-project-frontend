@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useDebouncedSearchParam } from "@/features/admin/shared/hooks/useDebouncedSearchParam";
 import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
 import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
 import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable";
@@ -28,6 +29,7 @@ export function AdminProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [meta, setMeta] = useState(defaultMeta);
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
   const page = getPageParam(searchParams);
   const query = searchParams.get("q") ?? "";
   const categoryId = searchParams.get("categoryId") ?? "";
@@ -121,10 +123,10 @@ export function AdminProductsPage() {
         <ProductFilters
           categories={categories}
           categoryId={categoryId}
-          query={query}
+          query={searchInput}
           onChangeCategory={(value) => updateFilters({ categoryId: value, page: 1 })}
           onChangePage={(nextPage) => updateFilters({ page: nextPage })}
-          onChangeQuery={(value) => updateFilters({ q: value, page: 1 })}
+          onChangeQuery={setSearchInput}
         />
         <ProductsTable
           isLoading={isLoading}

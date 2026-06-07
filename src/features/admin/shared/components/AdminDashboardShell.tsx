@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  ArrowLeftIcon,
   Building2Icon,
   LayoutDashboardIcon,
   Loader2Icon,
@@ -15,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAdminSessionStore } from "@/store/adminSession.store";
 import type { IAdminSessionUser } from "@/types/adminAuthStore.types";
-import { getAdminLandingPath } from "@/features/admin/auth/utils/adminRouting";
 import { getInitials } from "../utils/adminFormat";
 
 const superAdminNavItems = [
@@ -24,6 +24,13 @@ const superAdminNavItems = [
   { label: "Categories", to: "/admin/categories", icon: TagsIcon },
   { label: "Stores", to: "/admin/stores", icon: StoreIcon },
   { label: "Accounts", to: "/admin/admin-accounts", icon: UserCogIcon },
+];
+
+const storeNavItems = [
+  { label: "Dashboard", to: "/admin/store/dashboard", icon: LayoutDashboardIcon },
+  { label: "Stock", to: "/admin/store/stock", icon: PackageIcon },
+  { label: "Categories", to: "/admin/store/categories", icon: TagsIcon },
+  { label: "Staff", to: "/admin/store/staff", icon: UserCogIcon },
 ];
 
 function Sidebar() {
@@ -46,14 +53,33 @@ function Sidebar() {
 
 function DashboardNav({ admin, className }: { admin: IAdminSessionUser | null; className: string }) {
   const { pathname } = useLocation();
-  const navItems = admin?.role === "storeAdmin"
-    ? [{ label: "Dashboard", to: getAdminLandingPath(admin), icon: LayoutDashboardIcon }]
-    : superAdminNavItems;
+
+  const isStoreContext = pathname.startsWith("/admin/store/");
+
+  let navItems;
+  if (admin?.role === "storeAdmin") {
+    navItems = storeNavItems;
+  } else if (admin?.role === "superAdmin" && isStoreContext) {
+    navItems = storeNavItems;
+  } else {
+    navItems = superAdminNavItems;
+  }
 
   return (
     <nav className={className}>
+      {admin?.role === "superAdmin" && isStoreContext && (
+        <Link
+          to="/admin/dashboard"
+          className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground mb-2 border border-border"
+        >
+          <ArrowLeftIcon className="size-4" />
+          Back to Dashboard
+        </Link>
+      )}
       {navItems.map(({ label, to, icon: Icon }) => {
-        const isActive = to === "/admin/dashboard" ? pathname === to : pathname.startsWith(to);
+        const isActive = to === "/admin/dashboard" || to === "/admin/store/dashboard"
+          ? pathname === to
+          : pathname.startsWith(to);
 
         return (
           <Link

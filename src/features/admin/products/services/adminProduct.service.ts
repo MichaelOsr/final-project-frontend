@@ -47,9 +47,9 @@ export const adminProductService = {
     adminAxios.patch<ApiResponse<AdminProduct>>(`/admin/product/${slug}/images`, toProductImagesFormData(payload)),
   delete: (slug: string) =>
     adminAxios.delete<ApiResponse<Pick<AdminProduct, "id" | "name" | "slug" | "images" | "stocks">>>(`/admin/product/${slug}`),
-  listCategories: () =>
+  listCategories: (params?: Record<string, string | number>) =>
     adminAxios.get<PaginatedApiResponse<ProductCategory>>("/categories", {
-      params: { page: 1, limit: 100, sortBy: "name", sortOrder: "asc" },
+      params: { page: 1, limit: 100, sortBy: "name", sortOrder: "asc", ...params },
     }),
 };
 

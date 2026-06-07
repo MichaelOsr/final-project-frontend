@@ -4,6 +4,7 @@ import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useDebouncedSearchParam } from "@/features/admin/shared/hooks/useDebouncedSearchParam";
 import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
 import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
 import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable";
@@ -33,6 +34,7 @@ export function AdminAccountsPage() {
   const [roles, setRoles] = useState<AdminRoleOption[]>([]);
   const [stores, setStores] = useState<StoreOption[]>([]);
   const [users, setUsers] = useState<AdminUserOverview[]>([]);
+  const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
   const page = getPageParam(searchParams);
   const query = searchParams.get("q") ?? "";
   const roleName = searchParams.get("role") ?? "";
@@ -146,13 +148,13 @@ export function AdminAccountsPage() {
       </div>
       <section className="overflow-hidden rounded-lg border border-border bg-background">
         <AccountFilters
-          query={query}
+          query={searchInput}
           roleName={roleName}
           roles={roles}
           storeName={storeName}
           stores={stores}
           onChangePage={(nextPage) => updateFilters({ page: nextPage })}
-          onChangeQuery={(value) => updateFilters({ q: value, page: 1 })}
+          onChangeQuery={setSearchInput}
           onChangeRoleName={(value) => updateFilters({ role: value, page: 1 })}
           onChangeStoreName={(value) => updateFilters({ store: value, page: 1 })}
         />
