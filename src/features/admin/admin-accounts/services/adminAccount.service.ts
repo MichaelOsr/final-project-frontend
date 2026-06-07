@@ -1,12 +1,18 @@
 import adminAxios from "@/lib/adminAxios";
 import type { ApiResponse } from "@/types/api.types";
-import type { AdminUserOverview } from "@/features/admin/shared/types/admin.types";
+import type { AdminUserOverview, PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import type {
   AdminAccountPayload,
   UpdateAdminAccountPayload,
 } from "../types/adminAccount.types";
 
+interface PaginatedApiResponse<T> extends ApiResponse<T[]> {
+  meta?: PaginationMeta;
+}
+
 export const adminAccountService = {
+  list: (params: Record<string, string | number | boolean>) =>
+    adminAxios.get<PaginatedApiResponse<AdminUserOverview>>("/admin/admin-accounts", { params }),
   create: (payload: AdminAccountPayload) =>
     adminAxios.post<ApiResponse<AdminUserOverview>>("/admin/admin-accounts", payload),
   getById: (id: string) =>

@@ -1,0 +1,149 @@
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { useDebouncedSearchParam } from "@/features/admin/shared/hooks/useDebouncedSearchParam";
+import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
+import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
+import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
+import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
+import { adminProductService } from "@/features/admin/products/services/adminProduct.service";
+import type { ProductCategory } from "@/features/admin/products/types/adminProduct.types";
+
+const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
+
+export function StoreCategoriesPage() {
+  usePageTitle("Store Categories");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [meta, setMeta] = useState(defaultMeta);
+  const page = getPageParam(searchParams);
+  const query = searchParams.get("q") ?? "";
+  const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCategories() {
+      try {
+        const response = await adminProductService.listCategories({
+          page,
+          limit: 10,
+          ...(query.trim() ? { q: query.trim() } : {}),
+        });
+        if (!isMounted) return;
+        setCategories(response.data.data ?? []);
+        setMeta(response.data.meta ?? defaultMeta);
+      } catch (error) {
+        if (isMounted) toast.error(getAdminErrorMessage(error));
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, [page, query]);
+
+  function updateFilters(updates: Record<string, string | number>) {
+    setSearchParams(updateSearchParams(searchParams, updates));
+  }
+
+  return (
+    <AdminDashboardShell>
+      <div>
+        <h1 className="text-xl font-semibold">Categories</h1>
+        <p className="text-sm text-muted-foreground">Browse product categories available in your store.</p>
+      </div>
+
+      <Card className="rounded-lg p-0">
+        <CardContent className="overflow-hidden p-0">
+          <div className="border-b border-border px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold">All Categories</h2>
+              <input
+                type="text"
+                placeholder="Search categories..."
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-muted/30">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold">Category Name</th>
+                  <th className="px-4 py-3 text-left font-semibold">Created</th>
+                  <th className="px-4 py-3 text-left font-semibold">Updated</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {isLoading && (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-3 text-center text-muted-foreground">
+                      Loading...
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && categories.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-3 text-center text-muted-foreground">
+                      No categories found
+                    </td>
+                  </tr>
+                )}
+                {!isLoading &&
+                  categories.map((category) => (
+                    <tr key={category.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3 font-medium">{category.name}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {category.createdAt ? new Date(category.createdAt).toLocaleDateString() : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {category.updatedAt ? new Date(category.updatedAt).toLocaleDateString() : "-"}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+
+          {!isLoading && categories.length > 0 && (
+            <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm">
+              <p className="text-muted-foreground">
+                Showing {categories.length} of {meta.total} categories
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 1}
+                  onClick={() => updateFilters({ page: page - 1 })}
+                >
+                  Previous
+                </Button>
+                <span className="flex items-center px-2 text-xs text-muted-foreground">
+                  Page {page} of {meta.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= meta.totalPages}
+                  onClick={() => updateFilters({ page: page + 1 })}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </AdminDashboardShell>
+  );
+}

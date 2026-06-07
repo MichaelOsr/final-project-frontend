@@ -26,7 +26,7 @@ export function AccountFilters(props: AccountFiltersProps) {
 
   return (
     <div className="grid items-end gap-3 border-b border-border p-4 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_12rem]">
-      <FilterSearch value={props.query} onChange={(value) => updateFilter(props.onChangeQuery, value)} />
+      <FilterSearch value={props.query} onChange={props.onChangeQuery} />
       <FilterSelect label="Role" value={props.roleName} onChange={(value) => updateFilter(props.onChangeRoleName, value)}>
         <option value="">All roles</option>
         {props.roles.map((role) => <option key={role.id} value={role.name}>{formatRoleName(role.name)}</option>)}
