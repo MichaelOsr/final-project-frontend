@@ -6,15 +6,18 @@ import { getErrorMessage } from "@/lib/error"
 import { authService } from "../services/auth.service"
 import { emailSchema } from "../schemas/auth.schemas"
 import type { EmailPayload } from "../types/auth.types"
+import { useAuthStore } from "@/store/auth.store"
 
 const initialValues: EmailPayload = { email: "" }
 
-export function ChangeEmailForm() {
+export function ChangeEmailForm({ onDone }: { onDone?: () => void } = {}) {
+  const fetchMe = useAuthStore((s) => s.fetchMe)
+
   const handleSubmit = async (values: EmailPayload, helpers: FormikHelpers<EmailPayload>) => {
     try {
       const { data } = await authService.changeEmail(values)
       toast.success(data.message ?? "Check your new email to verify the change.")
-      helpers.resetForm()
+      await fetchMe()        // ← isVerified kini false → ProtectedRoute lempar ke home
     } catch (error) {
       toast.error(getErrorMessage(error))
     } finally {
@@ -22,14 +25,22 @@ export function ChangeEmailForm() {
     }
   }
 
+
   return (
     <Formik initialValues={initialValues} validationSchema={emailSchema} onSubmit={handleSubmit}>
       {({ isSubmitting }) => (
         <Form className="grid gap-4">
           <TextField name="email" label="New email" type="email" placeholder="new@example.com" autoComplete="email" />
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Update email"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Update email"}
+            </Button>
+            {onDone && (
+              <Button type="button" variant="ghost" onClick={onDone}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </Form>
       )}
     </Formik>

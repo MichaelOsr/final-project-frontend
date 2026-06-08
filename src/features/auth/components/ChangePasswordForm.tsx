@@ -13,7 +13,7 @@ const initialValues: ChangePasswordPayload = {
   confirmPassword: "",
 }
 
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ onDone }: { onDone?: () => void } = {}) {
   const handleSubmit = async (
     values: ChangePasswordPayload,
     helpers: FormikHelpers<ChangePasswordPayload>
@@ -22,6 +22,7 @@ export function ChangePasswordForm() {
       const { data } = await authService.changePassword(values)
       toast.success(data.message ?? "Password updated")
       helpers.resetForm()
+      onDone?.()
     } catch (error) {
       toast.error(getErrorMessage(error))
     } finally {
@@ -36,9 +37,16 @@ export function ChangePasswordForm() {
           <TextField name="oldPassword" label="Current password" type="password" autoComplete="current-password" />
           <TextField name="newPassword" label="New password" type="password" autoComplete="new-password" />
           <TextField name="confirmPassword" label="Confirm new password" type="password" autoComplete="new-password" />
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Change password"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Change password"}
+            </Button>
+            {onDone && (
+              <Button type="button" variant="ghost" onClick={onDone}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </Form>
       )}
     </Formik>

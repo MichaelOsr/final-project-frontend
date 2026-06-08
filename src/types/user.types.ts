@@ -10,4 +10,5 @@ export interface User {
   role: Role
   isVerified: boolean
   referralCode: string | null
+  googleId: string | null
 }

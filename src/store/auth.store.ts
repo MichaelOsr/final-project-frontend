@@ -8,7 +8,7 @@ import type { ApiResponse } from "@/types/api.types"
 type AuthStatus = "loading" | "authenticated" | "unauthenticated"
 
 interface AuthState {
-  user: User | null
+  user?: User 
   status: AuthStatus
   setUser: (user: User) => void
   clear: () => void
@@ -17,17 +17,17 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
+  user: undefined,
   status: "loading",
   setUser: (user) => set({ user, status: "authenticated" }),
-  clear: () => set({ user: null, status: "unauthenticated" }),
+  clear: () => set({ user: undefined, status: "unauthenticated" }),
   fetchMe: async () => {
     try {
       const { data } = await api.get<ApiResponse<User>>("/auth/me")
-      const user = data.data ?? null
+      const user = data.data ?? undefined
       set({ user, status: user ? "authenticated" : "unauthenticated" })
     } catch {
-      set({ user: null, status: "unauthenticated" })
+      set({ user: undefined, status: "unauthenticated" })
     }
   },
   logout: async () => {
@@ -36,7 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       // Ignore network/401 errors: clearing local state below is what matters.
     } finally {
-      set({ user: null, status: "unauthenticated" })
+      set({ user: undefined, status: "unauthenticated" })
     }
   },
 }))

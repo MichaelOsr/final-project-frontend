@@ -1,7 +1,7 @@
 import { Formik, Form, type FormikHelpers } from "formik"
 import { useLocation, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { TextField } from "@/components/form/TextField"
+import { TextField, PasswordTextField } from "@/components/form/TextField"
 import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/store/auth.store"
 import { getErrorMessage } from "@/lib/error"
@@ -34,7 +34,7 @@ export function LoginForm() {
       {({ isSubmitting }) => (
         <Form className="grid gap-4">
           <TextField name="email" label="Email" type="email" placeholder="you@example.com" autoComplete="email" />
-          <TextField name="password" label="Password" type="password" autoComplete="current-password" />
+          <PasswordTextField name="password" label="Password"  autoComplete="current-password" />
           <Button type="submit" className="h-12 w-full rounded-full text-base" disabled={isSubmitting}>
             {isSubmitting ? "Signing in..." : "Continue"}
           </Button>

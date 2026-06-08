@@ -20,7 +20,7 @@ function validateAvatar(file: File): string | null {
   return null
 }
 
-export function ProfileForm() {
+export function ProfileForm({ onDone }: { onDone?: () => void } = {}) {
   const user = useAuthStore((s) => s.user)
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -44,6 +44,7 @@ export function ProfileForm() {
       await authService.updateProfile(formData)
       await fetchMe()
       toast.success("Profile updated")
+      onDone?.()
     } catch (error) {
       toast.error(getErrorMessage(error))
     } finally {
@@ -77,9 +78,16 @@ export function ProfileForm() {
             {avatarError ? <p className="text-xs text-destructive">{avatarError}</p> : null}
           </div>
           <TextField name="name" label="Full name" autoComplete="name" />
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save changes"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save changes"}
+            </Button>
+            {onDone && (
+              <Button type="button" variant="ghost" onClick={onDone}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </Form>
       )}
     </Formik>
