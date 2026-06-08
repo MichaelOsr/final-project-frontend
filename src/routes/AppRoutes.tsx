@@ -13,6 +13,9 @@ import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
 import { ProfilePage } from "@/features/auth/pages/ProfilePage";
 import { adminRoutes } from "@/routes/AdminRoutes";
 import { CartPage } from "@/features/cart/pages/CartPage";
+import { CheckoutPage } from "@/features/order/pages/CheckoutPage";
+import { OrderListPage } from "@/features/order/pages/OrderListPage";
+import { OrderDetailPage } from "@/features/order/pages/OrderDetailPage";
 
 // Single source of truth for routes. Each team member adds their feature's
 // pages here. Token-driven pages (verification, reset) stay accessible to any
@@ -35,6 +38,30 @@ export function AppRoutes() {
           element={
             <ProtectedRoute>
               <CartPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <OrderListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:orderId"
+          element={
+            <ProtectedRoute>
+              <OrderDetailPage />
             </ProtectedRoute>
           }
         />
