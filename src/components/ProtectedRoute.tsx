@@ -1,18 +1,25 @@
 import type { ReactNode } from "react"
-import { Navigate, useLocation } from "react-router-dom"
+import { Navigate } from "react-router-dom"
 import { useAuthStore } from "@/store/auth.store"
 import { FullScreenLoader } from "@/components/FullScreenLoader"
+import { useEffect } from "react"
+import { toast } from "sonner"
 
-// Guards pages that require authentication. While the first /me check is in
-// flight we show a loader so a logged-in user isn't briefly bounced to /login.
-// On redirect we remember the current location so login can return the user here.
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const status = useAuthStore((s) => s.status)
-  const location = useLocation()
+  const user = useAuthStore((s) => s.user)
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      toast.error("Please log in to access this page", { id: "auth-redirect" })
+    } else if (status === "authenticated" && !user?.isVerified) {
+      toast.error("Please verify your email before accessing this page", { id: "auth-redirect" })
+    }
+  }, [status, user])
 
   if (status === "loading") return <FullScreenLoader />
-  if (status === "unauthenticated") {
-    return <Navigate to="/login" replace state={{ from: location }} />
-  }
+  if (status === "unauthenticated") return <Navigate to="/" replace />
+  if (status === "authenticated" && !user?.isVerified) return <Navigate to="/" replace />
+
   return <>{children}</>
 }

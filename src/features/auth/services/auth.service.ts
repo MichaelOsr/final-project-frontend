@@ -7,6 +7,7 @@ import type {
   SetPasswordPayload,
   EmailPayload,
   ChangePasswordPayload,
+  GoogleAuthPayload,
 } from "../types/auth.types"
 
 // Thin wrapper around the /auth endpoints. Each method maps 1:1 to a backend
@@ -17,7 +18,10 @@ export const authService = {
 
   verifyEmail: (token: string, payload: SetPasswordPayload) =>
     api.post<ApiResponse>("/auth/verification", payload, { params: { token } }),
-
+  
+  verifyEmailChange: (token: string) =>
+    api.patch<ApiResponse>("/auth/verification", null, { params: { token } }),
+  
   resendVerification: (payload: EmailPayload) =>
     api.post<ApiResponse>("/auth/resend-verification", payload),
 
@@ -41,4 +45,8 @@ export const authService = {
 
   changePassword: (payload: ChangePasswordPayload) =>
     api.patch<ApiResponse>("/auth/password", payload),
+    
+  googleAuth: (payload: GoogleAuthPayload) =>
+    api.post<ApiResponse>("/auth/google", payload),
+
 }
