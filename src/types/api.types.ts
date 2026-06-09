@@ -9,3 +9,19 @@ export interface ApiResponse<T = unknown> {
 export interface ApiError {
   message: string
 }
+
+// Pagination info returned by list endpoints. Mirrors the backend's
+// buildPaginationMeta helper. `meta` sits as a sibling of `data`.
+export interface PaginationMeta {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+// Envelope for paginated list endpoints (e.g. GET /products).
+export interface PaginatedResponse<T> {
+  message?: string
+  data: T[]
+  meta: PaginationMeta
+}
