@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom"
 import { Navbar } from "@/components/layout/Navbar"
+import { Footer } from "@/components/layout/Footer"
 
 // Pages manage their own max-width / padding so the hero section can go full-width.
 export function RootLayout() {
@@ -9,9 +10,7 @@ export function RootLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} GrocerGo. All rights reserved.
-      </footer>
+      <Footer />
     </div>
   )
 }
