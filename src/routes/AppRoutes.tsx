@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PublicOnlyRoute } from "@/components/PublicOnlyRoute";
 import { NotFound } from "@/components/NotFound";
 import { HomePage } from "@/features/home/pages/HomePage";
+import { ProductViewPage } from "@/features/products/pages/ProductViewPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { RegisterPage } from "@/features/auth/pages/RegisterPage";
 import { VerifyEmailPage } from "@/features/auth/pages/VerifyEmailPage";
@@ -25,6 +26,10 @@ export function AppRoutes() {
     <Routes>
       <Route element={<RootLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route
+          path="/stores/:storeId/products/:slug"
+          element={<ProductViewPage />}
+        />
         <Route
           path="/profile"
           element={
@@ -84,6 +89,7 @@ export function AppRoutes() {
             </PublicOnlyRoute>
           }
         />
+
         <Route
           path="/forgot-password"
           element={
