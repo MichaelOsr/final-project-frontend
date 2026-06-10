@@ -18,5 +18,10 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // shadcn UI files export both a component and its variants (e.g. buttonVariants);
+      // keep this as a warning so generated files don't fail lint.
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    },
   },
 ])
