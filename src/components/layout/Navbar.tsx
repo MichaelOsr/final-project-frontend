@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import {
   LogOutIcon,
   UserIcon,
-  SearchIcon,
   ClipboardListIcon,
   MenuIcon,
   ShoppingBasketIcon,
