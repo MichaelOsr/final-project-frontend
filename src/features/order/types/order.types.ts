@@ -141,3 +141,36 @@ export interface GetOrdersQuery {
   endDate?: string
   search?: string
 }
+// Address user dari GET /api/addresses
+export interface UserAddress {
+  id: string
+  name: string
+  latitude: string
+  longitude: string
+  notes: string | null
+  isDefault: boolean
+}
+
+export interface GetAddressesResponse {
+  message: string
+  data: UserAddress[]
+}
+
+// Shipping cost dari GET /api/shipping/cost
+export interface ShippingCostItem {
+  name: string
+  code: string
+  service: string
+  description: string
+  cost: number
+  etd: string
+}
+
+export interface GetShippingCostResponse {
+  message: string
+  data: {
+    origin: { id: number; label: string; store: string }
+    destination: { id: number; label: string }
+    costs: ShippingCostItem[]
+  }
+}

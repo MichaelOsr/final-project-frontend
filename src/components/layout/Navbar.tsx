@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { LogOutIcon, UserIcon, SearchIcon, MenuIcon, ShoppingBasketIcon, ShoppingCartIcon } from "lucide-react"
+import { LogOutIcon, UserIcon, SearchIcon, MenuIcon, ShoppingBasketIcon, ShoppingCartIcon, ClipboardListIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -42,6 +42,11 @@ function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
         <DropdownMenuItem asChild>
           <Link to="/profile">
             <UserIcon /> Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/orders">
+            <ClipboardListIcon /> Pesanan Saya
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem variant="destructive" onClick={onLogout}>
