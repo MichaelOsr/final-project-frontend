@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useLocation as useStoreLocation } from "@/features/home/hooks/useLocation";
 import { ProductGallery } from "../components/ProductGallery";
 import { AddToCartControl } from "../components/AddToCartControl";
 import { useStoreProduct } from "../hooks/useStoreProduct";
@@ -10,7 +11,9 @@ function formatPrice(value: number): string {
 }
 
 export function ProductViewPage() {
-  const { storeId = "", slug = "" } = useParams<{ storeId: string; slug: string }>();
+  const { storeId: routeStoreId, slug = "" } = useParams<{ storeId?: string; slug: string }>();
+  const { storeId: locationStoreId } = useStoreLocation();
+  const storeId = routeStoreId ?? locationStoreId ?? "";
   const { product, isLoading } = useStoreProduct(storeId, slug);
   usePageTitle(product?.name ?? "Product");
 

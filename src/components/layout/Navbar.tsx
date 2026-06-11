@@ -1,9 +1,16 @@
-import { useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { toast } from "sonner"
-import { LogOutIcon, UserIcon, SearchIcon, MenuIcon, ShoppingBasketIcon, ShoppingCartIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import {
+  LogOutIcon,
+  UserIcon,
+  MenuIcon,
+  ShoppingBasketIcon,
+  ShoppingCartIcon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SearchBar, MobileSearchButton } from "@/components/layout/SearchBar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -11,10 +18,10 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import { useAuthStore } from "@/store/auth.store"
-import { useCartStore } from "@/store/cart.store"
-import type { User } from "@/types/user.types"
+} from "@/components/ui/dropdown-menu";
+import { useAuthStore } from "@/store/auth.store";
+import { useCartStore } from "@/store/cart.store";
+import type { User } from "@/types/user.types";
 
 function initials(name: string) {
   return name
@@ -22,7 +29,7 @@ function initials(name: string) {
     .split(/\s+/)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("")
+    .join("");
 }
 
 function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
@@ -49,32 +56,31 @@ function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 export function Navbar() {
-  const user = useAuthStore((s) => s.user)
-  const status = useAuthStore((s) => s.status)
-  const logout = useAuthStore((s) => s.logout)
-  const navigate = useNavigate()
+  const user = useAuthStore((s) => s.user);
+  const status = useAuthStore((s) => s.status);
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
 
-  const totalItems = useCartStore((s) => s.totalItems)
-  const fetchCart = useCartStore((s) => s.fetchCart)
-  const clearCart = useCartStore((s) => s.clear)
+  const totalItems = useCartStore((s) => s.totalItems);
+  const fetchCart = useCartStore((s) => s.fetchCart);
+  const clearCart = useCartStore((s) => s.clear);
 
-  // Fetch cart sekali saat user baru authenticated agar badge langsung muncul.
   useEffect(() => {
     if (status === "authenticated") {
-      fetchCart()
+      fetchCart();
     }
-  }, [status, fetchCart])
+  }, [status, fetchCart]);
 
   const handleLogout = async () => {
-    await logout()
-    clearCart()
-    toast.success("Signed out")
-    navigate("/login")
-  }
+    await logout();
+    clearCart();
+    toast.success("Signed out");
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white shadow-sm">
@@ -94,20 +100,15 @@ export function Navbar() {
         </Link>
 
         {/* Search bar: hidden on mobile, visible on md+ */}
-        <div className="relative hidden flex-1 items-center md:flex">
-          <SearchIcon className="absolute left-3.5 size-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Search products and stores"
-            className="h-10 w-full rounded-full border border-input bg-muted/50 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
-            readOnly
-          />
-        </div>
+        <SearchBar />
+
+        {/* Mobile-only search button, sits next to the cart */}
+        <MobileSearchButton />
 
         {/* Cart icon + badge */}
         <Link
           to={status === "authenticated" ? "/cart" : "/login"}
-          className="relative ml-auto rounded-full p-2 text-foreground transition-colors hover:bg-muted"
+          className="relative rounded-full p-2 text-foreground transition-colors hover:bg-muted md:ml-auto"
           aria-label={`Cart${totalItems > 0 ? `, ${totalItems} item` : ""}`}
         >
           <ShoppingCartIcon className="size-5" />
@@ -123,7 +124,12 @@ export function Navbar() {
           <UserMenu user={user} onLogout={handleLogout} />
         ) : (
           <div className="flex shrink-0 items-center gap-2">
-            <Button asChild variant="outline" className="rounded-full" size="sm">
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-full"
+              size="sm"
+            >
               <Link to="/login">Log in</Link>
             </Button>
             <Button asChild className="rounded-full" size="sm">
@@ -133,5 +139,5 @@ export function Navbar() {
         )}
       </nav>
     </header>
-  )
+  );
 }

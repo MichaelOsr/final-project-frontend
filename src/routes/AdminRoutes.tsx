@@ -132,7 +132,10 @@ export const adminRoutes = (
           </AdminProtectedRoute>
         }
       />
-      <Route path="/admin/users" element={<Navigate to="/admin/admin-accounts" replace />} />
+      <Route
+        path="/admin/users"
+        element={<Navigate to="/admin/admin-accounts" replace />}
+      />
       <Route
         path="/admin/admin-accounts"
         element={

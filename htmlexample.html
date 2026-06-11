@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html class="light" lang="en" style="">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>GrocerGo | Fresh Grocery Catalog</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: #f9f9ff;
+      }
+    </style>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              outline: "#6d7b6c",
+              "on-secondary-container": "#24703e",
+              "on-secondary-fixed": "#00210b",
+              "on-tertiary-container": "#76231b",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed-variant": "#005321",
+              "inverse-primary": "#4ae176",
+              "error-container": "#ffdad6",
+              "on-secondary-fixed-variant": "#005226",
+              "tertiary-fixed": "#ffdad5",
+              "secondary-fixed": "#a6f4b5",
+              "on-background": "#151c27",
+              tertiary: "#9e4036",
+              "on-secondary": "#ffffff",
+              "on-error": "#ffffff",
+              secondary: "#1f6c3a",
+              "surface-container-low": "#f0f3ff",
+              "primary-fixed": "#6bff8f",
+              "inverse-surface": "#2a313d",
+              "tertiary-fixed-dim": "#ffb4a9",
+              "surface-container": "#e7eefe",
+              primary: "#006e2f",
+              "inverse-on-surface": "#ebf1ff",
+              surface: "#f9f9ff",
+              "surface-dim": "#d3daea",
+              "surface-variant": "#dce2f3",
+              "secondary-container": "#a4f1b2",
+              "tertiary-container": "#ff8b7c",
+              "surface-container-high": "#e2e8f8",
+              "on-primary-container": "#004b1e",
+              "surface-tint": "#006e2f",
+              "on-tertiary-fixed": "#410001",
+              "on-error-container": "#93000a",
+              "on-primary-fixed": "#002109",
+              "on-tertiary": "#ffffff",
+              "primary-fixed-dim": "#4ae176",
+              background: "#f9f9ff",
+              "on-primary": "#ffffff",
+              "on-surface-variant": "#3d4a3d",
+              "on-surface": "#151c27",
+              error: "#ba1a1a",
+              "secondary-fixed-dim": "#8bd79b",
+              "surface-container-highest": "#dce2f3",
+              "on-tertiary-fixed-variant": "#7f2a21",
+              "primary-container": "#22c55e",
+              "surface-bright": "#f9f9ff",
+              "outline-variant": "#bccbb9",
+            },
+            borderRadius: {
+              DEFAULT: "1rem",
+              lg: "2rem",
+              xl: "3rem",
+              full: "9999px",
+            },
+            spacing: {
+              xs: "0.5rem",
+              xl: "3rem",
+              base: "4px",
+              "container-max": "1280px",
+              md: "1.5rem",
+              sm: "1rem",
+              lg: "2rem",
+              gutter: "1.5rem",
+              xxl: "5rem",
+            },
+            fontFamily: {
+              "label-md": ["Plus Jakarta Sans"],
+              "headline-md": ["Plus Jakarta Sans"],
+              "body-md": ["Plus Jakarta Sans"],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-surface text-on-surface">
+    <!-- TopNavBar -->
+    <header class="bg-surface sticky top-0 z-50"></header>
+    <main class="max-w-container-max mx-auto flex min-h-screen">
+      <!-- SideNavBar -->
+      <aside
+        class="hidden md:flex flex-col gap-sm py-lg px-md border-r border-outline-variant h-full w-64 shrink-0 bg-surface-container-lowest"
+      >
+        <div class="mb-lg">
+          <h2 class="text-headline-md font-headline-md text-on-surface">
+            Filters
+          </h2>
+          <p
+            class="text-label-md font-label-md text-on-surface-variant opacity-70"
+          >
+            Refine your shop
+          </p>
+        </div>
+        <div class="flex flex-col gap-lg">
+          <!-- Search Refinement (q) -->
+          <div class="flex flex-col gap-xs">
+            <div class="relative"></div>
+          </div>
+          <!-- Category Dropdown (categoryId) -->
+          <div class="flex flex-col gap-xs">
+            <label class="text-label-md font-label-md text-on-surface-variant"
+              >Category</label
+            >
+            <select
+              class="w-full bg-surface border-outline-variant rounded-xl text-label-md font-label-md focus:ring-primary py-2 px-sm"
+              name="categoryId"
+            >
+              <option value="">All Categories</option>
+              <option value="cat_produce">Produce</option>
+              <option value="cat_dairy">Dairy</option>
+              <option value="cat_meat">Meat</option>
+              <option value="cat_bakery">Bakery</option>
+              <option value="cat_pantry">Pantry</option>
+            </select>
+          </div>
+          <!-- Availability Toggle (inStock) -->
+          <div class="flex items-center justify-between">
+            <span class="text-label-md font-label-md text-on-surface-variant"
+              >Available only</span
+            >
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                class="sr-only peer"
+                name="inStock"
+                type="checkbox"
+                value="true"
+              />
+              <div
+                class="w-10 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"
+              ></div>
+            </label>
+          </div>
+          <!-- Price Range (minPrice, maxPrice) -->
+          <div class="flex flex-col gap-xs">
+            <label class="text-label-md font-label-md text-on-surface-variant"
+              >Price Range</label
+            >
+            <div class="flex items-center gap-xs">
+              <input
+                class="w-full bg-surface border-outline-variant rounded-xl text-label-md font-label-md focus:ring-primary py-2 px-sm"
+                min="0"
+                name="minPrice"
+                placeholder="Min"
+                type="number"
+              />
+              <span class="text-outline">-</span>
+              <input
+                class="w-full bg-surface border-outline-variant rounded-xl text-label-md font-label-md focus:ring-primary py-2 px-sm"
+                min="0"
+                name="maxPrice"
+                placeholder="Max"
+                type="number"
+              />
+            </div>
+          </div>
+          <!-- Filter Tags -->
+          <div
+            class="flex flex-col gap-xs pt-sm border-t border-outline-variant"
+          >
+            <button
+              class="flex items-center gap-xs text-on-surface-variant hover:bg-surface-container px-sm py-xs transition-colors rounded-sm"
+            >
+              <span class="material-symbols-outlined" data-icon="sell"
+                >sell</span
+              >
+              <span class="text-label-md font-label-md">On Sale</span>
+            </button>
+          </div>
+        </div>
+        <div class="mt-auto pt-xl">
+          <button
+            class="w-full py-2 border border-primary text-primary rounded-full font-bold text-label-md font-label-md hover:bg-primary-container hover:text-white transition-all"
+          >
+            Clear All
+          </button>
+        </div>
+      </aside>
+      <!-- Product Grid Area -->
+      <section class="flex-1 p-lg">
+        <!-- Breadcrumbs & Sort -->
+        <div class="flex justify-between items-center mb-lg">
+          <div>
+            <h1 class="text-headline-md font-headline-md text-on-surface">
+              Fresh Produce
+            </h1>
+            <p class="text-body-md font-body-md text-on-surface-variant">
+              Showing 42 products matching "Organic"
+            </p>
+          </div>
+          <div class="flex items-center gap-md">
+            <div class="flex items-center gap-sm">
+              <label class="text-label-sm font-label-sm text-on-surface-variant"
+                >Show per page:</label
+              ><select
+                class="bg-surface border-outline-variant rounded-full text-label-sm font-label-sm focus:ring-primary py-1 px-4"
+              >
+                <option>20</option>
+                <option>40</option>
+                <option>60</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-sm">
+              <label class="text-label-sm font-label-sm text-on-surface-variant"
+                >Sort by:</label
+              ><select
+                class="bg-surface border-outline-variant rounded-full text-label-sm font-label-sm focus:ring-primary py-1 px-4"
+              >
+                <option>Featured</option>
+                <option>Price: Low to High</option>
+                <option>Price: High to Low</option>
+                <option>Newest</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <!-- Tags Cloud -->
+        <div class="flex flex-wrap gap-sm mb-xl">
+          <span
+            class="px-md py-1 bg-primary-container text-white rounded-full text-label-sm font-label-sm cursor-pointer hover:opacity-80"
+            >All Produce</span
+          >
+          <span
+            class="px-md py-1 bg-surface-container text-on-surface-variant rounded-full text-label-sm font-label-sm cursor-pointer hover:bg-surface-container-high"
+            >Vegetables</span
+          >
+          <span
+            class="px-md py-1 bg-surface-container text-on-surface-variant rounded-full text-label-sm font-label-sm cursor-pointer hover:bg-surface-container-high"
+            >Fruits</span
+          >
+          <span
+            class="px-md py-1 bg-surface-container text-on-surface-variant rounded-full text-label-sm font-label-sm cursor-pointer hover:bg-surface-container-high"
+            >Herbs</span
+          >
+          <span
+            class="px-md py-1 bg-surface-container text-on-surface-variant rounded-full text-label-sm font-label-sm cursor-pointer hover:bg-surface-container-high"
+            >Berries</span
+          >
+        </div>
+        <!-- Grid -->
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-lg gap-md"
+        >
+          <!-- Product Card 1: In Stock -->
+          <div
+            class="group bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-all flex flex-col border border-transparent hover:border-outline-variant relative"
+          >
+            <div
+              class="aspect-square bg-surface-container-low overflow-hidden relative"
+            >
+              <img
+                alt="Organic Gala Apples"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAy6xLI_CgZlp5JoRwW6jv4ZQQIBBsQAIRtqa-2Y3A419Fmgv6eT6XncrPqjzsE1AOTlLtmdz5uoJ6Fcn3ue1aW8R6_M9KOwjrK6plpSfzqwOrjtVHUZ4rFQ-N187NrM_sBJkYIhPCco9e3EdYTgHyHH-LQ13ISKeQVdPr4BI2GgREzuUlahYErnlb00obKzspUcOJ23xQXbYoMU5yahrVEnJFvKyTSpBNFP7T1nGJCiiU7VgN8_DyA03VWY500Xlvdkuvnj3_eEtZb"
+              />
+              <span
+                class="absolute top-3 left-3 bg-white px-2 py-1 rounded-full text-[10px] font-bold text-primary shadow-sm uppercase tracking-wider"
+                >Organic</span
+              >
+            </div>
+            <div class="p-md flex flex-col flex-1">
+              <div class="flex justify-between items-start mb-1">
+                <h3 class="text-body-md font-body-md font-bold text-on-surface">
+                  Organic Gala Apples
+                </h3>
+                <span
+                  class="text-[10px] font-medium text-on-surface-variant bg-surface-variant px-1.5 py-0.5 rounded"
+                  >Produce</span
+                >
+              </div>
+              <p class="text-label-sm font-label-sm text-on-surface-variant">
+                Farm Fresh • 1lb Bag
+              </p>
+              <div class="mt-auto pt-md flex items-center justify-between">
+                <span class="text-headline-md font-headline-md text-primary"
+                  >Rp75.000</span
+                >
+                <button
+                  class="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md"
+                >
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Product Card 2: Out of Stock -->
+          <div
+            class="group bg-surface-container-lowest rounded-xl overflow-hidden transition-all flex flex-col border border-transparent opacity-75 relative grayscale-[0.5]"
+          >
+            <div
+              class="aspect-square bg-surface-container-low overflow-hidden relative"
+            >
+              <img
+                alt="Whole Milk"
+                class="w-full h-full object-cover"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcn-k3g0FV0BPRa5F8NCWLAC0jLIbpnK-_-hhm2_Z3k4fzbehyR94Bzh2bK0gxLl0KFHulqzyU2kT8YHOUb-r8XeeSUk4gMsuLnu3f6WrS2Eup_mTfv2lMw_QA6Av5GxDC5nvKhv7g9G67JbDtSWA9f_--KpkY9PbBjoLZgS7_jyYqmEJz2uwghy5JktnILbR2V1mmt0G8Vuf6iUdBawEk6ALQgGVUwjqH3FlV7Bk6rdS4punVjamQIJ1B8-QH9AHKCJTvBqC1ud1q"
+              />
+              <!-- Out of Stock Overlay -->
+              <div
+                class="absolute inset-0 bg-on-surface/40 backdrop-blur-[2px] flex items-center justify-center"
+              >
+                <span
+                  class="bg-error text-white px-4 py-2 rounded-full font-bold text-label-md uppercase tracking-widest shadow-lg"
+                  >Out of Stock</span
+                >
+              </div>
+            </div>
+            <div class="p-md flex flex-col flex-1">
+              <div class="flex justify-between items-start mb-1">
+                <h3 class="text-body-md font-body-md font-bold text-on-surface">
+                  Whole Milk
+                </h3>
+                <span
+                  class="text-[10px] font-medium text-on-surface-variant bg-surface-variant px-1.5 py-0.5 rounded"
+                  >Dairy</span
+                >
+              </div>
+              <p class="text-label-sm font-label-sm text-on-surface-variant">
+                Vitamin D • Half Gallon
+              </p>
+              <div class="mt-auto pt-md flex items-center justify-between">
+                <span
+                  class="text-headline-md font-headline-md text-on-surface-variant/50"
+                  >Rp52.500</span
+                >
+                <button
+                  class="w-10 h-10 bg-outline-variant text-white rounded-full flex items-center justify-center cursor-not-allowed shadow-none"
+                  disabled=""
+                >
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Product Card 3 -->
+          <div
+            class="group bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-all flex flex-col border border-transparent hover:border-outline-variant relative"
+          >
+            <div
+              class="aspect-square bg-surface-container-low overflow-hidden relative"
+            >
+              <img
+                alt="Sourdough Bread"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJs4ESIihbY9nj2rlubghePFf3c07PEybm1XzTx_UsVkMXQeWHHo_PaSJ9nmS0ayW3zXb-RlddoK52NG6dX0USuvh4-g5cqEVmcgNYcBRk6k5qjpP6oXRS_xH9Gl2Q0lBSkNvTSBMKnVpXrdkXfzYV8T-XjObo3FnP7X1vOygafV6d6o4gaSCaq3OmFU4oN76ORym3LBDD4aq82X35MrUJlQXC3QQgJXFApugV08HBWgmoF5FslIfzVcAwOLzMgMh8lS_INeSg2WH6"
+              />
+            </div>
+            <div class="p-md flex flex-col flex-1">
+              <div class="flex justify-between items-start mb-1">
+                <h3 class="text-body-md font-body-md font-bold text-on-surface">
+                  Sourdough Bread
+                </h3>
+                <span
+                  class="text-[10px] font-medium text-on-surface-variant bg-surface-variant px-1.5 py-0.5 rounded"
+                  >Bakery</span
+                >
+              </div>
+              <p class="text-label-sm font-label-sm text-on-surface-variant">
+                Freshly Baked • 24oz
+              </p>
+              <div class="mt-auto pt-md flex items-center justify-between">
+                <span class="text-headline-md font-headline-md text-primary"
+                  >Rp98.000</span
+                >
+                <button
+                  class="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md"
+                >
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Product Card 4 -->
+          <div
+            class="group bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-all flex flex-col border border-transparent hover:border-outline-variant relative"
+          >
+            <div
+              class="aspect-square bg-surface-container-low overflow-hidden relative"
+            >
+              <img
+                alt="Organic Carrots"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyi9tBv3N67hMoSAglw3Mt1xKK-6pevcD9-FOEvj2xQsy8yFeBfOB2XX2QVmgX7iVZGl-7SU7JTrDNMooXL0h_LGUoI1kz5DygVq6j5NeiXDtzPcW5rB8GN71gcZ3jR4Ex0WMBzWQmRr5PJnGm5c260nP-8K0ot5JU5vH6AIX46NU-xzHdlD8vy3Xlnvv_DxQAQcYvmok_e8STdBauXnTr0BqtZgyRfXtEPyd6msVd7bvvK7WV_TqyDNJ3Hj3ppUz6JaUIbs3bgamv"
+              />
+              <span
+                class="absolute top-3 right-3 bg-tertiary-container text-on-tertiary-container px-2 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase tracking-wider"
+                >On Sale</span
+              >
+            </div>
+            <div class="p-md flex flex-col flex-1">
+              <div class="flex justify-between items-start mb-1">
+                <h3 class="text-body-md font-body-md font-bold text-on-surface">
+                  Organic Carrots
+                </h3>
+                <span
+                  class="text-[10px] font-medium text-on-surface-variant bg-surface-variant px-1.5 py-0.5 rounded"
+                  >Produce</span
+                >
+              </div>
+              <p class="text-label-sm font-label-sm text-on-surface-variant">
+                Local Farm • 2lb Bag
+              </p>
+              <div class="mt-auto pt-md flex items-center justify-between">
+                <div class="flex flex-col">
+                  <span class="text-headline-md font-headline-md text-primary"
+                    >Rp45.000</span
+                  ><span
+                    class="text-label-sm font-label-sm text-on-surface-variant line-through"
+                    >Rp60.000</span
+                  >
+                </div>
+                <button
+                  class="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md"
+                >
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Product Card 5 -->
+          <div
+            class="group bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-all flex flex-col border border-transparent hover:border-outline-variant relative"
+          >
+            <div
+              class="aspect-square bg-surface-container-low overflow-hidden relative"
+            >
+              <img
+                alt="Organic Spinach"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLkpSf_-mpz8_TUwvn5DypOImNpHtjb5J9V6XeuxmpmQfiyMvYpiX-4LCtDVaOZemk6KbLoj7C6L0XffEyeqVBjquB4wgJF15fDsU5K9BInkotKHE47HK__yLdz_UVaWx-Bt8c-flL7iHlU0yiEWXP3W4sdr7H65dwus7H8jrxMjYLJnJ_zszEfYICyvoFEdY0Iqsevx4gqurks2yhgM9wJYuxNVYOaoZxsDmtW4eaTFlx2OYDCBI-PpoDKmo_DaZSkc8fCIvAoGp2"
+              />
+              <span
+                class="absolute top-3 left-3 bg-white px-2 py-1 rounded-full text-[10px] font-bold text-primary shadow-sm uppercase tracking-wider"
+                >Vegan</span
+              >
+            </div>
+            <div class="p-md flex flex-col flex-1">
+              <div class="flex justify-between items-start mb-1">
+                <h3 class="text-body-md font-body-md font-bold text-on-surface">
+                  Organic Spinach
+                </h3>
+                <span
+                  class="text-[10px] font-medium text-on-surface-variant bg-surface-variant px-1.5 py-0.5 rounded"
+                  >Produce</span
+                >
+              </div>
+              <p class="text-label-sm font-label-sm text-on-surface-variant">
+                Pre-Washed • 5oz Clamshell
+              </p>
+              <div class="mt-auto pt-md flex items-center justify-between">
+                <span class="text-headline-md font-headline-md text-primary"
+                  >Rp60.000</span
+                >
+                <button
+                  class="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md"
+                >
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Product Card 6 -->
+          <div
+            class="group bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-all flex flex-col border border-transparent hover:border-outline-variant relative"
+          >
+            <div
+              class="aspect-square bg-surface-container-low overflow-hidden relative"
+            >
+              <img
+                alt="Organic Strawberries"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmWWZPJG4RG-oIlmqffXIZs-LvsTkzbv62YdHpGUgfKtVzvoBAO2kMhS5Gs9Ok4HznselOxlY0ljLA1BCCD4TmrMl_L75EwfER6mbuWZoTWYQogZVbit4sLnc5ocY_BgiZTgTk4qbfhgMXoCoQtwphdsm0BvwI8Hq8fZeBVZhvRG9ATirEeAHFmAPJv-dNJSu3UjnmhO_uwQk9XZRqhl6bbzhX-1URPF3BIeZSY50GfH3FkbBnBpkkdVn7agLIXRYwWbU_igw8Vy2o"
+              />
+            </div>
+            <div class="p-md flex flex-col flex-1">
+              <div class="flex justify-between items-start mb-1">
+                <h3 class="text-body-md font-body-md font-bold text-on-surface">
+                  Organic Strawberries
+                </h3>
+                <span
+                  class="text-[10px] font-medium text-on-surface-variant bg-surface-variant px-1.5 py-0.5 rounded"
+                  >Produce</span
+                >
+              </div>
+              <p class="text-label-sm font-label-sm text-on-surface-variant">
+                California Sweet • 1lb
+              </p>
+              <div class="mt-auto pt-md flex items-center justify-between">
+                <span class="text-headline-md font-headline-md text-primary"
+                  >Rp82.500</span
+                >
+                <button
+                  class="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md"
+                >
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Product Card 7 -->
+          <div
+            class="group bg-surface-container-lowest rounded-xl overflow-hidden hover:shadow-[0px_4px_20px_rgba(0,0,0,0.05)] transition-all flex flex-col border border-transparent hover:border-outline-variant relative"
+          >
+            <div
+              class="aspect-square bg-surface-container-low overflow-hidden relative"
+            >
+              <img
+                alt="Organic Hass Avocado"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoNrikQ7voS3V0dliRnl6hDBY7akKT-mraB17SaGC9XcsaCVyjQDqzBIlmR9iUGPx8aswteQcPCf23ZnV_Tqv8aN83aKfgnmtmifLiDlgop7_CORa1KGoaKzZRpuYMAEibKGVQF7_sKmYH6QDK64dXLVjElBmJaWuulLwSoCvyvB4PEQeSmbSKEc0GlyNayE8Ccdmpq_iWqFiuO3ogG9UVTc5kKs7gUr8byy2XuhjBfOSZBUVXZoDLvgVSbf2g4el2q_VFbuvJZoN7"
+              />
+            </div>
+            <div class="p-md flex flex-col flex-1">
+              <div class="flex justify-between items-start mb-1">
+                <h3 class="text-body-md font-body-md font-bold text-on-surface">
+                  Organic Hass Avocado
+                </h3>
+                <span
+                  class="text-[10px] font-medium text-on-surface-variant bg-surface-variant px-1.5 py-0.5 rounded"
+                  >Produce</span
+                >
+              </div>
+              <p class="text-label-sm font-label-sm text-on-surface-variant">
+                Large • Each
+              </p>
+              <div class="mt-auto pt-md flex items-center justify-between">
+                <span class="text-headline-md font-headline-md text-primary"
+                  >Rp30.000</span
+                >
+                <button
+                  class="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-md"
+                >
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Product Card 8: Out of Stock (Low Stock) -->
+          <div
+            class="group bg-surface-container-lowest rounded-xl overflow-hidden transition-all flex flex-col border border-transparent relative opacity-75 grayscale-[0.3]"
+          >
+            <div
+              class="aspect-square bg-surface-container-low overflow-hidden relative"
+            >
+              <img
+                alt="Pancake Mix"
+                class="w-full h-full object-cover"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDR3glqEQWYh9CFbDP577zRpvo1zXafa0lVW87JNYp8q12i-YJkzVz6BofrMGdAHaqkiMwjPqWjmmnHr18BQo4M4PfaHFi25IwYr4we8jf3dG8oe7H7Un0RHyO2mwbWpI3UBb8EyEvU-oN8y94vP5313EQZPgXVoHr8f49NKPe3GyNy1qXK-QJ70wHQDy47O6GeSEORInH0t-lr-10xZMeuDzI87HqxhnyXTTn8AI0-MwOCi-9bgRuXw7mnAW2SHpBEG5DEy0fIp-b5"
+              />
+              <!-- Out of Stock Overlay -->
+              <div
+                class="absolute inset-0 bg-on-surface/40 backdrop-blur-[2px] flex items-center justify-center"
+              >
+                <span
+                  class="bg-error text-white px-4 py-2 rounded-full font-bold text-label-md uppercase tracking-widest shadow-lg"
+                  >Out of Stock</span
+                >
+              </div>
+            </div>
+            <div class="p-md flex flex-col flex-1">
+              <div class="flex justify-between items-start mb-1">
+                <h3 class="text-body-md font-body-md font-bold text-on-surface">
+                  Pancake Mix
+                </h3>
+                <span
+                  class="text-[10px] font-medium text-on-surface-variant bg-surface-variant px-1.5 py-0.5 rounded"
+                  >Pantry</span
+                >
+              </div>
+              <p class="text-label-sm font-label-sm text-on-surface-variant">
+                Classic Buttermilk • 32oz
+              </p>
+              <div class="mt-auto pt-md flex items-center justify-between">
+                <span
+                  class="text-headline-md font-headline-md text-on-surface-variant/50"
+                  >Rp64.000</span
+                >
+                <button
+                  class="w-10 h-10 bg-outline-variant text-white rounded-full flex items-center justify-center cursor-not-allowed shadow-none"
+                  disabled=""
+                >
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Pagination -->
+        <div class="mt-xxl flex flex-col items-center gap-md">
+          <div class="flex flex-col items-center gap-xs">
+            <span class="text-label-md font-label-md text-on-surface-variant"
+              >Page 1 of 12</span
+            >
+            <div class="flex items-center gap-xs">
+              <button
+                class="w-8 h-8 rounded-full bg-primary text-white text-label-sm font-label-sm"
+              >
+                1
+              </button>
+              <button
+                class="w-8 h-8 rounded-full hover:bg-surface-container text-on-surface-variant text-label-sm font-label-sm"
+              >
+                2
+              </button>
+              <button
+                class="w-8 h-8 rounded-full hover:bg-surface-container text-on-surface-variant text-label-sm font-label-sm"
+              >
+                3
+              </button>
+              <span class="text-on-surface-variant">...</span>
+              <button
+                class="w-8 h-8 rounded-full hover:bg-surface-container text-on-surface-variant text-label-sm font-label-sm"
+              >
+                12
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-outline-variant"></footer>
+    <script>
+      // Micro-interactions for product cards
+      document
+        .querySelectorAll(".group button:not([disabled])")
+        .forEach((button) => {
+          button.addEventListener("click", (e) => {
+            e.preventDefault();
+            const icon = button.querySelector(".material-symbols-outlined");
+            icon.textContent = "check";
+            button.classList.remove("bg-primary-container");
+            button.classList.add("bg-secondary");
+
+            // Increase cart count visually
+            const cartBadge = document.querySelector(".absolute.top-0.right-0");
+            if (cartBadge) {
+              let count = parseInt(cartBadge.textContent);
+              cartBadge.textContent = count + 1;
+            }
+
+            setTimeout(() => {
+              icon.textContent = "add";
+              button.classList.add("bg-primary-container");
+              button.classList.remove("bg-secondary");
+            }, 1500);
+          });
+        });
+    </script>
+  </body>
+</html>

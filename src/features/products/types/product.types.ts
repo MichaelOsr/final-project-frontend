@@ -42,3 +42,20 @@ export interface StoreProduct {
   images: ProductImage[];
   storeStock: StoreStock;
 }
+
+export interface Category {
+  id: string;
+  name: string;
+}
+
+export interface CatalogProductsParams {
+  q?: string;
+  categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  sortBy?: "name" | "slug" | "sku" | "brand" | "price" | "categoryName" | "createdAt" | "updatedAt";
+  sortOrder?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+}

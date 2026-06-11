@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AxiosError } from "axios";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/error";
 import { productService } from "../services/product.service";
@@ -11,6 +12,7 @@ async function fetchProduct(storeId: string, slug: string): Promise<StoreProduct
 
 function handleError(error: unknown, setProduct: (value: StoreProduct | null) => void) {
   setProduct(null);
+  if (error instanceof AxiosError && error.response?.status === 404) return;
   toast.error(getErrorMessage(error));
 }
 

@@ -17,6 +17,7 @@ import { CartPage } from "@/features/cart/pages/CartPage";
 import { CheckoutPage } from "@/features/order/pages/CheckoutPage";
 import { OrderListPage } from "@/features/order/pages/OrderListPage";
 import { OrderDetailPage } from "@/features/order/pages/OrderDetailPage";
+import { ProductCatalogPage } from "@/features/products/pages/ProductCatalogPage";
 
 // Single source of truth for routes. Each team member adds their feature's
 // pages here. Token-driven pages (verification, reset) stay accessible to any
@@ -26,6 +27,7 @@ export function AppRoutes() {
     <Routes>
       <Route element={<RootLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/products/:slug" element={<ProductViewPage />} />
         <Route
           path="/stores/:storeId/products/:slug"
           element={<ProductViewPage />}
@@ -69,6 +71,11 @@ export function AppRoutes() {
               <OrderDetailPage />
             </ProtectedRoute>
           }
+        />
+        <Route path="/products-catalog" element={<ProductCatalogPage />} />
+        <Route
+          path="/products-catalog/:storeId"
+          element={<ProductCatalogPage />}
         />
       </Route>
 
