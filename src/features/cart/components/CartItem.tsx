@@ -7,6 +7,7 @@ import type { CartItem as CartItemType } from "@/types/cart.types"
 
 interface CartItemProps {
   item: CartItemType
+  resolvedStoreId: string | null
 }
 
 function formatPrice(value: number): string {
@@ -56,9 +57,24 @@ function getDiscountedPrice(
 
 const DEBOUNCE_MS = 600
 
-export function CartItem({ item }: CartItemProps) {
+export function CartItem({ item, resolvedStoreId }: CartItemProps) {
   const { updateItem, removeItem } = useCartStore()
   const [isRemoving, setIsRemoving] = useState(false)
+
+  const { product, id: cartItemId } = item
+  const mainImage = getMainImage(product.images)
+  const { finalPrice, hasDiscount, discountLabel } = getDiscountedPrice(
+    product.price,
+    product.discounts
+  )
+
+  // Stok dari toko terdekat (resolved di CartPage).
+  // Fallback ke stok tertinggi di semua toko kalau storeId belum ada.
+  const nearestStoreStock =
+    product.stocks.find((s) => s.storeId === resolvedStoreId)?.stock ?? null
+  const maxStock =
+    nearestStoreStock ??
+    Math.max(...product.stocks.map((s) => s.stock), 0)
 
   // State lokal untuk quantity — langsung update saat klik supaya UI responsif.
   const [localQty, setLocalQty] = useState(item.quantity)
@@ -68,14 +84,6 @@ export function CartItem({ item }: CartItemProps) {
 
   // Ref untuk track apakah ini mount pertama — skip kirim ke backend saat init.
   const isMounted = useRef(false)
-
-  const { product, id: cartItemId } = item
-  const mainImage = getMainImage(product.images)
-  const { finalPrice, hasDiscount, discountLabel } = getDiscountedPrice(
-    product.price,
-    product.discounts
-  )
-  const totalStock = product.stocks.reduce((sum, s) => sum + s.stock, 0)
 
   // Sync localQty jika prop item.quantity berubah dari luar (misal setelah refetch).
   useEffect(() => {
@@ -119,7 +127,7 @@ export function CartItem({ item }: CartItemProps) {
   }
 
   const handleIncrease = () => {
-    if (localQty >= totalStock) return
+    if (localQty >= maxStock) return
     setLocalQty((prev) => prev + 1)
   }
 
@@ -194,7 +202,7 @@ export function CartItem({ item }: CartItemProps) {
               size="icon"
               className="h-7 w-7 rounded-full"
               onClick={handleIncrease}
-              disabled={localQty >= totalStock || isRemoving}
+              disabled={localQty >= maxStock || isRemoving}
               aria-label="Tambah jumlah"
             >
               <PlusIcon className="size-3" />

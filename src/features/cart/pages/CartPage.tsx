@@ -1,10 +1,13 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { ShoppingCartIcon, ShoppingBasketIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/store/cart.store"
+import { useLocationStore } from "@/store/location.store"
 import { usePageTitle } from "@/hooks/usePageTitle"
 import { CartItem } from "../components/CartItem"
+import { addressService } from "@/features/order/services/address.service"
+import { storeService } from "@/features/home/services/store.service"
 
 // Format harga ke Rupiah.
 function formatPrice(value: number): string {
@@ -18,10 +21,42 @@ function formatPrice(value: number): string {
 export function CartPage() {
   usePageTitle("Cart")
   const { cart, isLoading, fetchCart } = useCartStore()
+  const locationStatus = useLocationStore((s) => s.status)
+  const locationStoreId = useLocationStore((s) => s.storeId)
+
+  // resolvedStoreId: storeId toko terdekat yang dipakai untuk limit stok di CartItem.
+  // Prioritas: GPS aktif (status "ready") → alamat default dari DB → null (fallback Math.max)
+  const [resolvedStoreId, setResolvedStoreId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchCart()
   }, [fetchCart])
+
+  useEffect(() => {
+    if (locationStatus === "ready" && locationStoreId) {
+      // GPS aktif dan sudah resolve — pakai storeId dari GPS
+      setResolvedStoreId(locationStoreId)
+      return
+    }
+    // GPS mati atau denied — fallback ke alamat default user di DB
+    const resolveFromAddress = async () => {
+      try {
+        const { data } = await addressService.getAddresses()
+        const defaultAddr = data.data.find((a) => a.isDefault) ?? data.data[0]
+        if (!defaultAddr) return
+        const { data: storeData } = await storeService.getNearestStore(
+          parseFloat(defaultAddr.latitude),
+          parseFloat(defaultAddr.longitude),
+        )
+        if (storeData.data?.store?.id) {
+          setResolvedStoreId(storeData.data.store.id)
+        }
+      } catch {
+        // Silently fail — CartItem akan pakai Math.max fallback
+      }
+    }
+    void resolveFromAddress()
+  }, [locationStatus, locationStoreId])
 
   const items = cart?.items ?? []
 
@@ -92,7 +127,7 @@ export function CartPage() {
         {/* Daftar item */}
         <div className="grid auto-rows-min gap-3 lg:col-span-2">
           {items.map((item) => (
-            <CartItem key={item.id} item={item} />
+            <CartItem key={item.id} item={item} resolvedStoreId={resolvedStoreId} />
           ))}
         </div>
 
