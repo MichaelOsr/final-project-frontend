@@ -2013,6 +2013,284 @@ Use this when frontend needs a lightweight store dropdown without pagination or 
 }
 ```
 
+### GET `/stores/nearest-store`
+
+Find the nearest active store from user coordinates.
+
+#### Frontend Usage
+
+Use this after the user grants location access or selects a delivery coordinate. The response includes `outOfRange` so frontend can decide whether to show delivery-unavailable messaging.
+
+#### Zod Contract
+
+```ts
+query = {
+  lat: number; // -90 to 90
+  lng: number; // -180 to 180
+}
+```
+
+#### Query
+
+| Param | Type   | Required | Description     |
+| ----- | ------ | -------- | --------------- |
+| `lat` | number | Yes      | User latitude.  |
+| `lng` | number | Yes      | User longitude. |
+
+#### Request Example
+
+```txt
+GET /api/stores/nearest-store?lat=-6.200000&lng=106.816666
+```
+
+#### Return
+
+```json
+{
+  "message": "Nearest store fetched successfully",
+  "data": {
+    "store": {
+      "id": "uuid",
+      "name": "GrocerGo Jakarta",
+      "latitude": "-6.175392",
+      "longitude": "106.827153",
+      "address": null,
+      "isMain": true,
+      "createdAt": "2026-06-06T10:00:00.000Z",
+      "updatedAt": "2026-06-06T10:00:00.000Z",
+      "deletedAt": null
+    },
+    "distanceKm": 3.2,
+    "outOfRange": false
+  }
+}
+```
+
+### GET `/stores/mainStore`
+
+Get the configured main store. If no store is flagged as main, backend falls back to the oldest active store.
+
+#### Frontend Usage
+
+Use this for homepage defaults before the user has selected a specific store.
+
+#### Zod Contract
+
+```ts
+// no params, query, or body
+```
+
+#### Return
+
+```json
+{
+  "message": "Main store fetched successfully",
+  "data": {
+    "id": "uuid",
+    "name": "GrocerGo Jakarta",
+    "latitude": "-6.175392",
+    "longitude": "106.827153",
+    "address": null,
+    "isMain": true,
+    "createdAt": "2026-06-06T10:00:00.000Z",
+    "updatedAt": "2026-06-06T10:00:00.000Z",
+    "deletedAt": null
+  }
+}
+```
+
+### GET `/stores/:storeId/products`
+
+Get paginated product catalog for a selected store. Each product includes `storeStock` for that store.
+
+#### Frontend Usage
+
+Use this for store-scoped catalog pages. Only products with an active stock row in the selected store are returned. Send `inStock=true` when the catalog should only show products available in the selected store. If `inStock` is omitted, available products are returned first and out-of-stock products are placed at the end.
+
+#### Zod Contract
+
+```ts
+params = {
+  storeId: uuid;
+}
+
+query = {
+  q?: string;
+  name?: string;
+  slug?: string;
+  sku?: string;
+  brand?: string;
+  variant?: string;
+  size?: string;
+  categoryName?: string;
+  categoryId?: uuid;
+  minPrice?: nonNegativeInt;
+  maxPrice?: nonNegativeInt;
+  inStock?: boolean;
+  sortBy?: "name" | "slug" | "sku" | "brand" | "price" | "categoryName" | "createdAt" | "updatedAt";
+  sortOrder?: "asc" | "desc";
+  page?: positiveInt;
+  limit?: positiveInt; // capped at 100
+}
+```
+
+#### Params
+
+| Param     | Type | Required | Description |
+| --------- | ---- | -------- | ----------- |
+| `storeId` | uuid | Yes      | Store ID.   |
+
+#### Query
+
+| Param          | Type    | Default     | Description                                                                        |
+| -------------- | ------- | ----------- | ---------------------------------------------------------------------------------- |
+| `q`            | string  | -           | Search name, slug, SKU, brand, variant, size, category name.                       |
+| `name`         | string  | -           | Filter product name.                                                               |
+| `slug`         | string  | -           | Filter product slug.                                                               |
+| `sku`          | string  | -           | Filter SKU.                                                                        |
+| `brand`        | string  | -           | Filter brand.                                                                      |
+| `variant`      | string  | -           | Filter variant.                                                                    |
+| `size`         | string  | -           | Filter size.                                                                       |
+| `categoryName` | string  | -           | Filter category name.                                                              |
+| `categoryId`   | uuid    | -           | Filter category ID.                                                                |
+| `minPrice`     | number  | -           | Minimum price.                                                                     |
+| `maxPrice`     | number  | -           | Maximum price.                                                                     |
+| `inStock`      | boolean | -           | `true` means stock `> 0`; `false` means stock `<= 0`.                              |
+| `sortBy`       | enum    | `createdAt` | `name`, `slug`, `sku`, `brand`, `price`, `categoryName`, `createdAt`, `updatedAt`. |
+| `sortOrder`    | enum    | `desc`      | `asc` or `desc`.                                                                   |
+| `page`         | number  | `1`         | Positive integer.                                                                  |
+| `limit`        | number  | `10`        | Positive integer, capped at `100`.                                                 |
+
+#### Request Examples
+
+```txt
+GET /api/stores/<store-id>/products?page=1&limit=20
+GET /api/stores/<store-id>/products?q=milk&categoryId=<uuid>&inStock=true
+GET /api/stores/<store-id>/products?sortBy=price&sortOrder=asc
+```
+
+#### Return
+
+```json
+{
+  "message": "Store products fetched successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Fresh Milk",
+      "slug": "fresh-milk",
+      "categoryId": "uuid",
+      "brand": "Greenfields",
+      "variant": "Full Cream",
+      "size": "1 L",
+      "description": null,
+      "sku": "DE-MLK-005",
+      "price": 22000,
+      "createdAt": "2026-06-06T10:00:00.000Z",
+      "updatedAt": "2026-06-06T10:00:00.000Z",
+      "deletedAt": null,
+      "category": {
+        "id": "uuid",
+        "name": "Dairy & Eggs"
+      },
+      "images": [
+        {
+          "id": "uuid",
+          "image": "https://res.cloudinary.com/demo/image/upload/product.jpg",
+          "position": 1
+        }
+      ],
+      "storeStock": {
+        "productStockId": "uuid",
+        "storeId": "uuid",
+        "stock": 70,
+        "isAvailable": true,
+        "store": {
+          "id": "uuid",
+          "name": "GrocerGo Jakarta",
+          "latitude": "-6.175392",
+          "longitude": "106.827153"
+        },
+        "createdAt": "2026-06-06T10:00:00.000Z",
+        "updatedAt": "2026-06-06T10:00:00.000Z"
+      }
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 12,
+    "totalPages": 1
+  }
+}
+```
+
+Products without an active stock row in the selected store are not returned by this endpoint.
+
+### GET `/stores/:storeId/products/:slug`
+
+Get one product detail scoped to a selected store. Response includes `storeStock` for that store. Products without an active stock row in the selected store return `404`.
+
+#### Frontend Usage
+
+Use this for product detail pages after the user has selected a store.
+
+#### Zod Contract
+
+```ts
+params = {
+  storeId: uuid;
+  slug: string;
+}
+```
+
+#### Params
+
+| Param     | Type   | Required | Description   |
+| --------- | ------ | -------- | ------------- |
+| `storeId` | uuid   | Yes      | Store ID.     |
+| `slug`    | string | Yes      | Product slug. |
+
+#### Request Example
+
+```txt
+GET /api/stores/<store-id>/products/fresh-milk
+```
+
+#### Return
+
+Same product shape as `GET /stores/:storeId/products`, without array/meta wrapper:
+
+```json
+{
+  "message": "Store product fetched successfully",
+  "data": {
+    "id": "uuid",
+    "name": "Fresh Milk",
+    "slug": "fresh-milk",
+    "category": {
+      "id": "uuid",
+      "name": "Dairy & Eggs"
+    },
+    "images": [],
+    "storeStock": {
+      "productStockId": "uuid",
+      "storeId": "uuid",
+      "stock": 70,
+      "isAvailable": true,
+      "store": {
+        "id": "uuid",
+        "name": "GrocerGo Jakarta",
+        "latitude": "-6.175392",
+        "longitude": "106.827153"
+      },
+      "createdAt": "2026-06-06T10:00:00.000Z",
+      "updatedAt": "2026-06-06T10:00:00.000Z"
+    }
+  }
+}
+```
+
 ### GET `/stores/:id`
 
 Get store detail by ID.
@@ -3023,12 +3301,431 @@ GET /api/admin/stock/store/<store-id>/product/indomie-goreng-1234
 
 - `404` when store does not exist, product stock does not exist, or storeAdmin tries to access another store.
 
+## Orders
+
+Order endpoints are for logged-in users, not admin users.
+
+### Order Rules
+
+- All order endpoints require regular user `accessToken` verification.
+- `POST /orders` chooses the nearest active store from the user's saved address.
+- Product stock is validated against that nearest store before the transaction is created.
+- Successful order creation decrements product stock and writes stock history.
+- User status updates are limited to `cancel` and `confirmed`.
+
+### GET `/orders`
+
+Get paginated order list for the current user.
+
+#### Frontend Usage
+
+Use this for the user's order history page. Filters are optional and scoped to the authenticated user.
+
+#### Auth
+
+Requires regular user access token.
+
+#### Zod Contract
+
+```ts
+query = {
+  page?: positiveInt;
+  limit?: positiveInt; // capped at 100
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+}
+```
+
+#### Query
+
+| Param       | Type   | Default | Description                                   |
+| ----------- | ------ | ------- | --------------------------------------------- |
+| `page`      | number | `1`     | Positive integer.                             |
+| `limit`     | number | `10`    | Positive integer, capped at `100`.            |
+| `status`    | string | -       | Filter by transaction status.                 |
+| `startDate` | string | -       | Filter orders created at or after this date.  |
+| `endDate`   | string | -       | Filter orders created at or before this date. |
+| `search`    | string | -       | Accepted by schema; currently not applied.    |
+
+#### Request Examples
+
+```txt
+GET /api/orders
+GET /api/orders?status=waitingPayment&page=1&limit=10
+GET /api/orders?startDate=2026-06-01&endDate=2026-06-10
+```
+
+#### Return
+
+```json
+{
+  "message": "Orders fetched successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "customerId": "uuid",
+      "storeId": "uuid",
+      "transactionStatus": "waitingPayment",
+      "deliveryFee": 15000,
+      "shipping_vendor": "JNE",
+      "totalPrice": 57000,
+      "createdAt": "2026-06-06T10:00:00.000Z",
+      "updatedAt": "2026-06-06T10:00:00.000Z",
+      "deletedAt": null,
+      "items": [
+        {
+          "id": "uuid",
+          "transactionId": "uuid",
+          "productId": "uuid",
+          "name": "Fresh Milk",
+          "quantity": 2,
+          "totalPrice": 44000,
+          "product": {
+            "id": "uuid",
+            "name": "Fresh Milk",
+            "slug": "fresh-milk",
+            "images": [
+              {
+                "id": "uuid",
+                "image": "https://res.cloudinary.com/demo/image/upload/product.jpg",
+                "position": 1
+              }
+            ]
+          }
+        }
+      ],
+      "store": {
+        "id": "uuid",
+        "name": "GrocerGo Jakarta"
+      }
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+### GET `/orders/:orderId`
+
+Get one order detail owned by the current user.
+
+#### Frontend Usage
+
+Use this for order detail and payment/status pages.
+
+#### Auth
+
+Requires regular user access token.
+
+#### Zod Contract
+
+```ts
+params = {
+  orderId: uuid;
+}
+```
+
+#### Params
+
+| Param     | Type | Required | Description |
+| --------- | ---- | -------- | ----------- |
+| `orderId` | uuid | Yes      | Order ID.   |
+
+#### Return
+
+```json
+{
+  "message": "Order fetched successfully",
+  "data": {
+    "id": "uuid",
+    "customerId": "uuid",
+    "storeId": "uuid",
+    "transactionStatus": "waitingPayment",
+    "deliveryFee": 15000,
+    "shipping_vendor": "JNE",
+    "totalPrice": 57000,
+    "items": [],
+    "store": {},
+    "voucher": null,
+    "deliveryVoucher": null,
+    "createdAt": "2026-06-06T10:00:00.000Z",
+    "updatedAt": "2026-06-06T10:00:00.000Z",
+    "deletedAt": null
+  }
+}
+```
+
+#### Possible Errors
+
+- `403` when the order belongs to another user.
+- `404` when the order does not exist.
+
+### POST `/orders`
+
+Create a new order for the current user.
+
+#### Frontend Usage
+
+Use this from checkout after the user selects an address, shipping vendor, and cart/product quantities. Backend determines the nearest store from the address coordinates.
+
+#### Auth
+
+Requires regular user access token.
+
+#### Zod Contract
+
+```ts
+body = {
+  addressId: uuid;
+  shippingVendor: string;
+  deliveryFee: nonNegativeInt;
+  voucherId?: uuid;
+  deliveryVoucherId?: uuid;
+  items: Array<{
+    productId: uuid;
+    quantity: positiveInt;
+    discountId?: uuid;
+  }>; // min 1
+}
+```
+
+#### Body
+
+| Field               | Type   | Required | Description                    |
+| ------------------- | ------ | -------- | ------------------------------ |
+| `addressId`         | uuid   | Yes      | User address ID.               |
+| `shippingVendor`    | string | Yes      | Shipping vendor name.          |
+| `deliveryFee`       | number | Yes      | Whole number, minimum `0`.     |
+| `voucherId`         | uuid   | No       | Transaction voucher ID.        |
+| `deliveryVoucherId` | uuid   | No       | Delivery voucher ID.           |
+| `items`             | array  | Yes      | Order items, minimum one item. |
+
+`items` fields:
+
+| Field        | Type   | Required | Description              |
+| ------------ | ------ | -------- | ------------------------ |
+| `productId`  | uuid   | Yes      | Product ID.              |
+| `quantity`   | number | Yes      | Whole number, minimum 1. |
+| `discountId` | uuid   | No       | Product discount ID.     |
+
+#### Request Example
+
+```json
+{
+  "addressId": "address-uuid",
+  "shippingVendor": "JNE",
+  "deliveryFee": 15000,
+  "voucherId": "voucher-uuid",
+  "deliveryVoucherId": "delivery-voucher-uuid",
+  "items": [
+    {
+      "productId": "product-uuid",
+      "quantity": 2,
+      "discountId": "discount-uuid"
+    }
+  ]
+}
+```
+
+#### Return
+
+```json
+{
+  "message": "Order created successfully",
+  "data": {
+    "id": "uuid",
+    "customerId": "uuid",
+    "storeId": "uuid",
+    "transactionStatus": "waitingPayment",
+    "deliveryFee": 15000,
+    "shipping_vendor": "JNE",
+    "totalPrice": 57000,
+    "voucherId": "uuid",
+    "deliveryVoucherId": "uuid",
+    "items": [
+      {
+        "id": "uuid",
+        "transactionId": "uuid",
+        "productId": "uuid",
+        "name": "Fresh Milk",
+        "quantity": 2,
+        "totalPrice": 44000,
+        "discountId": "uuid"
+      }
+    ]
+  }
+}
+```
+
+#### Possible Errors
+
+- `404` when address does not exist, no nearby store is available, or a product is unavailable in the nearest store.
+- `400` when stock is insufficient, voucher is invalid/expired, or discount does not match the product.
+
+### PATCH `/orders/:orderId`
+
+Update order status by the current user.
+
+#### Frontend Usage
+
+Use this for user-driven cancel and confirm actions. Backend validates allowed status transitions.
+
+#### Auth
+
+Requires regular user access token.
+
+#### Zod Contract
+
+```ts
+params = {
+  orderId: uuid;
+}
+
+body = {
+  status: "cancel" | "confirmed";
+}
+```
+
+#### Params
+
+| Param     | Type | Required | Description |
+| --------- | ---- | -------- | ----------- |
+| `orderId` | uuid | Yes      | Order ID.   |
+
+#### Body
+
+| Field    | Type | Required | Description                     |
+| -------- | ---- | -------- | ------------------------------- |
+| `status` | enum | Yes      | Either `cancel` or `confirmed`. |
+
+#### Request Example
+
+```json
+{
+  "status": "cancel"
+}
+```
+
+#### Return
+
+```json
+{
+  "message": "Order cancel successfully"
+}
+```
+
+#### Possible Errors
+
+- `400` when cancelling an order that is no longer `waitingPayment`, or confirming an order that is not `onDelivery`.
+- `403` when the order belongs to another user.
+- `404` when the order does not exist.
+
+## Geocode
+
+Geocode endpoints are public helpers for converting coordinates and place names.
+
+### GET `/geocode/address`
+
+Resolve coordinates into a human-readable address.
+
+#### Frontend Usage
+
+Use this after location picker/geolocation selection to display the resolved address label.
+
+#### Zod Contract
+
+```ts
+query = {
+  lat: number; // -90 to 90
+  lng: number; // -180 to 180
+}
+```
+
+#### Query
+
+| Param | Type   | Required | Description |
+| ----- | ------ | -------- | ----------- |
+| `lat` | number | Yes      | Latitude.   |
+| `lng` | number | Yes      | Longitude.  |
+
+#### Request Example
+
+```txt
+GET /api/geocode/address?lat=-6.200000&lng=106.816666
+```
+
+#### Return
+
+```json
+{
+  "message": "Address resolved successfully",
+  "data": {
+    "label": "Jakarta, Indonesia",
+    "lat": -6.2,
+    "lng": 106.816666
+  }
+}
+```
+
+### GET `/geocode/coordinates`
+
+Resolve a place name into coordinates.
+
+#### Frontend Usage
+
+Use this for address search/autocomplete flows when the user types a place name.
+
+#### Zod Contract
+
+```ts
+query = {
+  q: string;
+}
+```
+
+#### Query
+
+| Param | Type   | Required | Description           |
+| ----- | ------ | -------- | --------------------- |
+| `q`   | string | Yes      | Place/address search. |
+
+#### Request Example
+
+```txt
+GET /api/geocode/coordinates?q=Jakarta
+```
+
+#### Return
+
+```json
+{
+  "message": "Coordinates resolved successfully",
+  "data": {
+    "label": "Jakarta, Indonesia",
+    "lat": -6.1753942,
+    "lng": 106.827183
+  }
+}
+```
+
+#### Possible Errors
+
+- `404` when the location cannot be resolved.
+- `502` when the geocoding provider is unavailable.
+
 ## Error Status
 
-| Status | Meaning                                                                                                                                 |
-| ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `400`  | Invalid input, duplicate product name/SKU, invalid image payload, or deleting the last product image.                                   |
-| `401`  | Missing or invalid admin token.                                                                                                         |
-| `403`  | Admin does not have required permission or is not assigned to a required store.                                                         |
-| `404`  | Category, product, product image, store, or stock was not found. For scoped admin access, outside-scope products may also return `404`. |
-| `500`  | Cloudinary upload/delete cleanup or unexpected operation failed.                                                                        |
+| Status | Meaning                                                                                                                                      |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400`  | Invalid input, invalid cart/order state, insufficient stock, invalid voucher/discount, invalid image payload, or deleting the last image.    |
+| `401`  | Missing or invalid user/admin token.                                                                                                         |
+| `403`  | User does not own a resource, admin lacks required permission, or admin is not assigned to a required store.                                 |
+| `404`  | Category, product, product image, store, stock, address, order, or geocode location was not found. Outside-scope admin resources may be 404. |
+| `500`  | Cloudinary upload/delete cleanup or unexpected operation failed.                                                                             |
+| `502`  | External geocoding service is unavailable.                                                                                                   |

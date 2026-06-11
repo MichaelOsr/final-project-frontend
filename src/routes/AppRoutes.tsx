@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PublicOnlyRoute } from "@/components/PublicOnlyRoute";
 import { NotFound } from "@/components/NotFound";
 import { HomePage } from "@/features/home/pages/HomePage";
+import { ProductViewPage } from "@/features/products/pages/ProductViewPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { RegisterPage } from "@/features/auth/pages/RegisterPage";
 import { VerifyEmailPage } from "@/features/auth/pages/VerifyEmailPage";
@@ -16,6 +17,7 @@ import { CartPage } from "@/features/cart/pages/CartPage";
 import { CheckoutPage } from "@/features/order/pages/CheckoutPage";
 import { OrderListPage } from "@/features/order/pages/OrderListPage";
 import { OrderDetailPage } from "@/features/order/pages/OrderDetailPage";
+import { ProductCatalogPage } from "@/features/products/pages/ProductCatalogPage";
 
 // Single source of truth for routes. Each team member adds their feature's
 // pages here. Token-driven pages (verification, reset) stay accessible to any
@@ -25,6 +27,11 @@ export function AppRoutes() {
     <Routes>
       <Route element={<RootLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/products/:slug" element={<ProductViewPage />} />
+        <Route
+          path="/stores/:storeId/products/:slug"
+          element={<ProductViewPage />}
+        />
         <Route
           path="/profile"
           element={
@@ -65,6 +72,11 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="/products-catalog" element={<ProductCatalogPage />} />
+        <Route
+          path="/products-catalog/:storeId"
+          element={<ProductCatalogPage />}
+        />
       </Route>
 
       <Route element={<AuthLayout />}>
@@ -84,6 +96,7 @@ export function AppRoutes() {
             </PublicOnlyRoute>
           }
         />
+
         <Route
           path="/forgot-password"
           element={
