@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { toast } from "sonner"
 import {
@@ -7,12 +7,16 @@ import {
   MapPinIcon,
   TruckIcon,
   ReceiptIcon,
+  CreditCardIcon,
+  BuildingIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useOrderStore } from "@/store/order.store"
 import { OrderStatusBadge } from "../components/OrderStatusBadge"
 import { formatPrice, getMainImage } from "../utils/order.utils"
 import { usePageTitle } from "@/hooks/usePageTitle"
+import { addressService } from "../services/address.service"
+import { geocodeService } from "@/features/home/services/geocode.service"
 import type { OrderItem } from "../types/order.types"
 
 export function OrderDetailPage() {
@@ -31,6 +35,40 @@ export function OrderDetailPage() {
     if (orderId) fetchOrderDetail(orderId)
     return () => clearDetail()
   }, [orderId, fetchOrderDetail, clearDetail])
+
+  // Geocode koordinat alamat pengiriman untuk tampil label yang readable.
+  const [addressLabel, setAddressLabel] = useState<string | null>(null)
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false)
+
+  useEffect(() => {
+    if (!orderDetail?.addressId) return
+    setIsLoadingAddress(true)
+    const fetchAddressLabel = async () => {
+      try {
+        const { data } = await addressService.getAddresses()
+        const addr = data.data.find((a) => a.id === orderDetail.addressId)
+        if (addr) {
+          try {
+            const { data: geo } = await geocodeService.getAddress(
+              parseFloat(addr.latitude),
+              parseFloat(addr.longitude),
+            )
+            setAddressLabel(geo.data?.label ?? addr.notes ?? addr.name)
+          } catch {
+            // Geocode gagal, fallback ke nama atau notes
+            setAddressLabel(addr.notes ?? addr.name)
+          }
+        }
+        // Kalau address tidak ditemukan di list, addressLabel tetap null
+        // dan section akan menampilkan addressId sebagai fallback
+      } catch {
+        // Silently fail
+      } finally {
+        setIsLoadingAddress(false)
+      }
+    }
+    fetchAddressLabel()
+  }, [orderDetail?.addressId])
 
   const handleUpdateStatus = async (status: "cancel" | "confirmed") => {
     if (!orderDetail) return
@@ -84,6 +122,15 @@ export function OrderDetailPage() {
     hour: "2-digit",
     minute: "2-digit",
   })
+
+  const isCancellable =
+    order.transactionStatus === "waitingPayment" ||
+    order.transactionStatus === "waitingConfirmation"
+
+  // Tentukan route tombol lanjut bayar berdasarkan paymentType.
+  // paymentType "midtrans" → user sudah pernah hit getSnapToken, lanjutkan ke Midtrans.
+  // null (belum ada aksi) → default ke manual transfer.
+  const isMidtrans = order.paymentType === "midtrans"
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -173,18 +220,21 @@ export function OrderDetailPage() {
           </div>
         </div>
 
-        {/* Alamat — placeholder sampai Feature 1 merge */}
+        {/* Alamat Pengiriman */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-center gap-2">
             <MapPinIcon className="size-4 text-primary" />
             <h2 className="text-sm font-bold">Alamat Pengiriman</h2>
           </div>
-          <p className="text-xs text-muted-foreground">
-            ID: {order.addressId}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            * Detail alamat akan tampil setelah address management (Feature 1) merge.
-          </p>
+          {isLoadingAddress ? (
+            <p className="text-sm text-muted-foreground">Memuat alamat...</p>
+          ) : addressLabel ? (
+            <p className="text-sm text-foreground">{addressLabel}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Detail alamat akan tersedia setelah address management (Feature 1) selesai diintegrasikan.
+            </p>
+          )}
         </div>
 
         {/* Ringkasan harga */}
@@ -218,26 +268,62 @@ export function OrderDetailPage() {
 
           <div className="flex items-center justify-between font-bold">
             <span>Total</span>
-            <span className="text-primary text-base">{formatPrice(order.totalPrice)}</span>
+            <span className="text-base text-primary">{formatPrice(order.totalPrice)}</span>
           </div>
         </div>
 
         {/* Action buttons */}
         <div className="flex flex-col gap-3">
+          {/* waitingPayment: satu tombol sesuai metode yang dipilih di checkout */}
           {order.transactionStatus === "waitingPayment" && (
             <>
               <p className="text-center text-xs text-muted-foreground">
                 Kamu punya 1 jam untuk melakukan pembayaran sebelum pesanan otomatis dibatalkan.
               </p>
-              <Button
-                variant="destructive"
-                className="h-11 w-full rounded-full"
-                onClick={() => handleUpdateStatus("cancel")}
-              >
-                Batalkan Pesanan
-              </Button>
+              {isMidtrans ? (
+                <Button
+                  className="h-11 w-full rounded-full font-semibold"
+                  onClick={() => navigate(`/payment/midtrans/${order.id}`)}
+                >
+                  <CreditCardIcon className="mr-2 size-4" />
+                  Bayar via Midtrans
+                </Button>
+              ) : (
+                <Button
+                  className="h-11 w-full rounded-full font-semibold"
+                  onClick={() => navigate(`/payment/manual-transfer/${order.id}`)}
+                >
+                  <BuildingIcon className="mr-2 size-4" />
+                  Upload Bukti Transfer
+                </Button>
+              )}
             </>
           )}
+
+          {/* waitingConfirmation: info menunggu konfirmasi admin */}
+          {order.transactionStatus === "waitingConfirmation" && (
+            <div className="rounded-lg bg-blue-50 px-4 py-3 text-center">
+              <p className="text-sm font-semibold text-blue-700">
+                Menunggu konfirmasi admin
+              </p>
+              <p className="mt-0.5 text-xs text-blue-600">
+                Bukti pembayaran kamu sedang diverifikasi oleh admin.
+              </p>
+            </div>
+          )}
+
+          {/* Tombol cancel: muncul di waitingPayment dan waitingConfirmation */}
+          {isCancellable && (
+            <Button
+              variant="destructive"
+              className="h-11 w-full rounded-full"
+              onClick={() => handleUpdateStatus("cancel")}
+            >
+              Batalkan Pesanan
+            </Button>
+          )}
+
+          {/* Tombol konfirmasi terima: muncul di onDelivery */}
           {order.transactionStatus === "onDelivery" && (
             <>
               <p className="text-center text-xs text-muted-foreground">
