@@ -11,12 +11,14 @@ import { Input } from "@/components/ui/input"
 import { geocodeService } from "@/features/home/services/geocode.service"
 import { getErrorMessage } from "@/lib/error"
 
-// Marker icon tidak ke-load di Vite tanpa override URL ini.
+delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl
+
 L.Icon.Default.mergeOptions({
   iconUrl: markerIcon,
   iconRetinaUrl: markerIcon2x,
   shadowUrl: markerShadow,
 })
+
 
 const DEFAULT_CENTER: [number, number] = [-7.2575, 112.7521] // Surabaya
 type LatLng = { lat: number; lng: number }
