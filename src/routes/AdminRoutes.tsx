@@ -19,6 +19,7 @@ import { AdminStoresPage } from "@/features/admin/stores/pages/AdminStoresPage";
 import { StoreDashboardPage } from "@/features/admin/store-dashboard/pages/StoreDashboardPage";
 import { StoreCategoriesPage } from "@/features/admin/store-dashboard/pages/StoreCategoriesPage";
 import { StoreStockPage } from "@/features/admin/store-dashboard/pages/StoreStockPage";
+import { StoreStockHistoryPage } from "@/features/admin/store-dashboard/pages/StoreStockHistoryPage";
 import { StoreStaffPage } from "@/features/admin/store-dashboard/pages/StoreStaffPage";
 import { StoreProductDetailPage } from "@/features/admin/store-dashboard/pages/StoreProductDetailPage";
 
@@ -65,6 +66,14 @@ export const adminRoutes = (
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
             <StoreStockPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/stock/history"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <StoreStockHistoryPage />
           </AdminProtectedRoute>
         }
       />

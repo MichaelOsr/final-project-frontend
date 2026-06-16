@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { SearchIcon } from "lucide-react";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { HistoryIcon, SearchIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +16,11 @@ import { adminProductService } from "@/features/admin/products/services/adminPro
 import type { ProductCategory } from "@/features/admin/products/types/adminProduct.types";
 import { storeDashboardService } from "../services/storeDashboard.service";
 import { StoreStockTable } from "../components/StoreStockTable";
+import { StockMovementDialog } from "../components/StockMovementDialog";
+import { ClearStockDialog } from "../components/ClearStockDialog";
 import { useStoreContext } from "../hooks/useStoreContext";
 import type { StoreStock } from "../types/storeDashboard.types";
+import type { CreateMovementPayload } from "../types/stockMovement.types";
 
 const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
 
@@ -30,6 +34,10 @@ export function StoreStockPage() {
   const [meta, setMeta] = useState(defaultMeta);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
+  const [adjustTarget, setAdjustTarget] = useState<StoreStock | null>(null);
+  const [clearTarget, setClearTarget] = useState<StoreStock | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const page = getPageParam(searchParams);
   const query = searchParams.get("q") ?? "";
   const categoryId = searchParams.get("categoryId") ?? "";
@@ -76,17 +84,57 @@ export function StoreStockPage() {
     return () => {
       isMounted = false;
     };
-  }, [isReady, storeId, page, query, categoryId, sortBy, sortOrder]);
+  }, [isReady, storeId, page, query, categoryId, sortBy, sortOrder, refreshKey]);
 
   function updateFilters(updates: Record<string, string | number>) {
     setSearchParams(updateSearchParams(searchParams, updates));
   }
 
+  async function submitMovement(values: CreateMovementPayload, helpers: { setSubmitting: (value: boolean) => void }) {
+    if (!adjustTarget) return;
+    try {
+      await storeDashboardService.createStockMovement(storeId, adjustTarget.productId, {
+        ...values,
+        quantity: Number(values.quantity),
+      });
+      toast.success("Stock updated");
+      setAdjustTarget(null);
+      setRefreshKey((key) => key + 1);
+    } catch (error) {
+      toast.error(getAdminErrorMessage(error));
+    } finally {
+      helpers.setSubmitting(false);
+    }
+  }
+
+  async function confirmClear(notes: string) {
+    if (!clearTarget) return;
+    setIsClearing(true);
+    try {
+      await storeDashboardService.clearStock(storeId, clearTarget.productId, notes ? { notes } : {});
+      toast.success("Stock cleared");
+      setClearTarget(null);
+      setRefreshKey((key) => key + 1);
+    } catch (error) {
+      toast.error(getAdminErrorMessage(error));
+    } finally {
+      setIsClearing(false);
+    }
+  }
+
   return (
     <AdminDashboardShell>
-      <div>
-        <h1 className="text-xl font-semibold">Store Stock</h1>
-        <p className="text-sm text-muted-foreground">Manage and monitor your store inventory.</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">Store Stock</h1>
+          <p className="text-sm text-muted-foreground">Manage and monitor your store inventory.</p>
+        </div>
+        <Button asChild variant="outline">
+          <Link to="/admin/store/stock/history">
+            <HistoryIcon className="size-4" />
+            Stock History
+          </Link>
+        </Button>
       </div>
 
       <Card className="rounded-lg p-0">
@@ -123,10 +171,28 @@ export function StoreStockPage() {
             meta={meta}
             page={page}
             onView={(slug) => navigate(`/admin/store/products/${slug}`)}
+            onAdjust={setAdjustTarget}
+            onClear={setClearTarget}
             onPageChange={(nextPage) => updateFilters({ page: nextPage })}
           />
         </CardContent>
       </Card>
+
+      <StockMovementDialog
+        open={Boolean(adjustTarget)}
+        productName={adjustTarget?.product.name ?? ""}
+        currentStock={adjustTarget?.stock ?? 0}
+        onOpenChange={(open) => !open && setAdjustTarget(null)}
+        onSubmit={submitMovement}
+      />
+      <ClearStockDialog
+        open={Boolean(clearTarget)}
+        productName={clearTarget?.product.name ?? ""}
+        currentStock={clearTarget?.stock ?? 0}
+        isClearing={isClearing}
+        onConfirm={confirmClear}
+        onOpenChange={(open) => !open && setClearTarget(null)}
+      />
     </AdminDashboardShell>
   );
 }
