@@ -29,7 +29,6 @@ const PAYMENT_METHODS: {
   label: string
   description: string
   icon: React.ReactNode
-  disabled?: boolean
 }[] = [
   {
     id: "manual_transfer",
@@ -42,7 +41,6 @@ const PAYMENT_METHODS: {
     label: "Bayar via Midtrans",
     description: "Kartu kredit, GoPay, OVO, DANA, dan metode lainnya",
     icon: <CreditCardIcon className="size-5" />,
-    disabled: true,
   },
 ]
 
@@ -158,7 +156,12 @@ export function CheckoutPage() {
       })
       clearCart()
       toast.success("Pesanan berhasil dibuat!")
-      navigate(`/orders/${orderId}`)
+      // Redirect ke halaman pembayaran sesuai metode yang dipilih
+      if (selectedPayment === "manual_transfer") {
+        navigate(`/payment/manual-transfer/${orderId}`)
+      } else {
+        navigate(`/payment/midtrans/${orderId}`)
+      }
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -204,7 +207,9 @@ export function CheckoutPage() {
               Memuat alamat...
             </div>
           ) : addresses.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Kamu belum punya alamat pengiriman.</p>
+            <p className="text-sm text-muted-foreground">
+              Kamu belum punya alamat tersimpan. Tambahkan alamat di halaman profil.
+            </p>
           ) : (
             <div className="grid gap-2">
               {addresses.map((addr) => (
@@ -312,9 +317,7 @@ export function CheckoutPage() {
               <label
                 key={method.id}
                 className={`flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 transition-colors ${
-                  method.disabled
-                    ? "cursor-not-allowed opacity-50"
-                    : selectedPayment === method.id
+                  selectedPayment === method.id
                     ? "border-primary bg-accent"
                     : "border-border hover:bg-muted/50"
                 }`}
@@ -324,20 +327,12 @@ export function CheckoutPage() {
                   name="payment"
                   className="mt-0.5 accent-primary"
                   checked={selectedPayment === method.id}
-                  onChange={() => !method.disabled && setSelectedPayment(method.id)}
-                  disabled={method.disabled}
+                  onChange={() => setSelectedPayment(method.id)}
                 />
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 text-muted-foreground">{method.icon}</span>
                   <div>
-                    <p className="text-sm font-medium">
-                      {method.label}
-                      {method.disabled && (
-                        <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                          Segera hadir
-                        </span>
-                      )}
-                    </p>
+                    <p className="text-sm font-medium">{method.label}</p>
                     <p className="text-xs text-muted-foreground">{method.description}</p>
                   </div>
                 </div>

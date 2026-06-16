@@ -18,6 +18,8 @@ import { CheckoutPage } from "@/features/order/pages/CheckoutPage";
 import { OrderListPage } from "@/features/order/pages/OrderListPage";
 import { OrderDetailPage } from "@/features/order/pages/OrderDetailPage";
 import { ProductCatalogPage } from "@/features/products/pages/ProductCatalogPage";
+import { ManualTransferPage } from "@/features/order/pages/ManualTransferPage";
+import { MidtransPaymentPage } from "@/features/order/pages/MidtransPaymentPage";
 
 // Single source of truth for routes. Each team member adds their feature's
 // pages here. Token-driven pages (verification, reset) stay accessible to any
@@ -76,6 +78,22 @@ export function AppRoutes() {
         <Route
           path="/products-catalog/:storeId"
           element={<ProductCatalogPage />}
+        />
+        <Route
+          path="/payment/manual-transfer/:orderId"
+          element={
+            <ProtectedRoute>
+              <ManualTransferPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment/midtrans/:orderId"
+          element={
+            <ProtectedRoute>
+              <MidtransPaymentPage />
+            </ProtectedRoute>
+          }
         />
       </Route>
 
