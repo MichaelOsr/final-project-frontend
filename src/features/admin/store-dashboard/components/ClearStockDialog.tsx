@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2Icon } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Dialog,
   DialogContent,
@@ -55,7 +55,7 @@ export function ClearStockDialog(props: ClearStockDialogProps) {
             Cancel
           </Button>
           <Button variant="destructive" onClick={() => props.onConfirm(notes)} disabled={props.isClearing || props.currentStock === 0}>
-            {props.isClearing ? <Loader2Icon className="size-4 animate-spin" /> : null}
+            {props.isClearing ? <Spinner /> : null}
             Clear Stock
           </Button>
         </DialogFooter>

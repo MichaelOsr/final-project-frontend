@@ -56,10 +56,7 @@ export function StoreStockPage() {
   }, []);
 
   useEffect(() => {
-    if (!isReady) {
-      setIsLoading(false);
-      return;
-    }
+    if (!isReady) return;
     let isMounted = true;
     async function loadStocks() {
       try {

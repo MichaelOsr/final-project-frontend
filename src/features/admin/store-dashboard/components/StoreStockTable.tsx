@@ -1,5 +1,6 @@
 import { Edit2Icon, EraserIcon, EyeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { formatDate } from "@/features/admin/shared/utils/adminFormat";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import type { StoreStock } from "../types/storeDashboard.types";
@@ -97,7 +98,7 @@ export function StoreStockTable({ stocks, isLoading, meta, page, onView, onAdjus
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {isLoading && <StatusRow message="Loading..." />}
+            {isLoading && <tr><td colSpan={7} className="px-4 py-3 text-center text-muted-foreground"><span className="inline-flex items-center justify-center gap-2"><Spinner />Loading...</span></td></tr>}
             {!isLoading && stocks.length === 0 && <StatusRow message="No products found" />}
             {!isLoading && stocks.map((stock) => (
               <StockRow key={stock.id} stock={stock} onView={onView} onAdjust={onAdjust} onClear={onClear} />
