@@ -1,5 +1,6 @@
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, EyeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDate, getInitials } from "@/features/admin/shared/utils/adminFormat";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
@@ -145,7 +146,7 @@ export function StockHistoryTable({ movements, isLoading, meta, page, sortBy, so
   return (
     <>
       <div className="md:hidden">
-        {isLoading && <p className="px-4 py-6 text-center text-muted-foreground">Loading...</p>}
+        {isLoading && <p className="inline-flex w-full items-center justify-center gap-2 px-4 py-6 text-muted-foreground"><Spinner />Loading...</p>}
         {isEmpty && <p className="px-4 py-6 text-center text-muted-foreground">No stock history yet</p>}
         {!isLoading && movements.map((movement) => (
           <MovementCard key={movement.id} movement={movement} showProduct={showProduct} onView={onView} />
@@ -166,7 +167,7 @@ export function StockHistoryTable({ movements, isLoading, meta, page, sortBy, so
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {isLoading && <tr><td colSpan={colSpan} className="px-4 py-3 text-center text-muted-foreground">Loading...</td></tr>}
+            {isLoading && <tr><td colSpan={colSpan} className="px-4 py-3 text-center text-muted-foreground"><span className="inline-flex items-center justify-center gap-2"><Spinner />Loading...</span></td></tr>}
             {isEmpty && <tr><td colSpan={colSpan} className="px-4 py-3 text-center text-muted-foreground">No stock history yet</td></tr>}
             {!isLoading && movements.map((movement) => (
               <MovementRow key={movement.id} movement={movement} showProduct={showProduct} onView={onView} />

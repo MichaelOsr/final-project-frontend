@@ -3080,7 +3080,7 @@ params = {
 
 ## Admin Stock
 
-Read-only stock management endpoints for admins. All endpoints require `product:read` permission.
+Stock management endpoints for admins. Stock rows are created automatically with `stock: 0` when a product is created, so admins do not create/delete stock rows directly. Stock changes are write-once movements: create a stock history record first, then update the product stock from that movement. There are no PATCH or DELETE endpoints for stock history.
 
 ### GET `/admin/stock/store/:storeId`
 
@@ -3300,6 +3300,836 @@ GET /api/admin/stock/store/<store-id>/product/indomie-goreng-1234
 #### Possible Errors
 
 - `404` when store does not exist, product stock does not exist, or storeAdmin tries to access another store.
+
+### GET `/admin/stock/store/:storeId/movements`
+
+Get paginated stock movement history for one store.
+
+#### Frontend Usage
+
+Use this for inventory history tables. StoreAdmins can only read their assigned store; superAdmins can read any store.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `product:read` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  storeId: uuid;
+}
+
+query = {
+  productId?: uuid;
+  type?: "purchase" | "sale" | "returnIn" | "returnOut" | "adjustmentIn" | "adjustmentOut" | "transferIn" | "transferOut" | "damaged" | "expired" | "lost";
+  startDate?: date;
+  endDate?: date;
+  sortBy?: "createdAt" | "updatedAt" | "name" | "type" | "quantity" | "stockBefore" | "stockAfter" | "productName" | "storeName" | "adminName";
+  sortOrder?: "asc" | "desc";
+  page?: positiveInt;
+  limit?: positiveInt; // capped at 100
+}
+```
+
+Default sort is `createdAt desc` (newest movement first).
+
+#### Return
+
+```json
+{
+  "message": "Store stock movements fetched successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Mineral Water",
+      "quantity": 10,
+      "stockBefore": 0,
+      "stockAfter": 10,
+      "productId": "uuid",
+      "storeId": "uuid",
+      "adminId": "uuid",
+      "transactionId": null,
+      "type": "purchase",
+      "notes": "Initial restock",
+      "createdAt": "2026-06-11T10:00:00.000Z",
+      "updatedAt": "2026-06-11T10:00:00.000Z",
+      "deletedAt": null,
+      "product": {
+        "id": "uuid",
+        "name": "Mineral Water",
+        "slug": "mineral-water",
+        "sku": "BV-WTR-009"
+      },
+      "store": {
+        "id": "uuid",
+        "name": "Grocergo Kemang"
+      },
+      "admin": {
+        "id": "uuid",
+        "name": "Jane Admin",
+        "email": "jane@grocergo.com"
+      },
+      "transaction": null
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+### GET `/admin/stock/store/:storeId/product/:productId/movements`
+
+Get paginated stock movement history for one product in one store.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `product:read` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  storeId: uuid;
+  productId: uuid;
+}
+
+query = {
+  type?: "purchase" | "sale" | "returnIn" | "returnOut" | "adjustmentIn" | "adjustmentOut" | "transferIn" | "transferOut" | "damaged" | "expired" | "lost";
+  startDate?: date;
+  endDate?: date;
+  sortBy?: "createdAt" | "updatedAt" | "name" | "type" | "quantity" | "stockBefore" | "stockAfter" | "productName" | "storeName" | "adminName";
+  sortOrder?: "asc" | "desc";
+  page?: positiveInt;
+  limit?: positiveInt; // capped at 100
+}
+```
+
+Default sort is `createdAt desc` (newest movement first).
+
+#### Return
+
+Same shape as `GET /admin/stock/store/:storeId/movements`, but scoped to the requested product.
+
+### GET `/admin/stock/store/:storeId/movements/:historyId`
+
+Get one specific stock movement history item in a store.
+
+#### Frontend Usage
+
+Use this for inventory history detail pages, drawers, or modals. StoreAdmins can only read history from their assigned store.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `product:read` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  storeId: uuid;
+  historyId: uuid;
+}
+```
+
+#### Return
+
+```json
+{
+  "message": "Store stock movement fetched successfully",
+  "data": {
+    "id": "uuid",
+    "name": "Mineral Water",
+    "quantity": 10,
+    "stockBefore": 0,
+    "stockAfter": 10,
+    "productId": "uuid",
+    "storeId": "uuid",
+    "adminId": "uuid",
+    "transactionId": null,
+    "type": "purchase",
+    "notes": "Initial restock",
+    "createdAt": "2026-06-11T10:00:00.000Z",
+    "updatedAt": "2026-06-11T10:00:00.000Z",
+    "deletedAt": null,
+    "product": {
+      "id": "uuid",
+      "name": "Mineral Water",
+      "slug": "mineral-water",
+      "sku": "BV-WTR-009"
+    },
+    "store": {
+      "id": "uuid",
+      "name": "Grocergo Kemang"
+    },
+    "admin": {
+      "id": "uuid",
+      "name": "Jane Admin",
+      "email": "jane@grocergo.com"
+    },
+    "transaction": null
+  }
+}
+```
+
+#### Possible Errors
+
+- `404` when store does not exist, stock history does not exist in that store, or storeAdmin tries to access another store.
+
+### POST `/admin/stock/store/:storeId/product/:productId/movements`
+
+Create a stock movement and update the current product stock from that movement.
+
+#### Frontend Usage
+
+Use this for add stock, reduce stock, damaged/lost/expired stock, returns, and transfers. Do not manually calculate final stock on the frontend beyond previewing it; backend uses the current stock as `stockBefore`.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `stock:update` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  storeId: uuid;
+  productId: uuid;
+}
+
+body = {
+  type: "purchase" | "sale" | "returnIn" | "returnOut" | "adjustmentIn" | "adjustmentOut" | "transferIn" | "transferOut" | "damaged" | "expired" | "lost";
+  quantity: positiveInt;
+  notes?: string;
+}
+```
+
+#### Movement Rules
+
+| Type            | Effect         |
+| --------------- | -------------- |
+| `purchase`      | Increase stock |
+| `returnIn`      | Increase stock |
+| `adjustmentIn`  | Increase stock |
+| `transferIn`    | Increase stock |
+| `sale`          | Decrease stock |
+| `returnOut`     | Decrease stock |
+| `adjustmentOut` | Decrease stock |
+| `transferOut`   | Decrease stock |
+| `damaged`       | Decrease stock |
+| `expired`       | Decrease stock |
+| `lost`          | Decrease stock |
+
+#### Request Example
+
+```json
+{
+  "type": "purchase",
+  "quantity": 10,
+  "notes": "Restock from supplier"
+}
+```
+
+#### Return
+
+```json
+{
+  "message": "Stock movement created successfully",
+  "data": {
+    "stock": {
+      "id": "uuid",
+      "productId": "uuid",
+      "storeId": "uuid",
+      "stock": 10,
+      "createdAt": "2026-06-06T10:00:00.000Z",
+      "updatedAt": "2026-06-11T10:00:00.000Z",
+      "deletedAt": null,
+      "store": {
+        "id": "uuid",
+        "name": "Grocergo Kemang",
+        "latitude": "-6.260000",
+        "longitude": "106.810000"
+      },
+      "product": {
+        "id": "uuid",
+        "name": "Mineral Water",
+        "slug": "mineral-water",
+        "categoryId": "uuid",
+        "brand": "Aqua",
+        "variant": null,
+        "size": "600 ml",
+        "description": null,
+        "sku": "BV-WTR-009",
+        "price": 4000,
+        "category": {
+          "id": "uuid",
+          "name": "Beverages"
+        },
+        "images": []
+      }
+    },
+    "history": {
+      "id": "uuid",
+      "name": "Mineral Water",
+      "quantity": 10,
+      "stockBefore": 0,
+      "stockAfter": 10,
+      "productId": "uuid",
+      "storeId": "uuid",
+      "adminId": "uuid",
+      "transactionId": null,
+      "type": "purchase",
+      "notes": "Restock from supplier",
+      "createdAt": "2026-06-11T10:00:00.000Z",
+      "updatedAt": "2026-06-11T10:00:00.000Z",
+      "deletedAt": null,
+      "product": {
+        "id": "uuid",
+        "name": "Mineral Water",
+        "slug": "mineral-water",
+        "sku": "BV-WTR-009"
+      },
+      "store": {
+        "id": "uuid",
+        "name": "Grocergo Kemang"
+      },
+      "admin": {
+        "id": "uuid",
+        "name": "Jane Admin",
+        "email": "jane@grocergo.com"
+      },
+      "transaction": null
+    }
+  }
+}
+```
+
+#### Possible Errors
+
+- `400` when movement would make stock less than zero.
+- `404` when store or product stock does not exist, or storeAdmin tries to access another store.
+
+### POST `/admin/stock/store/:storeId/product/:productId/clear`
+
+Clear current stock to zero by creating an `adjustmentOut` movement. This is the replacement for deleting stock.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `stock:update` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  storeId: uuid;
+  productId: uuid;
+}
+
+body = {
+  notes?: string;
+}
+```
+
+#### Return
+
+Same shape as `POST /admin/stock/store/:storeId/product/:productId/movements`. If current stock is already `0`, `history` is `null` and stock is returned unchanged.
+
+## Admin Stock Transfers
+
+Stock transfer requests let one store request product stock from another store. The source store approves or rejects the request. When approved, backend writes a `transferOut` stock history and decreases source stock. When the destination store receives the goods, backend writes a `transferIn` stock history and increases destination stock.
+
+Status flow: `pending -> approved -> received`, `pending -> rejected`, or `pending -> cancelled`.
+
+If the destination store does not yet have a product stock row for the requested product, backend automatically creates it with `stock: 0` before creating or receiving the transfer. Source store stock must already exist and must be sufficient.
+
+### GET `/admin/stock/transfers/sources`
+
+Find stores that currently have stock for a product.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `product:read` permission.
+
+#### Zod Contract
+
+```ts
+query = {
+  productId: uuid;
+  excludeStoreId?: uuid;
+}
+```
+
+For storeAdmin, the assigned store is excluded automatically.
+
+#### Return
+
+```json
+{
+  "message": "Stock transfer sources fetched successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "productId": "uuid",
+      "storeId": "uuid",
+      "stock": 25,
+      "createdAt": "2026-06-16T10:00:00.000Z",
+      "updatedAt": "2026-06-16T10:00:00.000Z",
+      "deletedAt": null,
+      "store": {
+        "id": "uuid",
+        "name": "Grocergo Kemang",
+        "latitude": "-6.260000",
+        "longitude": "106.810000"
+      },
+      "product": {
+        "id": "uuid",
+        "name": "Mineral Water",
+        "slug": "mineral-water",
+        "sku": "BV-WTR-009"
+      }
+    }
+  ]
+}
+```
+
+### POST `/admin/stock/transfers/requests`
+
+Create a stock transfer request.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `stock:update` permission.
+
+#### Zod Contract
+
+```ts
+body = {
+  productId: uuid;
+  fromStoreId: uuid; // source store that will send stock
+  toStoreId?: uuid; // required for superAdmin, ignored for storeAdmin
+  quantity: positiveInt;
+  notes?: string;
+  requestNotes?: string;
+}
+```
+
+For storeAdmin, `toStoreId` is always the assigned store and cannot be changed. Destination stock row is created automatically with `stock: 0` if missing.
+
+#### Return
+
+```json
+{
+  "message": "Stock transfer request created successfully",
+  "data": {
+    "id": "uuid",
+    "productId": "uuid",
+    "productName": "Mineral Water",
+    "fromStoreId": "uuid",
+    "toStoreId": "uuid",
+    "requestedById": "uuid",
+    "approvedById": null,
+    "rejectedById": null,
+    "receivedById": null,
+    "cancelledById": null,
+    "quantity": 5,
+    "notes": "Need urgent restock",
+    "status": "pending",
+    "requestNotes": "Shelf is almost empty",
+    "responseNotes": null,
+    "receivedNotes": null,
+    "cancelledNotes": null,
+    "requestedAt": "2026-06-16T10:00:00.000Z",
+    "approvedAt": null,
+    "rejectedAt": null,
+    "receivedAt": null,
+    "cancelledAt": null,
+    "createdAt": "2026-06-16T10:00:00.000Z",
+    "updatedAt": "2026-06-16T10:00:00.000Z",
+    "deletedAt": null,
+    "product": {
+      "id": "uuid",
+      "name": "Mineral Water",
+      "slug": "mineral-water",
+      "sku": "BV-WTR-009"
+    },
+    "fromStore": {
+      "id": "uuid",
+      "name": "Grocergo Kemang",
+      "latitude": "-6.260000",
+      "longitude": "106.810000"
+    },
+    "toStore": {
+      "id": "uuid",
+      "name": "Grocergo UIN Jakarta",
+      "latitude": "-6.306000",
+      "longitude": "106.756000"
+    },
+    "requestedBy": {
+      "id": "uuid",
+      "name": "Store Admin",
+      "email": "store.admin@grocergo.com"
+    },
+    "approvedBy": null,
+    "rejectedBy": null,
+    "receivedBy": null,
+    "cancelledBy": null,
+    "stockHistories": []
+  }
+}
+```
+
+### GET `/admin/stock/transfers/requests`
+
+Get paginated stock transfer requests.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `product:read` permission.
+
+#### Zod Contract
+
+```ts
+query = {
+  status?: "pending" | "approved" | "rejected" | "received" | "cancelled";
+  productId?: uuid;
+  storeId?: uuid;
+  fromStoreId?: uuid;
+  toStoreId?: uuid;
+  direction?: "incoming" | "outgoing";
+  startDate?: date;
+  endDate?: date;
+  sortBy?: "createdAt" | "updatedAt" | "productName" | "quantity" | "status";
+  sortOrder?: "asc" | "desc";
+  page?: positiveInt;
+  limit?: positiveInt; // capped at 100
+}
+```
+
+#### Query
+
+| Param         | Type   | Default     | Description                                                                                                |
+| ------------- | ------ | ----------- | ---------------------------------------------------------------------------------------------------------- |
+| `status`      | enum   | -           | Filter by transfer status.                                                                                 |
+| `productId`   | uuid   | -           | Filter by product ID.                                                                                      |
+| `storeId`     | uuid   | -           | For superAdmin, filter transfers where this store is either source or destination. Ignored for storeAdmin. |
+| `fromStoreId` | uuid   | -           | Filter transfers where this store is the source store.                                                     |
+| `toStoreId`   | uuid   | -           | Filter transfers where this store is the destination store.                                                |
+| `direction`   | enum   | -           | `incoming` filters destination-side transfers; `outgoing` filters source-side transfers.                   |
+| `startDate`   | date   | -           | Filter transfers created at or after this date.                                                            |
+| `endDate`     | date   | -           | Filter transfers created at or before this date.                                                           |
+| `sortBy`      | enum   | `createdAt` | `createdAt`, `updatedAt`, `productName`, `quantity`, `status`.                                             |
+| `sortOrder`   | enum   | `desc`      | `asc` or `desc`.                                                                                           |
+| `page`        | number | `1`         | Positive integer.                                                                                          |
+| `limit`       | number | `10`        | Positive integer, capped at `100`.                                                                         |
+
+For superAdmin, `storeId` scopes results to transfers involving that store in either direction. When combined with `direction`, `storeId` becomes side-specific: `incoming` means `toStoreId = storeId`, and `outgoing` means `fromStoreId = storeId`.
+
+For storeAdmin, results are always scoped to the assigned store and any `storeId` query value is ignored. `incoming` means stock entering the assigned store (`toStoreId`), and `outgoing` means stock leaving the assigned store (`fromStoreId`).
+
+Explicit `fromStoreId` and `toStoreId` filters are still applied with `AND`.
+
+#### Return
+
+```json
+{
+  "message": "Stock transfer requests fetched successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "productId": "uuid",
+      "productName": "Mineral Water",
+      "fromStoreId": "uuid",
+      "toStoreId": "uuid",
+      "requestedById": "uuid",
+      "approvedById": null,
+      "rejectedById": null,
+      "receivedById": null,
+      "cancelledById": null,
+      "quantity": 5,
+      "notes": "Need urgent restock",
+      "status": "pending",
+      "requestNotes": "Shelf is almost empty",
+      "responseNotes": null,
+      "receivedNotes": null,
+      "cancelledNotes": null,
+      "requestedAt": "2026-06-16T10:00:00.000Z",
+      "approvedAt": null,
+      "rejectedAt": null,
+      "receivedAt": null,
+      "cancelledAt": null,
+      "createdAt": "2026-06-16T10:00:00.000Z",
+      "updatedAt": "2026-06-16T10:00:00.000Z",
+      "deletedAt": null,
+      "product": {
+        "id": "uuid",
+        "name": "Mineral Water",
+        "slug": "mineral-water",
+        "sku": "BV-WTR-009"
+      },
+      "fromStore": {
+        "id": "uuid",
+        "name": "Grocergo Kemang",
+        "latitude": "-6.260000",
+        "longitude": "106.810000"
+      },
+      "toStore": {
+        "id": "uuid",
+        "name": "Grocergo UIN Jakarta",
+        "latitude": "-6.306000",
+        "longitude": "106.756000"
+      },
+      "requestedBy": {
+        "id": "uuid",
+        "name": "Store Admin",
+        "email": "store.admin@grocergo.com"
+      },
+      "approvedBy": null,
+      "rejectedBy": null,
+      "receivedBy": null,
+      "cancelledBy": null,
+      "stockHistories": []
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+### GET `/admin/stock/transfers/store/:storeId/requests`
+
+Get paginated stock transfer requests scoped to one store. This is the path-scoped equivalent of `GET /admin/stock/transfers/requests?storeId=<storeId>`.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `product:read` permission.
+
+#### Access Rules
+
+- `superAdmin` can read transfer requests for any store.
+- `storeAdmin` can only read transfer requests for their assigned store.
+- A transfer is included when the store is either the source (`fromStoreId`) or destination (`toStoreId`).
+- `direction=incoming` scopes to `toStoreId = :storeId`.
+- `direction=outgoing` scopes to `fromStoreId = :storeId`.
+
+#### Zod Contract
+
+```ts
+params = {
+  storeId: uuid;
+}
+
+query = {
+  status?: "pending" | "approved" | "rejected" | "received" | "cancelled";
+  productId?: uuid;
+  fromStoreId?: uuid;
+  toStoreId?: uuid;
+  direction?: "incoming" | "outgoing";
+  startDate?: date;
+  endDate?: date;
+  sortBy?: "createdAt" | "updatedAt" | "productName" | "quantity" | "status";
+  sortOrder?: "asc" | "desc";
+  page?: positiveInt;
+  limit?: positiveInt; // capped at 100
+}
+```
+
+#### Request Examples
+
+```txt
+GET /api/admin/stock/transfers/store/<store-id>/requests
+GET /api/admin/stock/transfers/store/<store-id>/requests?direction=incoming
+GET /api/admin/stock/transfers/store/<store-id>/requests?direction=outgoing&status=pending
+```
+
+#### Return
+
+Same shape as `GET /admin/stock/transfers/requests`, with message `Store stock transfer requests fetched successfully`.
+
+#### Possible Errors
+
+- `404` when store does not exist, or when storeAdmin tries to access another store.
+
+### GET `/admin/stock/transfers/store/:storeId/requests/:id`
+
+Get one stock transfer request detail scoped to one store.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `product:read` permission.
+
+#### Access Rules
+
+- `superAdmin` can read any transfer request through any involved store route.
+- `storeAdmin` can only read through their assigned store.
+- The transfer request must involve `:storeId` as either `fromStoreId` or `toStoreId`.
+
+#### Zod Contract
+
+```ts
+params = {
+  storeId: uuid;
+  id: uuid;
+}
+```
+
+#### Request Example
+
+```txt
+GET /api/admin/stock/transfers/store/<store-id>/requests/<request-id>
+```
+
+#### Return
+
+Same item shape as `GET /admin/stock/transfers/requests/:id`, with message `Store stock transfer request fetched successfully`.
+
+#### Possible Errors
+
+- `404` when store does not exist, transfer request does not exist, transfer request does not involve the store, or storeAdmin tries to access another store.
+
+### GET `/admin/stock/transfers/requests/:id`
+
+Get one stock transfer request detail.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `product:read` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  id: uuid;
+}
+```
+
+#### Return
+
+Same item shape as `GET /admin/stock/transfers/requests`, without pagination wrapper.
+
+### POST `/admin/stock/transfers/requests/:id/approve`
+
+Approve a pending transfer request. This decreases source store stock and creates a `transferOut` stock history.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `stock:update` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  id: uuid;
+}
+
+body = {
+  responseNotes?: string; // default generated if omitted
+}
+```
+
+If `responseNotes` is omitted, backend automatically stores a default response note and uses the same text for the generated `transferOut` stock history, for example `Approved transfer of 5 Mineral Water to Grocergo UIN Jakarta.`
+
+#### Return
+
+```json
+{
+  "message": "Stock transfer request approved successfully",
+  "data": {
+    "request": "StockTransferRequest",
+    "stock": "ProductStock",
+    "history": "StockHistory"
+  }
+}
+```
+
+### POST `/admin/stock/transfers/requests/:id/reject`
+
+Reject a pending transfer request. This does not change stock.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `stock:update` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  id: uuid;
+}
+
+body = {
+  responseNotes?: string;
+}
+```
+
+#### Return
+
+Same item shape as `GET /admin/stock/transfers/requests/:id`.
+
+### POST `/admin/stock/transfers/requests/:id/receive`
+
+Mark an approved transfer as received. This increases destination store stock and creates a `transferIn` stock history.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `stock:update` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  id: uuid;
+}
+
+body = {
+  receivedNotes?: string; // default generated if omitted
+}
+```
+
+If `receivedNotes` is omitted, backend automatically stores a default received note and uses the same text for the generated `transferIn` stock history, for example `Received 5 Mineral Water from Grocergo Kemang.`
+
+#### Return
+
+```json
+{
+  "message": "Stock transfer request received successfully",
+  "data": {
+    "request": "StockTransferRequest",
+    "stock": "ProductStock",
+    "history": "StockHistory"
+  }
+}
+```
+
+### POST `/admin/stock/transfers/requests/:id/cancel`
+
+Cancel a pending transfer request from the destination/requesting store side. This does not change stock.
+
+#### Auth
+
+Requires `adminAccessToken` HTTP-only cookie and `stock:update` permission.
+
+#### Zod Contract
+
+```ts
+params = {
+  id: uuid;
+}
+
+body = {
+  cancelledNotes?: string;
+}
+```
+
+#### Return
+
+Same item shape as `GET /admin/stock/transfers/requests/:id`.
 
 ## Orders
 

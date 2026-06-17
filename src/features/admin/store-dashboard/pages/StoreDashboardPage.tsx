@@ -17,10 +17,7 @@ export function StoreDashboardPage() {
   const [summary, setSummary] = useState<StoreDashboardSummary | null>(null);
 
   useEffect(() => {
-    if (!isReady) {
-      setIsLoading(false);
-      return;
-    }
+    if (!isReady) return;
     let isMounted = true;
     async function loadSummary() {
       try {

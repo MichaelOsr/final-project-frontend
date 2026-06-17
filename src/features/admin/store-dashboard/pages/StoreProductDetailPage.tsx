@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeftIcon, Edit2Icon, EraserIcon, PencilIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightLeftIcon, Edit2Icon, EraserIcon, PencilIcon } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { storeDashboardService } from "../services/storeDashboard.service";
 import { useStoreContext } from "../hooks/useStoreContext";
 import { StockMovementDialog } from "../components/StockMovementDialog";
 import { ClearStockDialog } from "../components/ClearStockDialog";
+import { CreateTransferDialog } from "../components/CreateTransferDialog";
 import { ProductStockHistoryCard } from "../components/ProductStockHistoryCard";
 import type { AdminProduct, ProductStock } from "@/features/admin/products/types/adminProduct.types";
 import type { CreateMovementPayload } from "../types/stockMovement.types";
@@ -27,15 +29,13 @@ export function StoreProductDetailPage() {
   const [storeStock, setStoreStock] = useState<ProductStock | null>(null);
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
   const [isClearOpen, setIsClearOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   usePageTitle(product?.name ? `${product.name} details` : "Product details");
 
   useEffect(() => {
-    if (!slug || !isReady) {
-      setIsLoading(false);
-      return;
-    }
+    if (!slug || !isReady) return;
     let isMounted = true;
 
     async function loadProductAndStock() {
@@ -98,7 +98,7 @@ export function StoreProductDetailPage() {
       <div className="grid gap-5">
         <Header product={product} slug={slug} />
         {isLoading ? (
-          <Card className="rounded-lg"><CardContent className="p-5 text-sm text-muted-foreground">Loading product...</CardContent></Card>
+          <Card className="rounded-lg"><CardContent className="flex items-center gap-2 p-5 text-sm text-muted-foreground"><Spinner />Loading product...</CardContent></Card>
         ) : product ? (
           <ProductDetail
             product={product}
@@ -107,6 +107,7 @@ export function StoreProductDetailPage() {
             refreshKey={refreshKey}
             onAdjust={() => setIsAdjustOpen(true)}
             onClear={() => setIsClearOpen(true)}
+            onTransfer={() => setIsTransferOpen(true)}
           />
         ) : (
           <Card className="rounded-lg"><CardContent className="p-5 text-sm text-muted-foreground">Product was not found.</CardContent></Card>
@@ -128,6 +129,14 @@ export function StoreProductDetailPage() {
         onConfirm={confirmClear}
         onOpenChange={setIsClearOpen}
       />
+      {product && (
+        <CreateTransferDialog
+          open={isTransferOpen}
+          toStoreId={storeId}
+          product={product}
+          onOpenChange={setIsTransferOpen}
+        />
+      )}
     </AdminDashboardShell>
   );
 }
@@ -154,15 +163,16 @@ interface ProductDetailProps {
   refreshKey: number;
   onAdjust: () => void;
   onClear: () => void;
+  onTransfer: () => void;
 }
 
-function ProductDetail({ product, storeStock, storeId, refreshKey, onAdjust, onClear }: ProductDetailProps) {
+function ProductDetail({ product, storeStock, storeId, refreshKey, onAdjust, onClear, onTransfer }: ProductDetailProps) {
   return (
     <div className="grid gap-5">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="grid gap-5">
           <ProductInfo product={product} />
-          <StoreStockCard storeStock={storeStock} onAdjust={onAdjust} onClear={onClear} />
+          <StoreStockCard storeStock={storeStock} onAdjust={onAdjust} onClear={onClear} onTransfer={onTransfer} />
         </div>
         <ImageCard product={product} />
       </div>
@@ -220,25 +230,32 @@ interface StoreStockCardProps {
   storeStock: ProductStock | null;
   onAdjust: () => void;
   onClear: () => void;
+  onTransfer: () => void;
 }
 
-function StoreStockCard({ storeStock, onAdjust, onClear }: StoreStockCardProps) {
+function StoreStockCard({ storeStock, onAdjust, onClear, onTransfer }: StoreStockCardProps) {
   return (
     <Card className="rounded-lg">
       <CardHeader className="border-b border-border">
         <CardTitle>Store stock</CardTitle>
-        {storeStock && (
-          <CardAction className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onAdjust}>
-              <Edit2Icon className="size-4" />
-              Adjust Stock
-            </Button>
-            <Button variant="outline" size="sm" onClick={onClear} disabled={storeStock.stock === 0}>
-              <EraserIcon className="size-4" />
-              Clear Stock
-            </Button>
-          </CardAction>
-        )}
+        <CardAction className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={onTransfer}>
+            <ArrowRightLeftIcon className="size-4" />
+            Request Transfer
+          </Button>
+          {storeStock && (
+            <>
+              <Button variant="outline" size="sm" onClick={onAdjust}>
+                <Edit2Icon className="size-4" />
+                Adjust Stock
+              </Button>
+              <Button variant="outline" size="sm" onClick={onClear} disabled={storeStock.stock === 0}>
+                <EraserIcon className="size-4" />
+                Clear Stock
+              </Button>
+            </>
+          )}
+        </CardAction>
       </CardHeader>
       <CardContent className="p-5">
         {storeStock ? (

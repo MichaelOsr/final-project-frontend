@@ -1,5 +1,6 @@
 import { Form, Formik, useField, useFormikContext, type FormikHelpers } from "formik";
-import { Loader2Icon, SaveIcon } from "lucide-react";
+import { SaveIcon } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { TextField } from "@/components/form/TextField";
 import { TextareaField } from "@/components/form/TextareaField";
 import { Label } from "@/components/ui/label";
@@ -79,7 +80,7 @@ function SubmitButton({ currentStock, isSubmitting }: { currentStock: number; is
   const isNegative = previewStockAfter(currentStock, values.type, quantity) < 0;
   return (
     <Button type="submit" disabled={isSubmitting || isNegative}>
-      {isSubmitting ? <Loader2Icon className="size-4 animate-spin" /> : <SaveIcon className="size-4" />}
+      {isSubmitting ? <Spinner /> : <SaveIcon className="size-4" />}
       Save
     </Button>
   );

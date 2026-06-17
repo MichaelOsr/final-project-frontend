@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -33,28 +33,31 @@ export function AdminStoresPage() {
   const sortBy = getSortParam(searchParams.get("sort"));
   const sortOrder = getSortOrderParam(searchParams.get("order"), sortBy);
 
-  const loadStores = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await adminStoreService.list({
-        page,
-        limit: 10,
-        sortBy,
-        sortOrder,
-        ...(query.trim() ? { q: query.trim() } : {}),
-      });
-      setStores(response.data.data ?? []);
-      setMeta(response.data.meta ?? defaultMeta);
-    } catch (error) {
-      toast.error(getAdminErrorMessage(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, query, sortBy, sortOrder]);
-
   useEffect(() => {
+    let isMounted = true;
+    async function loadStores() {
+      try {
+        const response = await adminStoreService.list({
+          page,
+          limit: 10,
+          sortBy,
+          sortOrder,
+          ...(query.trim() ? { q: query.trim() } : {}),
+        });
+        if (!isMounted) return;
+        setStores(response.data.data ?? []);
+        setMeta(response.data.meta ?? defaultMeta);
+      } catch (error) {
+        if (isMounted) toast.error(getAdminErrorMessage(error));
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
     loadStores();
-  }, [loadStores]);
+    return () => {
+      isMounted = false;
+    };
+  }, [page, query, sortBy, sortOrder]);
 
   async function openDetail(store: AdminStore) {
     setDetailStore(store);

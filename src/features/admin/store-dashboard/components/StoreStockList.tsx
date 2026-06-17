@@ -9,6 +9,7 @@ import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
 import { formatDate, formatNumber } from "@/features/admin/shared/utils/adminFormat";
+import { Spinner } from "@/components/ui/spinner";
 import { storeDashboardService } from "../services/storeDashboard.service";
 import { StockMovementDialog } from "./StockMovementDialog";
 import { ClearStockDialog } from "./ClearStockDialog";
@@ -144,7 +145,7 @@ export function StoreStockList({ storeId }: { storeId: string }) {
                 {isLoading && (
                   <tr>
                     <td colSpan={6} className="px-4 py-3 text-center text-muted-foreground">
-                      Loading...
+                      <span className="inline-flex items-center justify-center gap-2"><Spinner />Loading...</span>
                     </td>
                   </tr>
                 )}
