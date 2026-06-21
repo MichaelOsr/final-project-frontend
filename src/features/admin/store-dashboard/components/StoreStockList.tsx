@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Edit2Icon, ShoppingCartIcon, TrendingDownIcon } from "lucide-react";
+import { Edit2Icon, EraserIcon, ShoppingCartIcon, TrendingDownIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,8 +9,12 @@ import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
 import { formatDate, formatNumber } from "@/features/admin/shared/utils/adminFormat";
+import { Spinner } from "@/components/ui/spinner";
 import { storeDashboardService } from "../services/storeDashboard.service";
+import { StockMovementDialog } from "./StockMovementDialog";
+import { ClearStockDialog } from "./ClearStockDialog";
 import type { StoreStock } from "../types/storeDashboard.types";
+import type { CreateMovementPayload } from "../types/stockMovement.types";
 
 const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
 
@@ -20,6 +24,10 @@ export function StoreStockList({ storeId }: { storeId: string }) {
   const [stocks, setStocks] = useState<StoreStock[]>([]);
   const [meta, setMeta] = useState(defaultMeta);
   const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
+  const [adjustTarget, setAdjustTarget] = useState<StoreStock | null>(null);
+  const [clearTarget, setClearTarget] = useState<StoreStock | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const page = getPageParam(searchParams);
   const query = searchParams.get("q") ?? "";
 
@@ -45,10 +53,42 @@ export function StoreStockList({ storeId }: { storeId: string }) {
     return () => {
       isMounted = false;
     };
-  }, [page, query, storeId]);
+  }, [page, query, storeId, refreshKey]);
 
   function updateFilters(updates: Record<string, string | number>) {
     setSearchParams(updateSearchParams(searchParams, updates));
+  }
+
+  async function submitMovement(values: CreateMovementPayload, helpers: { setSubmitting: (value: boolean) => void }) {
+    if (!adjustTarget) return;
+    try {
+      await storeDashboardService.createStockMovement(storeId, adjustTarget.productId, {
+        ...values,
+        quantity: Number(values.quantity),
+      });
+      toast.success("Stock updated");
+      setAdjustTarget(null);
+      setRefreshKey((key) => key + 1);
+    } catch (error) {
+      toast.error(getAdminErrorMessage(error));
+    } finally {
+      helpers.setSubmitting(false);
+    }
+  }
+
+  async function confirmClear(notes: string) {
+    if (!clearTarget) return;
+    setIsClearing(true);
+    try {
+      await storeDashboardService.clearStock(storeId, clearTarget.productId, notes ? { notes } : {});
+      toast.success("Stock cleared");
+      setClearTarget(null);
+      setRefreshKey((key) => key + 1);
+    } catch (error) {
+      toast.error(getAdminErrorMessage(error));
+    } finally {
+      setIsClearing(false);
+    }
   }
 
   return (
@@ -105,7 +145,7 @@ export function StoreStockList({ storeId }: { storeId: string }) {
                 {isLoading && (
                   <tr>
                     <td colSpan={6} className="px-4 py-3 text-center text-muted-foreground">
-                      Loading...
+                      <span className="inline-flex items-center justify-center gap-2"><Spinner />Loading...</span>
                     </td>
                   </tr>
                 )}
@@ -154,10 +194,19 @@ export function StoreStockList({ storeId }: { storeId: string }) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toast.info("To be implemented")}
-                          title="Edit stock"
+                          onClick={() => setAdjustTarget(stock)}
+                          title="Adjust stock"
                         >
                           <Edit2Icon className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setClearTarget(stock)}
+                          title="Clear stock"
+                          disabled={stock.stock === 0}
+                        >
+                          <EraserIcon className="size-4" />
                         </Button>
                       </td>
                     </tr>
@@ -196,6 +245,22 @@ export function StoreStockList({ storeId }: { storeId: string }) {
           )}
         </CardContent>
       </Card>
+
+      <StockMovementDialog
+        open={Boolean(adjustTarget)}
+        productName={adjustTarget?.product.name ?? ""}
+        currentStock={adjustTarget?.stock ?? 0}
+        onOpenChange={(open) => !open && setAdjustTarget(null)}
+        onSubmit={submitMovement}
+      />
+      <ClearStockDialog
+        open={Boolean(clearTarget)}
+        productName={clearTarget?.product.name ?? ""}
+        currentStock={clearTarget?.stock ?? 0}
+        isClearing={isClearing}
+        onConfirm={confirmClear}
+        onOpenChange={(open) => !open && setClearTarget(null)}
+      />
     </div>
   );
 }

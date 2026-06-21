@@ -9,6 +9,8 @@ import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
 import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
+import { formatDate } from "@/features/admin/shared/utils/adminFormat";
+import { Spinner } from "@/components/ui/spinner";
 import { adminProductService } from "@/features/admin/products/services/adminProduct.service";
 import type { ProductCategory } from "@/features/admin/products/types/adminProduct.types";
 
@@ -87,7 +89,7 @@ export function StoreCategoriesPage() {
                 {isLoading && (
                   <tr>
                     <td colSpan={3} className="px-4 py-3 text-center text-muted-foreground">
-                      Loading...
+                      <span className="inline-flex items-center justify-center gap-2"><Spinner />Loading...</span>
                     </td>
                   </tr>
                 )}
@@ -103,10 +105,10 @@ export function StoreCategoriesPage() {
                     <tr key={category.id} className="hover:bg-muted/30">
                       <td className="px-4 py-3 font-medium">{category.name}</td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {category.createdAt ? new Date(category.createdAt).toLocaleDateString() : "-"}
+                        {category.createdAt ? formatDate(category.createdAt) : "-"}
                       </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {category.updatedAt ? new Date(category.updatedAt).toLocaleDateString() : "-"}
+                        {category.updatedAt ? formatDate(category.updatedAt) : "-"}
                       </td>
                     </tr>
                   ))}

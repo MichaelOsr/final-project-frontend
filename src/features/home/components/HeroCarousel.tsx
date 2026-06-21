@@ -19,7 +19,7 @@ const slides = [
   {
     title: "Order groceries for delivery or pickup today",
     subtitle: "Fresh groceries from the store nearest to you — delivered fast.",
-    cta: { label: "Shop now", to: "/products" },
+    cta: { label: "Shop now", to: "/products-catalog" },
     image: UNSPLASH("1553531889-56cc480ac5cb"),
   },
   {
@@ -31,7 +31,7 @@ const slides = [
   {
     title: "Best local stores, handpicked for you",
     subtitle: "We partner with the top grocery stores in your area.",
-    cta: { label: "Browse products", to: "/products" },
+    cta: { label: "Browse products", to: "/products-catalog" },
     image: UNSPLASH("1557844352-761f2565b576"),
   },
 ]

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -63,30 +63,35 @@ export function AdminAccountsPage() {
     };
   }, []);
 
-  const loadUsers = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await accountService.list({
-        page,
-        limit: 10,
-        sortBy,
-        sortOrder,
-        ...(query.trim() ? { q: query.trim() } : {}),
-        ...(roleName ? { roleName } : {}),
-        ...(storeName ? { storeName } : {}),
-      });
-      setUsers(response.data.data ?? []);
-      setMeta(response.data.meta ?? defaultMeta);
-    } catch (error) {
-      toast.error(getAdminErrorMessage(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, query, roleName, sortBy, sortOrder, storeName]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    async function loadUsers() {
+      try {
+        const response = await accountService.list({
+          page,
+          limit: 10,
+          sortBy,
+          sortOrder,
+          ...(query.trim() ? { q: query.trim() } : {}),
+          ...(roleName ? { roleName } : {}),
+          ...(storeName ? { storeName } : {}),
+        });
+        if (!isMounted) return;
+        setUsers(response.data.data ?? []);
+        setMeta(response.data.meta ?? defaultMeta);
+      } catch (error) {
+        if (isMounted) toast.error(getAdminErrorMessage(error));
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
     loadUsers();
-  }, [loadUsers]);
+    return () => {
+      isMounted = false;
+    };
+  }, [page, query, roleName, sortBy, sortOrder, storeName, refreshKey]);
 
   async function openDetail(user: AdminUserOverview) {
     setDetailUser(user);
@@ -109,7 +114,7 @@ export function AdminAccountsPage() {
       await adminAccountService.delete(deleteTarget.id);
       toast.success("Admin account deleted successfully");
       setDeleteTarget(null);
-      loadUsers();
+      setRefreshKey((key) => key + 1);
     } catch (error) {
       toast.error(getAdminErrorMessage(error));
     } finally {

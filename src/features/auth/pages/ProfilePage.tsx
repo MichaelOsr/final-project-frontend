@@ -9,6 +9,7 @@ import type { User } from "@/types/user.types"
 import { ProfileForm } from "../components/ProfileForm"
 import { ChangeEmailForm } from "../components/ChangeEmailForm"
 import { ChangePasswordForm } from "../components/ChangePasswordForm"
+import { AddressSection } from "@/features/address/components/AddressSection"
 
 // One read-only label/value pair.
 function InfoField({ label, value }: { label: string; value: string }) {
@@ -106,6 +107,8 @@ export function ProfilePage() {
       >
         {(close) => <ProfileForm onDone={close} />}
       </EditableSection>
+
+      <AddressSection /> 
 
       <EditableSection
         title="Email address"
