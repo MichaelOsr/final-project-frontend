@@ -12,7 +12,7 @@ export function ProductImageField() {
   const [{ value }, meta] = useField<File[]>("images");
   const { setFieldValue, setFieldTouched } = useFormikContext<CreateProductFormValues>();
   const error = meta.touched ? meta.error : undefined;
-  const files = useMemo(() => value ?? [], [value]);
+  const files = value ?? [];
   const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
 
   useEffect(() => () => previews.forEach((preview) => URL.revokeObjectURL(preview)), [previews]);
