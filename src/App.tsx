@@ -18,7 +18,7 @@ function App() {
   return (
     <>
       <AppRoutes />
-      <Toaster richColors position="top-center" />
+      <Toaster richColors position="bottom-right" />
     </>
   )
 }
