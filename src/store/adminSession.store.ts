@@ -76,8 +76,12 @@ export const useAdminSessionStore = create<IAdminSessionStore>()(
       },
 
       logout: async () => {
-        await adminAxios.post<ApiResponse>("/admin/auth/logout").catch(() => null);
-        set({ user: null, status: "unauthenticated" });
+        try {
+          await adminAxios.post<ApiResponse>("/admin/auth/logout");
+        } catch {
+        } finally {
+          set({ user: null, status: "unauthenticated" });
+        }
       },
 
       clearSession: () =>

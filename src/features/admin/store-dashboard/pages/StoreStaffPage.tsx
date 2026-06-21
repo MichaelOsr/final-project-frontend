@@ -11,15 +11,12 @@ import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDas
 import type { AdminUserOverview, PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
 import { formatDate, getInitials } from "@/features/admin/shared/utils/adminFormat";
-import { Spinner } from "@/components/ui/spinner";
 import { adminAccountService } from "@/features/admin/admin-accounts/services/adminAccount.service";
-import { useStoreContext } from "../hooks/useStoreContext";
 
 const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
 
 export function StoreStaffPage() {
   usePageTitle("Store Staff");
-  const { storeId, isReady } = useStoreContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [staff, setStaff] = useState<AdminUserOverview[]>([]);
@@ -29,14 +26,12 @@ export function StoreStaffPage() {
   const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
 
   useEffect(() => {
-    if (!isReady) return;
     let isMounted = true;
     async function loadStaff() {
       try {
         const response = await adminAccountService.list({
           page,
           limit: 10,
-          storeId,
           ...(query.trim() ? { q: query.trim() } : {}),
         });
         if (!isMounted) return;
@@ -52,7 +47,7 @@ export function StoreStaffPage() {
     return () => {
       isMounted = false;
     };
-  }, [isReady, storeId, page, query]);
+  }, [page, query]);
 
   function updateFilters(updates: Record<string, string | number>) {
     setSearchParams(updateSearchParams(searchParams, updates));
@@ -95,7 +90,7 @@ export function StoreStaffPage() {
                 {isLoading && (
                   <tr>
                     <td colSpan={5} className="px-4 py-3 text-center text-muted-foreground">
-                      <span className="inline-flex items-center justify-center gap-2"><Spinner />Loading...</span>
+                      Loading...
                     </td>
                   </tr>
                 )}

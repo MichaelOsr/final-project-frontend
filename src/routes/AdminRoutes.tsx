@@ -19,10 +19,8 @@ import { AdminStoresPage } from "@/features/admin/stores/pages/AdminStoresPage";
 import { StoreDashboardPage } from "@/features/admin/store-dashboard/pages/StoreDashboardPage";
 import { StoreCategoriesPage } from "@/features/admin/store-dashboard/pages/StoreCategoriesPage";
 import { StoreStockPage } from "@/features/admin/store-dashboard/pages/StoreStockPage";
-import { StoreStockHistoryPage } from "@/features/admin/store-dashboard/pages/StoreStockHistoryPage";
 import { StoreStaffPage } from "@/features/admin/store-dashboard/pages/StoreStaffPage";
 import { StoreProductDetailPage } from "@/features/admin/store-dashboard/pages/StoreProductDetailPage";
-import { StoreTransfersPage } from "@/features/admin/store-dashboard/pages/StoreTransfersPage";
 
 export const adminRoutes = (
   <Fragment>
@@ -67,22 +65,6 @@ export const adminRoutes = (
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
             <StoreStockPage />
-          </AdminProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/store/stock/history"
-        element={
-          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
-            <StoreStockHistoryPage />
-          </AdminProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/store/stock/transfers"
-        element={
-          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
-            <StoreTransfersPage />
           </AdminProtectedRoute>
         }
       />
@@ -150,10 +132,7 @@ export const adminRoutes = (
           </AdminProtectedRoute>
         }
       />
-      <Route
-        path="/admin/users"
-        element={<Navigate to="/admin/admin-accounts" replace />}
-      />
+      <Route path="/admin/users" element={<Navigate to="/admin/admin-accounts" replace />} />
       <Route
         path="/admin/admin-accounts"
         element={

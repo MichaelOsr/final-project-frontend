@@ -2,7 +2,6 @@ import { useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
-  ArrowRightLeftIcon,
   Building2Icon,
   LayoutDashboardIcon,
   Loader2Icon,
@@ -30,7 +29,6 @@ const superAdminNavItems = [
 const storeNavItems = [
   { label: "Dashboard", to: "/admin/store/dashboard", icon: LayoutDashboardIcon },
   { label: "Stock", to: "/admin/store/stock", icon: PackageIcon },
-  { label: "Transfers", to: "/admin/store/stock/transfers", icon: ArrowRightLeftIcon },
   { label: "Categories", to: "/admin/store/categories", icon: TagsIcon },
   { label: "Staff", to: "/admin/store/staff", icon: UserCogIcon },
 ];
@@ -78,15 +76,11 @@ function DashboardNav({ admin, className }: { admin: IAdminSessionUser | null; c
           Back to Dashboard
         </Link>
       )}
-      {(() => {
-        const EXACT = new Set(["/admin/dashboard", "/admin/store/dashboard"]);
-        const activeItem = navItems.reduce<string | null>((best, item) => {
-          const matches = EXACT.has(item.to) ? pathname === item.to : pathname.startsWith(item.to);
-          if (!matches) return best;
-          return best === null || item.to.length > best.length ? item.to : best;
-        }, null);
-        return navItems.map(({ label, to, icon: Icon }) => {
-        const isActive = activeItem === to;
+      {navItems.map(({ label, to, icon: Icon }) => {
+        const isActive = to === "/admin/dashboard" || to === "/admin/store/dashboard"
+          ? pathname === to
+          : pathname.startsWith(to);
+
         return (
           <Link
             key={label}
@@ -100,8 +94,7 @@ function DashboardNav({ admin, className }: { admin: IAdminSessionUser | null; c
             {label}
           </Link>
         );
-        });
-      })()}
+      })}
     </nav>
   );
 }

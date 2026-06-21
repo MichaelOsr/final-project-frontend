@@ -1,6 +1,6 @@
+import { Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
 
 export function DashboardLoadingState() {
@@ -8,7 +8,7 @@ export function DashboardLoadingState() {
     <AdminDashboardShell>
       <div className="grid min-h-105 place-items-center rounded-lg border border-border bg-card">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Spinner />
+          <Loader2Icon className="size-4 animate-spin" />
           Loading dashboard data
         </div>
       </div>

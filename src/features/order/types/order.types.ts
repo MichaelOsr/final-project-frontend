@@ -74,10 +74,6 @@ export interface OrderDetail {
   totalPrice: number
   deliveryFee: number
   shipping_vendor: string
-  // paymentType: diset oleh backend saat getSnapToken ("midtrans")
-  // atau saat uploadPaymentProof ("manual_transfer"). Null = belum ada aksi.
-  paymentType: string | null
-  paymentExpiredAt: string | null
   createdAt: string
   updatedAt: string
   storeId: string
@@ -144,51 +140,4 @@ export interface GetOrdersQuery {
   startDate?: string
   endDate?: string
   search?: string
-}
-
-// Address user dari GET /api/addresses
-export interface UserAddress {
-  id: string
-  name: string
-  latitude: string
-  longitude: string
-  notes: string | null
-  isDefault: boolean
-}
-
-export interface GetAddressesResponse {
-  message: string
-  data: UserAddress[]
-}
-
-// Shipping cost dari GET /api/shipping/cost
-export interface ShippingCostItem {
-  name: string
-  code: string
-  service: string
-  description: string
-  cost: number
-  etd: string
-}
-
-export interface GetShippingCostResponse {
-  message: string
-  data: {
-    origin: { id: number; label: string; store: string }
-    destination: { id: number; label: string }
-    costs: ShippingCostItem[]
-  }
-}
-
-// Response POST /api/payment/:orderId/proof
-export interface UploadPaymentProofResponse {
-  message: string
-}
-
-// Response POST /api/payment/:orderId/snap-token
-export interface GetSnapTokenResponse {
-  message: string
-  data: {
-    snapToken: string
-  }
 }
