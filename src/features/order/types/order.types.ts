@@ -2,6 +2,7 @@
 export type TransactionStatus =
   | "waitingPayment"
   | "waitingConfirmation"
+  | "paid"              // status setelah Midtrans konfirmasi otomatis
   | "process"
   | "onDelivery"
   | "confirmed"

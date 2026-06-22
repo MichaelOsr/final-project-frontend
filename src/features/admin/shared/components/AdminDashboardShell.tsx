@@ -8,6 +8,7 @@ import {
   Loader2Icon,
   LogOutIcon,
   PackageIcon,
+  ReceiptIcon,
   StoreIcon,
   TagsIcon,
   UserCogIcon,
@@ -24,6 +25,7 @@ const superAdminNavItems = [
   { label: "Products", to: "/admin/products", icon: PackageIcon },
   { label: "Categories", to: "/admin/categories", icon: TagsIcon },
   { label: "Stores", to: "/admin/stores", icon: StoreIcon },
+  { label: "Transactions", to: "/admin/orders", icon: ReceiptIcon },
   { label: "Accounts", to: "/admin/admin-accounts", icon: UserCogIcon },
 ];
 
@@ -31,6 +33,7 @@ const storeNavItems = [
   { label: "Dashboard", to: "/admin/store/dashboard", icon: LayoutDashboardIcon },
   { label: "Stock", to: "/admin/store/stock", icon: PackageIcon },
   { label: "Transfers", to: "/admin/store/stock/transfers", icon: ArrowRightLeftIcon },
+  { label: "Transactions", to: "/admin/orders", icon: ReceiptIcon },
   { label: "Categories", to: "/admin/store/categories", icon: TagsIcon },
   { label: "Staff", to: "/admin/store/staff", icon: UserCogIcon },
 ];
