@@ -102,5 +102,6 @@ export function useLocation() {
     error,
     requestLocation,
     searchManualLocation,
+    selectFromAddress: resolveNearest,
   }
 }
