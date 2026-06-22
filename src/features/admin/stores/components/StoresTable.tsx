@@ -11,8 +11,8 @@ import type { AdminStore } from "../types/adminStore.types";
 interface StoresTableProps {
   isLoading: boolean;
   stores: AdminStore[];
-  onDelete: () => void;
-  onEdit: () => void;
+  onDelete: (store: AdminStore) => void;
+  onEdit: (store: AdminStore) => void;
   onPageChange: (page: number) => void;
   onSortChange: (sortBy: StoreSortBy, sortOrder: SortOrder) => void;
   onView: (store: AdminStore) => void;
@@ -83,15 +83,15 @@ function StoreActions({
   onView,
 }: {
   store: AdminStore;
-  onDelete: () => void;
-  onEdit: () => void;
+  onDelete: (store: AdminStore) => void;
+  onEdit: (store: AdminStore) => void;
   onView: (store: AdminStore) => void;
 }) {
   return (
     <div className="flex justify-center gap-1">
       <Button variant="ghost" size="icon-sm" onClick={() => onView(store)} aria-label="View store"><EyeIcon className="size-4" /></Button>
-      <Button variant="ghost" size="icon-sm" onClick={onEdit} aria-label="Edit store"><PencilIcon className="size-4" /></Button>
-      <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Delete store"><Trash2Icon className="size-4 text-destructive" /></Button>
+      <Button variant="ghost" size="icon-sm" onClick={() => onEdit(store)} aria-label="Edit store"><PencilIcon className="size-4" /></Button>
+      <Button variant="ghost" size="icon-sm" onClick={() => onDelete(store)} aria-label="Delete store"><Trash2Icon className="size-4 text-destructive" /></Button>
     </div>
   );
 }
