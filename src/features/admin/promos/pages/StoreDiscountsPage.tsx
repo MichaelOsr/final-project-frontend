@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,27 +10,22 @@ import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDas
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
 import { useStoreContext } from "@/features/admin/store-dashboard/hooks/useStoreContext";
-import { useAdminSessionStore } from "@/store/adminSession.store";
 import { discountService } from "../services/promo.service";
 import type { Discount, DiscountSortField, DiscountType } from "../types/promo.types";
 import { DiscountFilters } from "../components/DiscountFilters";
 import { DiscountsTable } from "../components/DiscountsTable";
-import { DiscountFormDialog } from "../components/DiscountFormDialog";
 import { DeleteDiscountDialog } from "../components/DeleteDiscountDialog";
 
 const DEFAULT_META: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
 
 export function StoreDiscountsPage() {
   usePageTitle("Discounts");
+  const navigate = useNavigate();
   const { storeId, isReady } = useStoreContext();
-  const admin = useAdminSessionStore((s) => s.user);
-  const isSuperAdmin = admin?.role === "superAdmin";
   const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [meta, setMeta] = useState(DEFAULT_META);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Discount | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Discount | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
@@ -77,20 +72,12 @@ export function StoreDiscountsPage() {
   }
 
   function openEdit(d: Discount) {
-    setEditTarget(d);
-    setIsFormOpen(true);
+    navigate(`/admin/store/discounts/${d.id}/edit`);
   }
 
   function openDelete(d: Discount) {
     setDeleteTarget(d);
     setIsDeleteOpen(true);
-  }
-
-  function handleSaved(saved: Discount) {
-    setDiscounts((prev) => {
-      const idx = prev.findIndex((d) => d.id === saved.id);
-      return idx >= 0 ? prev.map((d) => (d.id === saved.id ? saved : d)) : [saved, ...prev];
-    });
   }
 
   return (
@@ -100,9 +87,11 @@ export function StoreDiscountsPage() {
           <h1 className="text-xl font-semibold">Discounts</h1>
           <p className="text-sm text-muted-foreground">Manage product discounts for this store.</p>
         </div>
-        <Button onClick={() => { setEditTarget(null); setIsFormOpen(true); }}>
-          <PlusIcon className="size-4" />
-          New Discount
+        <Button asChild>
+          <Link to="/admin/store/discounts/new">
+            <PlusIcon className="size-4" />
+            New Discount
+          </Link>
         </Button>
       </div>
 
@@ -124,14 +113,6 @@ export function StoreDiscountsPage() {
         </CardContent>
       </Card>
 
-      <DiscountFormDialog
-        open={isFormOpen}
-        discount={editTarget}
-        storeId={storeId}
-        isSuperAdmin={isSuperAdmin}
-        onOpenChange={setIsFormOpen}
-        onSaved={handleSaved}
-      />
       <DeleteDiscountDialog
         open={isDeleteOpen}
         discount={deleteTarget}
