@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { FormikHelpers } from "formik";
 import { useSearchParams } from "react-router-dom";
 import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -10,26 +11,39 @@ import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDas
 import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
+import { DeleteStoreDialog } from "../components/DeleteStoreDialog";
 import { StoreDetailDialog } from "../components/StoreDetailDialog";
 import { StoreFilters } from "../components/StoreFilters";
+import { StoreFormDialog } from "../components/StoreFormDialog";
 import { StoresTable, type StoreSortBy } from "../components/StoresTable";
 import { adminStoreService } from "../services/adminStore.service";
-import type { AdminStore } from "../types/adminStore.types";
+import type { AdminStore, StoreFormValues } from "../types/adminStore.types";
 
 const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
+const emptyValues: StoreFormValues = { name: "", latitude: "", longitude: "" };
 
 export function AdminStoresPage() {
   usePageTitle("Stores");
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const [stores, setStores] = useState<AdminStore[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [meta, setMeta] = useState(defaultMeta);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailStore, setDetailStore] = useState<AdminStore | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [meta, setMeta] = useState(defaultMeta);
-  const [stores, setStores] = useState<AdminStore[]>([]);
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<AdminStore | null>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<AdminStore | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
   const page = getPageParam(searchParams);
   const query = searchParams.get("q") ?? "";
-  const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
   const sortBy = getSortParam(searchParams.get("sort"));
   const sortOrder = getSortOrderParam(searchParams.get("order"), sortBy);
 
@@ -57,7 +71,7 @@ export function AdminStoresPage() {
     return () => {
       isMounted = false;
     };
-  }, [page, query, sortBy, sortOrder]);
+  }, [page, query, sortBy, sortOrder, refreshKey]);
 
   async function openDetail(store: AdminStore) {
     setDetailStore(store);
@@ -73,13 +87,74 @@ export function AdminStoresPage() {
     }
   }
 
-  function showNotImplemented() {
-    toast.info("Store management is not implemented yet");
+  function openCreate() {
+    setEditTarget(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(store: AdminStore) {
+    setEditTarget(store);
+    setFormOpen(true);
+  }
+
+  function closeForm() {
+    setFormOpen(false);
+    setEditTarget(null);
+  }
+
+  async function submitStore(
+    values: StoreFormValues,
+    helpers: FormikHelpers<StoreFormValues>,
+  ) {
+    const payload = {
+      name: values.name.trim(),
+      latitude: values.latitude.trim() || null,
+      longitude: values.longitude.trim() || null,
+    };
+    try {
+      if (editTarget) {
+        await adminStoreService.update(editTarget.id, payload);
+      } else {
+        await adminStoreService.create(payload);
+      }
+      toast.success(
+        editTarget ? "Store updated successfully" : "Store created successfully",
+      );
+      closeForm();
+      setRefreshKey((k) => k + 1);
+    } catch (error) {
+      toast.error(getAdminErrorMessage(error));
+    } finally {
+      helpers.setSubmitting(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await adminStoreService.delete(deleteTarget.id);
+      toast.success("Store deleted successfully");
+      setDeleteTarget(null);
+      setRefreshKey((k) => k + 1);
+    } catch (error) {
+      toast.error(getAdminErrorMessage(error));
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   function updateFilters(updates: Record<string, string | number>) {
     setSearchParams(updateSearchParams(searchParams, updates));
   }
+
+  const formInitialValues: StoreFormValues = editTarget
+    ? {
+        name: editTarget.name,
+        latitude: editTarget.latitude ?? "",
+        longitude: editTarget.longitude ?? "",
+      }
+    : emptyValues;
 
   return (
     <AdminDashboardShell>
@@ -88,7 +163,7 @@ export function AdminStoresPage() {
           <h1 className="text-xl font-semibold">Stores</h1>
           <p className="text-sm text-muted-foreground">Manage store locations and coordinates.</p>
         </div>
-        <Button type="button" onClick={showNotImplemented}>
+        <Button type="button" onClick={openCreate}>
           <PlusIcon className="size-4" />
           Create Store
         </Button>
@@ -102,8 +177,8 @@ export function AdminStoresPage() {
         <StoresTable
           stores={stores}
           isLoading={isLoading}
-          onDelete={showNotImplemented}
-          onEdit={showNotImplemented}
+          onDelete={setDeleteTarget}
+          onEdit={openEdit}
           onPageChange={(nextPage) => updateFilters({ page: nextPage })}
           onSortChange={(nextSortBy, nextOrder) => updateFilters({ sort: nextSortBy, order: nextOrder, page: 1 })}
           onView={openDetail}
@@ -112,7 +187,26 @@ export function AdminStoresPage() {
           sortOrder={sortOrder}
         />
       </section>
-      <StoreDetailDialog store={detailStore} isLoading={isDetailLoading} open={detailOpen} onOpenChange={setDetailOpen} />
+      <StoreFormDialog
+        initialValues={formInitialValues}
+        isEdit={Boolean(editTarget)}
+        open={formOpen}
+        onOpenChange={(open) => (open ? setFormOpen(true) : closeForm())}
+        onSubmit={submitStore}
+      />
+      <StoreDetailDialog
+        store={detailStore}
+        isLoading={isDetailLoading}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
+      <DeleteStoreDialog
+        storeName={deleteTarget?.name ?? ""}
+        isDeleting={isDeleting}
+        open={Boolean(deleteTarget)}
+        onConfirm={confirmDelete}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      />
     </AdminDashboardShell>
   );
 }
