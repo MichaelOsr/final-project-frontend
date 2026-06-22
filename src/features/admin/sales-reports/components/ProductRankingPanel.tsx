@@ -1,0 +1,125 @@
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { BoxesIcon, CoinsIcon, PackageIcon } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable";
+import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
+import {
+  getPageParam,
+  updateSearchParams,
+} from "@/features/admin/shared/utils/searchParams";
+import { formatPrice } from "@/lib/format";
+import { formatNumber } from "@/features/admin/shared/utils/adminFormat";
+import { salesReportService } from "../services/salesReport.service";
+import { useReportError } from "../hooks/useReportError";
+import type {
+  ProductRankingItem,
+  ProductSalesQuery,
+  ProductSortBy,
+  ResolvedRange,
+} from "../types/salesReport.types";
+import { ProductSalesTable } from "./ProductSalesTable";
+import { ProductTrendDialog } from "./ProductTrendDialog";
+import { AccessDenied } from "./ChartFeedback";
+import { SalesSummaryCards } from "./SalesSummaryCards";
+import { RangeCaption } from "./RangeCaption";
+
+const DEFAULT_META: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
+
+export function ProductRankingPanel({
+  query,
+  isActive,
+}: {
+  query: ProductSalesQuery;
+  isActive: boolean;
+}) {
+  const handleError = useReportError();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [items, setItems] = useState<ProductRankingItem[]>([]);
+  const [meta, setMeta] = useState(DEFAULT_META);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totals, setTotals] = useState({ items: 0, gross: 0 });
+  const [range, setRange] = useState<ResolvedRange | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [forbidden, setForbidden] = useState(false);
+  const [selected, setSelected] = useState<ProductRankingItem | null>(null);
+
+  const page = getPageParam(searchParams);
+  const sortBy = (searchParams.get("sortBy") ?? "productSales") as ProductSortBy;
+  const sortOrder = (searchParams.get("sortOrder") ?? "desc") as SortOrder;
+
+  useEffect(() => {
+    if (!isActive) return;
+    let mounted = true;
+    async function load() {
+      setIsLoading(true);
+      setForbidden(false);
+      try {
+        const res = await salesReportService.productRanking({
+          ...query,
+          page,
+          limit: 10,
+          sortBy,
+          sortOrder,
+        });
+        if (!mounted) return;
+        setItems(res.data.data.items);
+        setMeta(res.data.meta ?? DEFAULT_META);
+        setTotalProducts(res.data.data.summary.totalProducts);
+        setTotals({
+          items: res.data.data.summary.totalItemsSold,
+          gross: res.data.data.summary.productSales,
+        });
+        setRange(res.data.data.filters.resolvedRange);
+      } catch (error) {
+        if (mounted && handleError(error) === "forbidden") setForbidden(true);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [isActive, query, page, sortBy, sortOrder, handleError]);
+
+  function update(updates: Record<string, string | number>) {
+    setSearchParams(updateSearchParams(searchParams, updates));
+  }
+
+  if (forbidden) return <AccessDenied />;
+
+  return (
+    <div className="space-y-4">
+      <RangeCaption range={range} />
+      <SalesSummaryCards
+        metrics={[
+          { label: "Products Sold", value: formatNumber(totalProducts), icon: PackageIcon },
+          { label: "Items Sold", value: formatNumber(totals.items), icon: BoxesIcon },
+          { label: "Product Sales", value: formatPrice(totals.gross), icon: CoinsIcon },
+        ]}
+      />
+      <Card className="overflow-hidden rounded-lg p-0">
+        <CardContent className="p-0">
+          <ProductSalesTable
+            items={items}
+            isLoading={isLoading}
+            meta={meta}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortChange={(nextBy, nextOrder) =>
+              update({ sortBy: nextBy, sortOrder: nextOrder, page: 1 })
+            }
+            onPageChange={(nextPage) => update({ page: nextPage })}
+            onSelect={setSelected}
+          />
+        </CardContent>
+      </Card>
+      <ProductTrendDialog
+        product={selected}
+        query={query}
+        onClose={() => setSelected(null)}
+      />
+    </div>
+  );
+}
