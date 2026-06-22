@@ -43,7 +43,7 @@ export interface OrderStore {
   address: string | null
 }
 
-// Shape order di list (findTransactionsByCustomer — includes items + store).
+// Shape order di list (findTransactionsByCustomer).
 export interface OrderSummary {
   id: string
   transactionStatus: TransactionStatus
@@ -68,15 +68,13 @@ export interface OrderSummary {
   }[]
 }
 
-// Shape order detail (findTransactionById — includes items+product, voucher, dll).
+// Shape order detail (findTransactionById).
 export interface OrderDetail {
   id: string
   transactionStatus: TransactionStatus
   totalPrice: number
   deliveryFee: number
   shipping_vendor: string
-  // paymentType: diset oleh backend saat getSnapToken ("midtrans")
-  // atau saat uploadPaymentProof ("manual_transfer"). Null = belum ada aksi.
   paymentType: string | null
   paymentExpiredAt: string | null
   createdAt: string
@@ -191,5 +189,39 @@ export interface GetSnapTokenResponse {
   message: string
   data: {
     snapToken: string
+  }
+}
+
+// --------------------------------------------------------
+// VOUCHER (user-facing checkout)
+// --------------------------------------------------------
+
+export type VoucherDiscountType = "percentage" | "nominal"
+export type VoucherType = "transaction" | "delivery"
+
+// Shape voucher dari GET /api/vouchers/store/:storeId
+export interface PublicVoucher {
+  id: string
+  name: string
+  code: string
+  quantity: number
+  storeId: string | null
+  minimumTransaction: number | null
+  maxDiscount: number | null
+  discountType: VoucherDiscountType
+  voucherType: VoucherType
+  value: number
+  startDate: string
+  endDate: string
+  // "global" = storeId null, "store" = store-scoped
+  scope: "global" | "store"
+}
+
+// Response GET /api/vouchers/store/:storeId
+export interface GetStoreVouchersResponse {
+  message: string
+  data: {
+    vouchers: PublicVoucher[]         // voucherType = transaction
+    deliveryVouchers: PublicVoucher[] // voucherType = delivery
   }
 }

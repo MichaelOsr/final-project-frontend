@@ -2,34 +2,23 @@ import { useEffect, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import {
-  ShoppingBagIcon,
-  MapPinIcon,
-  TruckIcon,
-  CreditCardIcon,
-  BuildingIcon,
-  Loader2Icon,
-  StoreIcon,
+  ShoppingBagIcon, MapPinIcon, TruckIcon, CreditCardIcon,
+  BuildingIcon, Loader2Icon, StoreIcon, TagIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/store/cart.store"
 import { useOrderStore } from "@/store/order.store"
+import { useLocationStore } from "@/store/location.store"
 import { usePageTitle } from "@/hooks/usePageTitle"
 import { formatPrice } from "../utils/order.utils"
 import { addressService } from "../services/address.service"
 import { shippingService } from "../services/shipping.service"
+import { voucherService } from "../services/voucher.service"
 import { geocodeService } from "@/features/home/services/geocode.service"
-import type {
-  PaymentMethod,
-  UserAddress,
-  ShippingCostItem,
-} from "../types/order.types"
+import { VoucherSelector } from "../components/VoucherSelector"
+import type { PaymentMethod, UserAddress, ShippingCostItem, PublicVoucher } from "../types/order.types"
 
-const PAYMENT_METHODS: {
-  id: PaymentMethod
-  label: string
-  description: string
-  icon: React.ReactNode
-}[] = [
+const PAYMENT_METHODS: { id: PaymentMethod; label: string; description: string; icon: React.ReactNode }[] = [
   {
     id: "manual_transfer",
     label: "Transfer Manual",
@@ -44,15 +33,29 @@ const PAYMENT_METHODS: {
   },
 ]
 
+// Kalkulasi potongan voucher — mirrors logika di backend order.service.ts
+function calcVoucherDiscount(
+  discountType: "percentage" | "nominal",
+  value: number,
+  amount: number,
+  maxDiscount: number | null,
+): number {
+  const raw = discountType === "percentage"
+    ? Math.floor((amount * value) / 100)
+    : value
+  return maxDiscount !== null ? Math.min(raw, maxDiscount) : raw
+}
+
 export function CheckoutPage() {
   usePageTitle("Checkout")
   const navigate = useNavigate()
   const { cart, fetchCart, clear: clearCart } = useCartStore()
   const { createOrder } = useOrderStore()
+  const storeId = useLocationStore((s) => s.storeId)
 
-  const [addresses, setAddresses] = useState<UserAddress[]>([])
   const [selectedAddress, setSelectedAddress] = useState<UserAddress | null>(null)
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(true)
+  const [addressLabel, setAddressLabel] = useState<string | null>(null)
 
   const [shippingOptions, setShippingOptions] = useState<ShippingCostItem[]>([])
   const [selectedShipping, setSelectedShipping] = useState<ShippingCostItem | null>(null)
@@ -62,45 +65,43 @@ export function CheckoutPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>("manual_transfer")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Label hasil reverse geocoding per address (cache per id).
-  const [addressLabels, setAddressLabels] = useState<Record<string, string>>({})
+  const [vouchers, setVouchers] = useState<PublicVoucher[]>([])
+  const [deliveryVouchers, setDeliveryVouchers] = useState<PublicVoucher[]>([])
+  const [selectedVoucher, setSelectedVoucher] = useState<PublicVoucher | null>(null)
+  const [selectedDeliveryVoucher, setSelectedDeliveryVoucher] = useState<PublicVoucher | null>(null)
+  const [isLoadingVouchers, setIsLoadingVouchers] = useState(false)
 
-  // Geocode alamat yang sedang dipilih supaya bisa tampil label lengkap.
+  // Load alamat default — dipakai untuk addressId order, ditampilkan read-only.
+  useEffect(() => {
+    fetchCart()
+    const loadAddress = async () => {
+      try {
+        const { data } = await addressService.getAddresses()
+        const defaultAddr = data.data.find((a) => a.isDefault) ?? data.data[0]
+        if (defaultAddr) setSelectedAddress(defaultAddr)
+      } catch {
+        toast.error("Gagal memuat alamat")
+      } finally {
+        setIsLoadingAddresses(false)
+      }
+    }
+    loadAddress()
+  }, [fetchCart])
+
+  // Reverse geocode alamat terpilih untuk label yang lebih deskriptif.
   useEffect(() => {
     if (!selectedAddress) return
-    if (addressLabels[selectedAddress.id]) return
     const geocode = async () => {
       try {
         const { data } = await geocodeService.getAddress(
           parseFloat(selectedAddress.latitude),
           parseFloat(selectedAddress.longitude),
         )
-        if (data.data?.label) {
-          setAddressLabels((prev) => ({ ...prev, [selectedAddress.id]: data.data!.label }))
-        }
-      } catch {
-        // Silently fail — label formatnya tidak kritis
-      }
+        if (data.data?.label) setAddressLabel(data.data.label)
+      } catch { /* silently fail */ }
     }
     void geocode()
-  }, [selectedAddress, addressLabels])
-
-  useEffect(() => {
-    fetchCart()
-    const loadAddresses = async () => {
-      try {
-        const { data } = await addressService.getAddresses()
-        setAddresses(data.data)
-        const defaultAddr = data.data.find((a) => a.isDefault) ?? data.data[0]
-        if (defaultAddr) setSelectedAddress(defaultAddr)
-      } catch {
-        toast.error("Gagal memuat daftar alamat")
-      } finally {
-        setIsLoadingAddresses(false)
-      }
-    }
-    loadAddresses()
-  }, [fetchCart])
+  }, [selectedAddress])
 
   const fetchShippingCost = useCallback(async (addressId: string) => {
     setIsLoadingShipping(true)
@@ -119,8 +120,23 @@ export function CheckoutPage() {
   }, [])
 
   useEffect(() => {
-    if (selectedAddress) fetchShippingCost(selectedAddress.id)
+    if (selectedAddress) void fetchShippingCost(selectedAddress.id)
   }, [selectedAddress, fetchShippingCost])
+
+  // Fetch voucher untuk toko terdekat setelah storeId tersedia.
+  useEffect(() => {
+    if (!storeId) return
+    const fetchVouchers = async () => {
+      setIsLoadingVouchers(true)
+      try {
+        const { data } = await voucherService.getStoreVouchers(storeId)
+        setVouchers(data.data.vouchers)
+        setDeliveryVouchers(data.data.deliveryVouchers)
+      } catch { /* silently fail — voucher section tetap muncul tapi kosong */ }
+      finally { setIsLoadingVouchers(false) }
+    }
+    void fetchVouchers()
+  }, [storeId])
 
   const items = cart?.items ?? []
 
@@ -135,19 +151,28 @@ export function CheckoutPage() {
     return sum + unitPrice * item.quantity
   }, 0)
 
-  const total = subtotal + (selectedShipping?.cost ?? 0)
+  const deliveryFee = selectedShipping?.cost ?? 0
+  const voucherDiscount = selectedVoucher
+    ? calcVoucherDiscount(selectedVoucher.discountType, selectedVoucher.value, subtotal, selectedVoucher.maxDiscount)
+    : 0
+  const deliveryDiscount = selectedDeliveryVoucher
+    ? calcVoucherDiscount(selectedDeliveryVoucher.discountType, selectedDeliveryVoucher.value, deliveryFee, selectedDeliveryVoucher.maxDiscount)
+    : 0
+  const finalDeliveryFee = Math.max(0, deliveryFee - deliveryDiscount)
+  const total = Math.max(0, subtotal - voucherDiscount) + finalDeliveryFee
 
   const handlePlaceOrder = async () => {
     if (!cart?.items.length) { toast.error("Cart kamu kosong"); return }
-    if (!selectedAddress) { toast.error("Pilih alamat pengiriman dulu"); return }
+    if (!selectedAddress) { toast.error("Alamat pengiriman tidak tersedia"); return }
     if (!selectedShipping) { toast.error("Pilih metode pengiriman dulu"); return }
-
     setIsSubmitting(true)
     try {
       const orderId = await createOrder({
         addressId: selectedAddress.id,
         shippingVendor: `${selectedShipping.name} ${selectedShipping.service}`,
-        deliveryFee: selectedShipping.cost,
+        deliveryFee,
+        voucherId: selectedVoucher?.id,
+        deliveryVoucherId: selectedDeliveryVoucher?.id,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -156,7 +181,6 @@ export function CheckoutPage() {
       })
       clearCart()
       toast.success("Pesanan berhasil dibuat!")
-      // Redirect ke halaman pembayaran sesuai metode yang dipilih
       if (selectedPayment === "manual_transfer") {
         navigate(`/payment/manual-transfer/${orderId}`)
       } else {
@@ -164,8 +188,8 @@ export function CheckoutPage() {
       }
     } catch (err: unknown) {
       const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "Gagal membuat pesanan"
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? "Gagal membuat pesanan"
       toast.error(message)
     } finally {
       setIsSubmitting(false)
@@ -195,9 +219,9 @@ export function CheckoutPage() {
       </div>
 
       <div className="grid gap-4">
-        {/* Alamat Pengiriman */}
+        {/* Alamat Pengiriman — read-only, tidak bisa diganti di halaman ini */}
         <div className="rounded-xl border border-border bg-card p-5">
-          <div className="mb-4 flex items-center gap-2">
+          <div className="mb-3 flex items-center gap-2">
             <MapPinIcon className="size-4 text-primary" />
             <h2 className="text-sm font-bold">Alamat Pengiriman</h2>
           </div>
@@ -206,47 +230,18 @@ export function CheckoutPage() {
               <Loader2Icon className="size-4 animate-spin" />
               Memuat alamat...
             </div>
-          ) : addresses.length === 0 ? (
+          ) : !selectedAddress ? (
             <p className="text-sm text-muted-foreground">
-              Kamu belum punya alamat tersimpan. Tambahkan alamat di halaman profil.
+              Kamu belum punya alamat. Tambahkan di halaman profil.
             </p>
           ) : (
-            <div className="grid gap-2">
-              {addresses.map((addr) => (
-                <label
-                  key={addr.id}
-                  className={`flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 transition-colors ${
-                    selectedAddress?.id === addr.id
-                      ? "border-primary bg-accent"
-                      : "border-border hover:bg-muted/50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="address"
-                    className="mt-0.5 accent-primary"
-                    checked={selectedAddress?.id === addr.id}
-                    onChange={() => setSelectedAddress(addr)}
-                  />
-                  <div>
-                    <p className="text-sm font-medium">
-                      {addr.name}
-                      {addr.isDefault && (
-                        <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                          Utama
-                        </span>
-                      )}
-                    </p>
-                    {addressLabels[addr.id] ? (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {addressLabels[addr.id]}
-                      </p>
-                    ) : addr.notes ? (
-                      <p className="mt-0.5 text-xs text-muted-foreground">{addr.notes}</p>
-                    ) : null}
-                  </div>
-                </label>
-              ))}
+            <div className="rounded-lg bg-accent px-4 py-3">
+              <p className="text-sm font-medium">{selectedAddress.name}</p>
+              {addressLabel ? (
+                <p className="mt-0.5 text-xs text-muted-foreground">{addressLabel}</p>
+              ) : selectedAddress.notes ? (
+                <p className="mt-0.5 text-xs text-muted-foreground">{selectedAddress.notes}</p>
+              ) : null}
             </div>
           )}
         </div>
@@ -258,7 +253,7 @@ export function CheckoutPage() {
             <h2 className="text-sm font-bold">Metode Pengiriman</h2>
           </div>
           {!selectedAddress ? (
-            <p className="text-sm text-muted-foreground">Pilih alamat dulu untuk melihat opsi pengiriman.</p>
+            <p className="text-sm text-muted-foreground">Alamat belum tersedia.</p>
           ) : isLoadingShipping ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2Icon className="size-4 animate-spin" />
@@ -317,9 +312,7 @@ export function CheckoutPage() {
               <label
                 key={method.id}
                 className={`flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 transition-colors ${
-                  selectedPayment === method.id
-                    ? "border-primary bg-accent"
-                    : "border-border hover:bg-muted/50"
+                  selectedPayment === method.id ? "border-primary bg-accent" : "border-border hover:bg-muted/50"
                 }`}
               >
                 <input
@@ -339,6 +332,46 @@ export function CheckoutPage() {
               </label>
             ))}
           </div>
+        </div>
+
+        {/* Voucher Belanja */}
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <TagIcon className="size-4 text-primary" />
+            <h2 className="text-sm font-bold">Voucher Belanja</h2>
+            {selectedVoucher && (
+              <span className="ml-auto text-xs font-medium text-primary">
+                -{formatPrice(voucherDiscount)}
+              </span>
+            )}
+          </div>
+          <VoucherSelector
+            vouchers={vouchers}
+            selected={selectedVoucher}
+            onSelect={setSelectedVoucher}
+            relevantAmount={subtotal}
+            isLoading={isLoadingVouchers}
+          />
+        </div>
+
+        {/* Voucher Ongkir */}
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <TruckIcon className="size-4 text-primary" />
+            <h2 className="text-sm font-bold">Voucher Ongkir</h2>
+            {selectedDeliveryVoucher && (
+              <span className="ml-auto text-xs font-medium text-primary">
+                -{formatPrice(deliveryDiscount)}
+              </span>
+            )}
+          </div>
+          <VoucherSelector
+            vouchers={deliveryVouchers}
+            selected={selectedDeliveryVoucher}
+            onSelect={setSelectedDeliveryVoucher}
+            relevantAmount={deliveryFee}
+            isLoading={isLoadingVouchers}
+          />
         </div>
 
         {/* Ringkasan Pesanan */}
@@ -369,6 +402,12 @@ export function CheckoutPage() {
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-medium">{formatPrice(subtotal)}</span>
             </div>
+            {selectedVoucher && (
+              <div className="flex justify-between text-primary">
+                <span>Voucher ({selectedVoucher.code})</span>
+                <span className="font-medium">-{formatPrice(voucherDiscount)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">
                 Ongkos kirim{selectedShipping && ` (${selectedShipping.name} ${selectedShipping.service})`}
@@ -377,10 +416,16 @@ export function CheckoutPage() {
                 {isLoadingShipping ? (
                   <Loader2Icon className="size-3 animate-spin" />
                 ) : selectedShipping ? (
-                  formatPrice(selectedShipping.cost)
+                  formatPrice(deliveryFee)
                 ) : "-"}
               </span>
             </div>
+            {selectedDeliveryVoucher && (
+              <div className="flex justify-between text-primary">
+                <span>Voucher Ongkir ({selectedDeliveryVoucher.code})</span>
+                <span className="font-medium">-{formatPrice(deliveryDiscount)}</span>
+              </div>
+            )}
           </div>
           <div className="my-4 border-t border-border" />
           <div className="flex justify-between text-base font-bold">
