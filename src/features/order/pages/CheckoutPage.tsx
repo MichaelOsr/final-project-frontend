@@ -180,7 +180,7 @@ export function CheckoutPage() {
         </div>
         <h2 className="mb-2 text-xl font-bold">Tidak ada item untuk di-checkout</h2>
         <p className="mb-8 text-muted-foreground">Tambahkan produk ke cart dulu sebelum melanjutkan.</p>
-        <Button onClick={() => navigate("/products")} className="h-11 rounded-full px-8">
+        <Button onClick={() => navigate("/products-catalog")} className="h-11 rounded-full px-8">
           Mulai belanja
         </Button>
       </div>

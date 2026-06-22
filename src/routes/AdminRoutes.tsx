@@ -23,6 +23,8 @@ import { StoreStockHistoryPage } from "@/features/admin/store-dashboard/pages/St
 import { StoreStaffPage } from "@/features/admin/store-dashboard/pages/StoreStaffPage";
 import { StoreProductDetailPage } from "@/features/admin/store-dashboard/pages/StoreProductDetailPage";
 import { StoreTransfersPage } from "@/features/admin/store-dashboard/pages/StoreTransfersPage";
+import { AdminOrdersPage } from "@/features/admin/orders/pages/AdminOrdersPage";
+import { AdminOrderDetailPage } from "@/features/admin/orders/pages/AdminOrderDetailPage";
 
 export const adminRoutes = (
   <Fragment>
@@ -175,6 +177,22 @@ export const adminRoutes = (
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin"]}>
             <EditAdminAccountPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/orders"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <AdminOrdersPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/orders/:orderId"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <AdminOrderDetailPage />
           </AdminProtectedRoute>
         }
       />

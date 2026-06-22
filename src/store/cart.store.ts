@@ -8,7 +8,7 @@ interface CartState {
   totalItems: number
   isLoading: boolean
   // Fetch ulang cart dari server.
-  fetchCart: () => Promise<void>
+  fetchCart: (storeId?: string) => Promise<void>
   // Update quantity satu item secara optimistik, lalu sync ke server.
   updateItem: (cartItemId: string, quantity: number) => Promise<void>
   // Hapus satu item secara optimistik, lalu sync ke server.
@@ -26,10 +26,10 @@ export const useCartStore = create<CartState>((set, get) => ({
   totalItems: 0,
   isLoading: false,
 
-  fetchCart: async () => {
+  fetchCart: async (storeId?: string) => {
     set({ isLoading: true })
     try {
-      const { data } = await cartService.getCart()
+      const { data } = await cartService.getCart(storeId)
       const cart = data.data ?? null
       const items = cart?.items ?? []
       set({ cart, totalItems: computeTotalItems(items) })
