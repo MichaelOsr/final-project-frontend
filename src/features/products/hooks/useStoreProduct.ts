@@ -6,7 +6,7 @@ import { productService } from "../services/product.service";
 import type { StoreProduct } from "../types/product.types";
 
 async function fetchProduct(storeId: string, slug: string): Promise<StoreProduct | null> {
-  const res = await productService.getStoreProduct(storeId, slug);
+  const res = await productService.getStoreStockProduct(storeId, slug);
   return res.data.data ?? null;
 }
 

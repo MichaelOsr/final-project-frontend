@@ -23,6 +23,13 @@ import { StoreStockHistoryPage } from "@/features/admin/store-dashboard/pages/St
 import { StoreStaffPage } from "@/features/admin/store-dashboard/pages/StoreStaffPage";
 import { StoreProductDetailPage } from "@/features/admin/store-dashboard/pages/StoreProductDetailPage";
 import { StoreTransfersPage } from "@/features/admin/store-dashboard/pages/StoreTransfersPage";
+import { StoreDiscountsPage } from "@/features/admin/promos/pages/StoreDiscountsPage";
+import { CreateDiscountPage } from "@/features/admin/promos/pages/CreateDiscountPage";
+import { EditDiscountPage } from "@/features/admin/promos/pages/EditDiscountPage";
+import { StoreVouchersPage } from "@/features/admin/promos/pages/StoreVouchersPage";
+import { CreateVoucherPage } from "@/features/admin/promos/pages/CreateVoucherPage";
+import { EditVoucherPage } from "@/features/admin/promos/pages/EditVoucherPage";
+import { StorePromoReportsPage } from "@/features/admin/promos/pages/StorePromoReportsPage";
 import { AdminOrdersPage } from "@/features/admin/orders/pages/AdminOrdersPage";
 import { AdminOrderDetailPage } from "@/features/admin/orders/pages/AdminOrderDetailPage";
 
@@ -85,6 +92,62 @@ export const adminRoutes = (
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
             <StoreTransfersPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/discounts"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <StoreDiscountsPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/discounts/new"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <CreateDiscountPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/discounts/:id/edit"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <EditDiscountPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/vouchers"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <StoreVouchersPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/vouchers/new"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <CreateVoucherPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/vouchers/:id/edit"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <EditVoucherPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/promo-reports"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <StorePromoReportsPage />
           </AdminProtectedRoute>
         }
       />

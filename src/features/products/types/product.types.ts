@@ -1,3 +1,6 @@
+import type { ActiveDiscount, PricePreview } from "@/types/product.types";
+export type { ActiveDiscount, PricePreview };
+
 export interface ProductImage {
   id: string;
   image: string;
@@ -41,6 +44,8 @@ export interface StoreProduct {
   category: ProductCategory;
   images: ProductImage[];
   storeStock: StoreStock;
+  activeDiscount?: ActiveDiscount | null;
+  pricePreview?: PricePreview;
 }
 
 export interface Category {
@@ -48,6 +53,20 @@ export interface Category {
   name: string;
 }
 
+// Params for GET /stocks/store/:storeId (primary catalog endpoint)
+export interface CatalogStockParams {
+  q?: string;
+  categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  sortBy?: "name" | "price" | "createdAt" | "updatedAt";
+  sortOrder?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+}
+
+// Params for GET /stores/:storeId/products (secondary)
 export interface CatalogProductsParams {
   q?: string;
   categoryId?: string;

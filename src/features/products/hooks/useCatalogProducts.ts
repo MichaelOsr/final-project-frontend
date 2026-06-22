@@ -4,7 +4,7 @@ import { productService } from "../services/product.service";
 import { getErrorMessage } from "@/lib/error";
 import { getPageParam } from "../utils/searchParams";
 import type { PaginationMeta } from "@/types/api.types";
-import type { CatalogProductsParams, StoreProduct } from "../types/product.types";
+import type { CatalogStockParams, StoreProduct } from "../types/product.types";
 
 const DEFAULT_LIMIT = 12;
 const MAX_LIMIT = 100;
@@ -27,7 +27,7 @@ export function useCatalogProducts(storeId: string | null) {
     setError(null);
 
     productService
-      .getStoreProducts(storeId, params)
+      .getStoreStockItems(storeId, params)
       .then(({ data }) => {
         if (!active) return;
         setProducts(data.data);
@@ -49,7 +49,7 @@ export function useCatalogProducts(storeId: string | null) {
   return { products, meta, isLoading, error };
 }
 
-function buildParams(searchParams: URLSearchParams): CatalogProductsParams {
+function buildParams(searchParams: URLSearchParams): CatalogStockParams {
   const minPrice = toNonNegativeInt(searchParams.get("minPrice"));
   const maxPrice = toNonNegativeInt(searchParams.get("maxPrice"));
 
@@ -59,8 +59,8 @@ function buildParams(searchParams: URLSearchParams): CatalogProductsParams {
     inStock: searchParams.get("inStock") === "true" ? true : undefined,
     minPrice,
     maxPrice: minPrice !== undefined && maxPrice !== undefined && maxPrice < minPrice ? undefined : maxPrice,
-    sortBy: (searchParams.get("sortBy") as CatalogProductsParams["sortBy"]) || "price",
-    sortOrder: (searchParams.get("sortOrder") as CatalogProductsParams["sortOrder"]) || "asc",
+    sortBy: (searchParams.get("sortBy") as CatalogStockParams["sortBy"]) || "price",
+    sortOrder: (searchParams.get("sortOrder") as CatalogStockParams["sortOrder"]) || "asc",
     page: getPageParam(searchParams),
     limit: getLimitParam(searchParams),
   };

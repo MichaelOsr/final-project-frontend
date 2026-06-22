@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react"
 import { productService } from "@/features/home/services/product.service"
 import { getErrorMessage } from "@/lib/error"
-import type { Product } from "@/types/product.types"
+import type { StoreProduct } from "@/features/products/types/product.types"
 
-// Fetches in-stock products for a given store. Re-runs whenever storeId
-// changes (e.g. once the location flow resolves a different store).
 export function useProducts(storeId: string | null) {
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<StoreProduct[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -18,7 +16,7 @@ export function useProducts(storeId: string | null) {
     setError(null)
 
     productService
-      .getProducts({ storeId, inStock: true, limit: 12 })
+      .getStoreStockItems(storeId, { inStock: true, limit: 12, sortBy: "price", sortOrder: "asc" })
       .then(({ data }) => {
         if (active) setProducts(data.data)
       })
@@ -29,7 +27,6 @@ export function useProducts(storeId: string | null) {
         if (active) setIsLoading(false)
       })
 
-    // Ignore a stale response if storeId changes before the request resolves.
     return () => {
       active = false
     }

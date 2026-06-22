@@ -3,14 +3,17 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
   ArrowRightLeftIcon,
+  BarChart2Icon,
   Building2Icon,
   LayoutDashboardIcon,
   Loader2Icon,
   LogOutIcon,
   PackageIcon,
+  PercentIcon,
   ReceiptIcon,
   StoreIcon,
   TagsIcon,
+  TicketIcon,
   UserCogIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,6 +36,9 @@ const storeNavItems = [
   { label: "Dashboard", to: "/admin/store/dashboard", icon: LayoutDashboardIcon },
   { label: "Stock", to: "/admin/store/stock", icon: PackageIcon },
   { label: "Transfers", to: "/admin/store/stock/transfers", icon: ArrowRightLeftIcon },
+  { label: "Discounts", to: "/admin/store/discounts", icon: PercentIcon },
+  { label: "Vouchers", to: "/admin/store/vouchers", icon: TicketIcon },
+  { label: "Reports", to: "/admin/store/promo-reports", icon: BarChart2Icon },
   { label: "Transactions", to: "/admin/orders", icon: ReceiptIcon },
   { label: "Categories", to: "/admin/store/categories", icon: TagsIcon },
   { label: "Staff", to: "/admin/store/staff", icon: UserCogIcon },

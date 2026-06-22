@@ -4,7 +4,7 @@ import { useLocation as useStoreLocation } from "@/features/home/hooks/useLocati
 import { ProductGallery } from "../components/ProductGallery";
 import { AddToCartControl } from "../components/AddToCartControl";
 import { useStoreProduct } from "../hooks/useStoreProduct";
-import type { StoreProduct } from "../types/product.types";
+import type { PricePreview, StoreProduct } from "../types/product.types";
 
 function formatPrice(value: number): string {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
@@ -30,6 +30,36 @@ export function ProductViewPage() {
   );
 }
 
+function PriceDisplay({ price, pricePreview }: { price: number; pricePreview?: PricePreview }) {
+  if (!pricePreview?.isDiscounted) {
+    return <p className="text-4xl font-bold text-primary">{formatPrice(price)}</p>;
+  }
+  if (pricePreview.calculationMode === "unitPrice" && pricePreview.finalPrice !== null) {
+    return (
+      <div className="flex flex-col gap-1">
+        {pricePreview.label && (
+          <span className="inline-block w-fit rounded-lg bg-primary px-3 py-0.5 text-sm font-semibold text-white">
+            {pricePreview.label}
+          </span>
+        )}
+        <p className="text-xl text-muted-foreground line-through">{formatPrice(pricePreview.originalPrice)}</p>
+        <p className="text-4xl font-bold text-primary">{formatPrice(pricePreview.finalPrice)}</p>
+      </div>
+    );
+  }
+  if (pricePreview.calculationMode === "quantityBased" && pricePreview.label) {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="inline-block w-fit rounded-lg bg-primary px-3 py-0.5 text-sm font-semibold text-white">
+          {pricePreview.label}
+        </span>
+        <p className="text-4xl font-bold text-primary">{formatPrice(price)}</p>
+      </div>
+    );
+  }
+  return <p className="text-4xl font-bold text-primary">{formatPrice(price)}</p>;
+}
+
 function ProductInfo({ product, storeId }: { product: StoreProduct; storeId: string }) {
   const { storeStock } = product;
   return (
@@ -38,7 +68,7 @@ function ProductInfo({ product, storeId }: { product: StoreProduct; storeId: str
         {product.brand && <p className="text-sm text-muted-foreground">{product.brand}</p>}
         <h1 className="text-3xl font-bold leading-tight">{product.name}</h1>
       </div>
-      <p className="text-4xl font-bold text-primary">{formatPrice(product.price)}</p>
+      <PriceDisplay price={product.price} pricePreview={product.pricePreview} />
       <StockStatus stock={storeStock.stock} isAvailable={storeStock.isAvailable} storeName={storeStock.store.name} />
       <AddToCartControl productId={product.id} storeId={storeId} stock={storeStock.stock} isAvailable={storeStock.isAvailable} />
       <ProductMeta product={product} />

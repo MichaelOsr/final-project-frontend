@@ -34,6 +34,7 @@ export function CatalogProductCard({ product, storeId }: CatalogProductCardProps
       price={product.price}
       imageUrl={getMainImage(product.images)}
       to={`/stores/${storeId}/products/${product.slug}`}
+      pricePreview={product.pricePreview}
       outOfStock={outOfStock}
       isAdding={isAdding}
       inCartCount={inCart}

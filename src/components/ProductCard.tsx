@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Loader2Icon, ShoppingCartIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
+import type { PricePreview } from "@/types/product.types";
 
 interface ProductCardProps {
   name: string;
@@ -9,11 +10,35 @@ interface ProductCardProps {
   price: number;
   imageUrl: string;
   to: string;
+  pricePreview?: PricePreview | null;
   outOfStock?: boolean;
   disabled?: boolean;
   isAdding?: boolean;
   inCartCount?: number;
   onAddToCart?: () => void;
+}
+
+function DiscountBadge({ label }: { label: string }) {
+  return (
+    <span className="absolute left-0 top-0 rounded-br-lg bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-white">
+      {label}
+    </span>
+  );
+}
+
+function PriceSection({ price, pricePreview }: { price: number; pricePreview?: PricePreview | null }) {
+  if (!pricePreview?.isDiscounted) {
+    return <p className="text-sm font-bold text-primary">{formatPrice(price)}</p>;
+  }
+  if (pricePreview.calculationMode === "unitPrice" && pricePreview.finalPrice !== null) {
+    return (
+      <div className="grid gap-0.5">
+        <p className="text-xs text-muted-foreground line-through">{formatPrice(pricePreview.originalPrice)}</p>
+        <p className="text-sm font-bold text-primary">{formatPrice(pricePreview.finalPrice)}</p>
+      </div>
+    );
+  }
+  return <p className="text-sm font-bold text-primary">{formatPrice(price)}</p>;
 }
 
 export function ProductCard({
@@ -22,6 +47,7 @@ export function ProductCard({
   price,
   imageUrl,
   to,
+  pricePreview,
   outOfStock = false,
   disabled = false,
   isAdding = false,
@@ -44,11 +70,14 @@ export function ProductCard({
             </span>
           </div>
         )}
+        {!outOfStock && pricePreview?.isDiscounted && pricePreview.label && (
+          <DiscountBadge label={pricePreview.label} />
+        )}
       </div>
       <div className="grid gap-1">
         <p className="text-xs text-muted-foreground">{category}</p>
         <h3 className="line-clamp-2 text-sm font-medium">{name}</h3>
-        <p className="text-sm font-bold text-primary">{formatPrice(price)}</p>
+        <PriceSection price={price} pricePreview={pricePreview} />
       </div>
     </>
   );

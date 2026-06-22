@@ -24,6 +24,25 @@ export interface Product {
   images: ProductImage[]
 }
 
+export interface ActiveDiscount {
+  name: string;
+  type: "percentage" | "nominal" | "buyXGetY";
+  value: number | null;
+  buyQuantity: number | null;
+  getQuantity: number | null;
+  startDate: string;
+  endDate: string;
+}
+
+export interface PricePreview {
+  originalPrice: number;
+  finalPrice: number | null;
+  discountAmount: number | null;
+  isDiscounted: boolean;
+  label: string | null;
+  calculationMode: "unitPrice" | "quantityBased" | "none";
+}
+
 // Query params accepted by GET /products (subset used by the homepage).
 export interface GetProductsParams {
   storeId?: string
