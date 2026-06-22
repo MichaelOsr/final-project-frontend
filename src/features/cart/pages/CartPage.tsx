@@ -1,15 +1,12 @@
-import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import { ShoppingCartIcon, ShoppingBasketIcon } from "lucide-react"
+import { useEffect } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { ShoppingCartIcon, ShoppingBasketIcon, AlertCircleIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/store/cart.store"
 import { useLocationStore } from "@/store/location.store"
 import { usePageTitle } from "@/hooks/usePageTitle"
 import { CartItem } from "../components/CartItem"
-import { addressService } from "@/features/order/services/address.service"
-import { storeService } from "@/features/home/services/store.service"
 
-// Format harga ke Rupiah.
 function formatPrice(value: number): string {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -20,44 +17,17 @@ function formatPrice(value: number): string {
 
 export function CartPage() {
   usePageTitle("Cart")
+  const navigate = useNavigate()
   const { cart, isLoading, fetchCart } = useCartStore()
-  const locationStatus = useLocationStore((s) => s.status)
-  const locationStoreId = useLocationStore((s) => s.storeId)
 
-  // resolvedStoreId: storeId toko terdekat yang dipakai untuk limit stok di CartItem.
-  // Prioritas: GPS aktif (status "ready") → alamat default dari DB → null (fallback Math.max)
-  const [resolvedStoreId, setResolvedStoreId] = useState<string | null>(null)
+  // Ambil storeId langsung dari session storage via locationStore.
+  // Ini yang paling akurat karena sudah di-resolve saat user di landing page.
+  const resolvedStoreId = useLocationStore((s) => s.storeId)
 
-  // Fetch ulang cart setiap kali resolvedStoreId berubah supaya diskon difilter per toko
+  // Fetch cart setiap kali resolvedStoreId berubah supaya diskon difilter per toko.
   useEffect(() => {
     fetchCart(resolvedStoreId ?? undefined)
   }, [fetchCart, resolvedStoreId])
-
-  useEffect(() => {
-    if (locationStatus === "ready" && locationStoreId) {
-      // GPS aktif dan sudah resolve — pakai storeId dari GPS
-      setResolvedStoreId(locationStoreId)
-      return
-    }
-    // GPS mati atau denied — fallback ke alamat default user di DB
-    const resolveFromAddress = async () => {
-      try {
-        const { data } = await addressService.getAddresses()
-        const defaultAddr = data.data.find((a) => a.isDefault) ?? data.data[0]
-        if (!defaultAddr) return
-        const { data: storeData } = await storeService.getNearestStore(
-          parseFloat(defaultAddr.latitude),
-          parseFloat(defaultAddr.longitude),
-        )
-        if (storeData.data?.store?.id) {
-          setResolvedStoreId(storeData.data.store.id)
-        }
-      } catch {
-        // Silently fail — CartItem akan pakai Math.max fallback
-      }
-    }
-    void resolveFromAddress()
-  }, [locationStatus, locationStoreId])
 
   const items = cart?.items ?? []
 
@@ -66,27 +36,29 @@ export function CartPage() {
   const subtotal = items.reduce((sum, item) => {
     const activeDiscount = item.product.discounts[0]
     let unitPrice = item.product.price
-
     if (activeDiscount?.type === "percentage" && activeDiscount.value) {
       unitPrice = unitPrice - (unitPrice * activeDiscount.value) / 100
     } else if (activeDiscount?.type === "nominal" && activeDiscount.value) {
       unitPrice = Math.max(0, unitPrice - activeDiscount.value)
     }
-
     return sum + unitPrice * item.quantity
   }, 0)
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
+
+  // Cek apakah ada item yang melebihi stok di toko terdekat.
+  // Jika iya, tombol checkout di-disable sampai user kurangi quantity.
+  const hasOverstockedItems = resolvedStoreId !== null && items.some((item) => {
+    const nearestStock = item.product.stocks.find((s) => s.storeId === resolvedStoreId)?.stock
+    return nearestStock !== undefined && item.quantity > nearestStock
+  })
 
   if (isLoading) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
         <div className="grid gap-4">
           {[1, 2, 3].map((n) => (
-            <div
-              key={n}
-              className="h-28 animate-pulse rounded-xl bg-muted"
-            />
+            <div key={n} className="h-28 animate-pulse rounded-xl bg-muted" />
           ))}
         </div>
       </div>
@@ -103,10 +75,7 @@ export function CartPage() {
         <p className="mb-8 text-muted-foreground">
           Yuk, mulai belanja dan tambahkan produk ke cart kamu!
         </p>
-        <Button
-          asChild
-          className="h-11 rounded-full px-8"
-        >
+        <Button asChild className="h-11 rounded-full px-8">
           <Link to="/products-catalog">Mulai belanja</Link>
         </Button>
       </div>
@@ -115,7 +84,6 @@ export function CartPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <ShoppingBasketIcon className="size-6 text-primary" />
         <h1 className="text-2xl font-bold">Cart</h1>
@@ -139,9 +107,7 @@ export function CartPage() {
 
             <div className="grid gap-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Subtotal ({totalItems} item)
-                </span>
+                <span className="text-muted-foreground">Subtotal ({totalItems} item)</span>
                 <span className="font-medium">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between">
@@ -157,11 +123,19 @@ export function CartPage() {
               <span className="text-primary">{formatPrice(subtotal)}</span>
             </div>
 
+            {hasOverstockedItems && (
+              <div className="mb-3 flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                <AlertCircleIcon className="mt-0.5 size-3.5 shrink-0" />
+                <span>Sesuaikan stok item yang melebihi ketersediaan toko terdekat.</span>
+              </div>
+            )}
+
             <Button
-              asChild
               className="h-11 w-full rounded-full text-base font-semibold"
+              disabled={hasOverstockedItems}
+              onClick={() => navigate("/checkout")}
             >
-              <Link to="/checkout">Lanjut ke Checkout</Link>
+              Lanjut ke Checkout
             </Button>
 
             <p className="mt-3 text-center text-xs text-muted-foreground">

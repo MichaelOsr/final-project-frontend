@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Trash2Icon, MinusIcon, PlusIcon } from "lucide-react"
+import { Trash2Icon, MinusIcon, PlusIcon, AlertCircleIcon } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "@/store/cart.store"
@@ -68,7 +68,7 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
     product.discounts
   )
 
-  // Stok dari toko terdekat (resolved di CartPage).
+  // Stok dari toko terdekat berdasarkan resolvedStoreId dari session storage.
   // Fallback ke stok tertinggi di semua toko kalau storeId belum ada.
   const nearestStoreStock =
     product.stocks.find((s) => s.storeId === resolvedStoreId)?.stock ?? null
@@ -76,31 +76,25 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
     nearestStoreStock ??
     Math.max(...product.stocks.map((s) => s.stock), 0)
 
-  // State lokal untuk quantity — langsung update saat klik supaya UI responsif.
+  // Overstocked: quantity di cart melebihi stok yang tersedia di toko terdekat.
+  const isOverstocked = nearestStoreStock !== null && item.quantity > nearestStoreStock
+
   const [localQty, setLocalQty] = useState(item.quantity)
-
-  // Ref untuk menyimpan debounce timer.
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Ref untuk track apakah ini mount pertama — skip kirim ke backend saat init.
   const isMounted = useRef(false)
 
-  // Sync localQty jika prop item.quantity berubah dari luar (misal setelah refetch).
   useEffect(() => {
     setLocalQty(item.quantity)
   }, [item.quantity])
 
-  // Debounced sync ke backend setiap kali localQty berubah.
   const syncToBackend = useCallback(
     (qty: number) => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
-
       debounceTimer.current = setTimeout(async () => {
         try {
           await updateItem(cartItemId, qty)
         } catch {
           toast.error("Gagal memperbarui jumlah produk")
-          // Rollback localQty ke nilai dari store jika gagal.
           setLocalQty(item.quantity)
         }
       }, DEBOUNCE_MS)
@@ -108,14 +102,12 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
     [cartItemId, updateItem, item.quantity]
   )
 
-  // Jalankan sync ke backend setiap localQty berubah, skip saat mount pertama.
   useEffect(() => {
     if (!isMounted.current) {
       isMounted.current = true
       return
     }
     syncToBackend(localQty)
-
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
     }
@@ -133,7 +125,6 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
 
   const handleRemove = async () => {
     if (isRemoving) return
-    // Cancel debounce yang pending sebelum hapus.
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
     setIsRemoving(true)
     try {
@@ -148,7 +139,7 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
   const lineTotal = finalPrice * localQty
 
   return (
-    <div className="flex gap-4 rounded-xl border border-border bg-card p-4">
+    <div className={`flex gap-4 rounded-xl border bg-card p-4 ${isOverstocked ? "border-destructive/50" : "border-border"}`}>
       {/* Gambar produk */}
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
         <img
@@ -223,6 +214,16 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
             </Button>
           </div>
         </div>
+
+        {/* Warning overstocked */}
+        {isOverstocked && (
+          <div className="mt-1 flex items-center gap-1.5 text-xs text-destructive">
+            <AlertCircleIcon className="size-3 shrink-0" />
+            <span>
+              Stok tersedia: {nearestStoreStock}. Kurangi jumlah sebelum checkout.
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )
