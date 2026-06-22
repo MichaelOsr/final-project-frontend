@@ -28,9 +28,10 @@ export function CartPage() {
   // Prioritas: GPS aktif (status "ready") → alamat default dari DB → null (fallback Math.max)
   const [resolvedStoreId, setResolvedStoreId] = useState<string | null>(null)
 
+  // Fetch ulang cart setiap kali resolvedStoreId berubah supaya diskon difilter per toko
   useEffect(() => {
-    fetchCart()
-  }, [fetchCart])
+    fetchCart(resolvedStoreId ?? undefined)
+  }, [fetchCart, resolvedStoreId])
 
   useEffect(() => {
     if (locationStatus === "ready" && locationStoreId) {
@@ -106,7 +107,7 @@ export function CartPage() {
           asChild
           className="h-11 rounded-full px-8"
         >
-          <Link to="/products">Mulai belanja</Link>
+          <Link to="/products-catalog">Mulai belanja</Link>
         </Button>
       </div>
     )

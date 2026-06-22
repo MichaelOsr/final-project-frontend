@@ -30,6 +30,8 @@ import { StoreVouchersPage } from "@/features/admin/promos/pages/StoreVouchersPa
 import { CreateVoucherPage } from "@/features/admin/promos/pages/CreateVoucherPage";
 import { EditVoucherPage } from "@/features/admin/promos/pages/EditVoucherPage";
 import { StorePromoReportsPage } from "@/features/admin/promos/pages/StorePromoReportsPage";
+import { AdminOrdersPage } from "@/features/admin/orders/pages/AdminOrdersPage";
+import { AdminOrderDetailPage } from "@/features/admin/orders/pages/AdminOrderDetailPage";
 
 export const adminRoutes = (
   <Fragment>
@@ -238,6 +240,22 @@ export const adminRoutes = (
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin"]}>
             <EditAdminAccountPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/orders"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <AdminOrdersPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/orders/:orderId"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <AdminOrderDetailPage />
           </AdminProtectedRoute>
         }
       />

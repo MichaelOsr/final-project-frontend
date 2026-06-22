@@ -10,6 +10,7 @@ import {
   LogOutIcon,
   PackageIcon,
   PercentIcon,
+  ReceiptIcon,
   StoreIcon,
   TagsIcon,
   TicketIcon,
@@ -27,6 +28,7 @@ const superAdminNavItems = [
   { label: "Products", to: "/admin/products", icon: PackageIcon },
   { label: "Categories", to: "/admin/categories", icon: TagsIcon },
   { label: "Stores", to: "/admin/stores", icon: StoreIcon },
+  { label: "Transactions", to: "/admin/orders", icon: ReceiptIcon },
   { label: "Accounts", to: "/admin/admin-accounts", icon: UserCogIcon },
 ];
 
@@ -37,6 +39,7 @@ const storeNavItems = [
   { label: "Discounts", to: "/admin/store/discounts", icon: PercentIcon },
   { label: "Vouchers", to: "/admin/store/vouchers", icon: TicketIcon },
   { label: "Reports", to: "/admin/store/promo-reports", icon: BarChart2Icon },
+  { label: "Transactions", to: "/admin/orders", icon: ReceiptIcon },
   { label: "Categories", to: "/admin/store/categories", icon: TagsIcon },
   { label: "Staff", to: "/admin/store/staff", icon: UserCogIcon },
 ];

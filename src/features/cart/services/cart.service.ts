@@ -6,8 +6,8 @@ import type { Cart, AddToCartPayload, UpdateCartPayload } from "@/types/cart.typ
 // Setiap method peta 1:1 ke route backend.
 // Cookie auth ditangani otomatis oleh axios instance.
 export const cartService = {
-  getCart: () =>
-    api.get<ApiResponse<Cart>>("/cart"),
+  getCart: (storeId?: string) =>
+    api.get<ApiResponse<Cart>>("/cart", { params: storeId ? { storeId } : undefined }),
 
   addToCart: (payload: AddToCartPayload) =>
     api.post<ApiResponse>("/cart", payload),
