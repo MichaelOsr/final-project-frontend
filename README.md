@@ -16,11 +16,11 @@ The backend must be running first (`cd ../backend-grocery && npm run dev`, port 
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start dev server |
+| Command         | Description                                        |
+| --------------- | -------------------------------------------------- |
+| `npm run dev`   | Start dev server                                   |
 | `npm run build` | Type-check + production build (run before pushing) |
-| `npm run lint` | ESLint |
+| `npm run lint`  | ESLint                                             |
 
 ---
 
@@ -62,7 +62,7 @@ features/<feature>/
 1. Create `src/features/<your-feature>/` with the sub-folders above.
 2. Write API calls in `services/<feature>.service.ts` — use the shared `api` instance:
    ```ts
-   import api from "@/lib/axios"
+   import api from "@/lib/axios";
    ```
 3. Write Yup schemas in `schemas/<feature>.schemas.ts` — mirror the backend Zod rules.
 4. Build pages in `pages/`, call `usePageTitle("...")` at the top of each one.
@@ -89,10 +89,10 @@ Tokens live in httpOnly cookies — the frontend never touches them. Everything 
 To read the current user anywhere:
 
 ```ts
-import { useAuthStore } from "@/store/auth.store"
+import { useAuthStore } from "@/store/auth.store";
 
-const user = useAuthStore((s) => s.user)     // User | null
-const status = useAuthStore((s) => s.status) // "loading" | "authenticated" | "unauthenticated"
+const user = useAuthStore((s) => s.user); // User | null
+const status = useAuthStore((s) => s.status); // "loading" | "authenticated" | "unauthenticated"
 ```
 
 ---
@@ -102,10 +102,10 @@ const status = useAuthStore((s) => s.status) // "loading" | "authenticated" | "u
 Use Formik + the shared `<TextField />` component. Handle server errors with:
 
 ```ts
-import { getErrorMessage } from "@/lib/error"
-import { toast } from "sonner"
+import { getErrorMessage } from "@/lib/error";
+import { toast } from "sonner";
 
-toast.error(getErrorMessage(error))
+toast.error(getErrorMessage(error));
 ```
 
 ---
@@ -116,6 +116,7 @@ shadcn is pre-configured (style: radix-nova). Components already installed:
 `Button`, `Input`, `Label`, `Card`, `Avatar`, `DropdownMenu`, `Toaster`.
 
 Add more:
+
 ```bash
 npx shadcn@latest add <component-name>
 ```
@@ -124,22 +125,22 @@ npx shadcn@latest add <component-name>
 
 ## PRD requirements (graded — do not skip)
 
-| Requirement | Rule |
-|---|---|
-| Language | All UI text must be in **English** |
-| Lists | Pagination + filter + sort must be **server-side** (send as query params) |
-| Validation | Validate every input **client-side AND server-side**; validate file type + size |
-| Responsive | Mobile-first; test on both mobile and desktop widths |
-| File extension | Use `.tsx` for any file containing JSX |
-| Clean code | ≤ 200 lines per file · ≤ 15 lines per function |
-| Before pushing | Remove unused `console.log`s and dead code |
+| Requirement    | Rule                                                                            |
+| -------------- | ------------------------------------------------------------------------------- |
+| Language       | All UI text must be in **English**                                              |
+| Lists          | Pagination + filter + sort must be **server-side** (send as query params)       |
+| Validation     | Validate every input **client-side AND server-side**; validate file type + size |
+| Responsive     | Mobile-first; test on both mobile and desktop widths                            |
+| File extension | Use `.tsx` for any file containing JSX                                          |
+| Clean code     | ≤ 200 lines per file · ≤ 15 lines per function                                  |
+| Before pushing | Remove unused `console.log`s and dead code                                      |
 
 ---
 
 ## Environment variables
 
-| Variable | Description |
-|---|---|
+| Variable       | Description                                                                 |
+| -------------- | --------------------------------------------------------------------------- |
 | `VITE_API_URL` | Backend base URL including `/api` prefix (e.g. `http://localhost:5000/api`) |
 
 Copy `.env.example` to `.env`. The `.env` file is git-ignored and must never be committed.

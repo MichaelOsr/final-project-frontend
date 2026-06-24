@@ -20,7 +20,6 @@ interface LocationBannerProps {
 
 export function LocationBanner({
   status,
-  storeName,
   locationLabel,
   error,
   isAuthenticated,
