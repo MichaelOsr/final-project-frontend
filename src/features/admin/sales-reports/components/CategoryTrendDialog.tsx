@@ -19,35 +19,31 @@ import {
 import { salesReportService } from "../services/salesReport.service";
 import { useReportError } from "@/features/admin/shared/hooks/useReportError";
 import { useLatestRequest } from "@/features/admin/shared/hooks/useLatestRequest";
-import type {
-  ProductRankingItem,
-  ProductTrendResponse,
-  SalesReportCommonQuery,
-} from "../types/salesReport.types";
+import type { CategoryTrendResponse, SalesReportCommonQuery } from "../types/salesReport.types";
 import { ChartEmpty, ChartLoading } from "@/features/admin/shared/components/ChartFeedback";
 import { compactNumber, currencyTooltip } from "../utils/chart";
 
-interface ProductTrendDialogProps {
-  product: ProductRankingItem | null;
+interface CategoryTrendDialogProps {
+  category: { categoryId: string; categoryName: string } | null;
   query: SalesReportCommonQuery;
   onClose: () => void;
 }
 
-export function ProductTrendDialog({ product, query, onClose }: ProductTrendDialogProps) {
+export function CategoryTrendDialog({ category, query, onClose }: CategoryTrendDialogProps) {
   const handleError = useReportError();
   const { start, isCurrent } = useLatestRequest();
-  const [data, setData] = useState<ProductTrendResponse["data"] | null>(null);
+  const [data, setData] = useState<CategoryTrendResponse["data"] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!product) return;
-    const productId = product.productId;
+    if (!category) return;
+    const categoryId = category.categoryId;
     const requestId = start();
     async function load() {
       setIsLoading(true);
       setData(null);
       try {
-        const res = await salesReportService.productTrend(productId, query);
+        const res = await salesReportService.categoryTrend(categoryId, query);
         if (isCurrent(requestId)) setData(res.data.data);
       } catch (error) {
         if (isCurrent(requestId)) handleError(error);
@@ -56,19 +52,17 @@ export function ProductTrendDialog({ product, query, onClose }: ProductTrendDial
       }
     }
     load();
-  }, [product, query, handleError, start, isCurrent]);
+  }, [category, query, handleError, start, isCurrent]);
 
   return (
-    <Dialog open={Boolean(product)} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={Boolean(category)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{product?.productName ?? "Product trend"}</DialogTitle>
-          <DialogDescription>
-            {product?.categoryName} · {product?.sku}
-          </DialogDescription>
+          <DialogTitle>{category?.categoryName ?? "Category trend"}</DialogTitle>
+          <DialogDescription>Sales trend for this category over time.</DialogDescription>
         </DialogHeader>
         {isLoading ? (
-          <ChartLoading message="Loading product trend..." />
+          <ChartLoading message="Loading category trend..." />
         ) : !data || data.chart.length === 0 ? (
           <ChartEmpty />
         ) : (

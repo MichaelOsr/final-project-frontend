@@ -22,10 +22,11 @@ export function SalesReportFilters({
   onChange,
 }: SalesReportFiltersProps) {
   return (
-    <div className="flex flex-wrap items-end gap-3 border-b border-border p-4">
+    <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-background p-4">
       {isSuperAdmin && (
-        <FilterField label="Store">
+        <FilterField id="sales-report-store" label="Store">
           <select
+            id="sales-report-store"
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             value={storeId}
             onChange={(e) => onChange({ storeId: e.target.value, page: 1 })}
@@ -39,16 +40,18 @@ export function SalesReportFilters({
           </select>
         </FilterField>
       )}
-      <FilterField label="Start Date">
+      <FilterField id="sales-report-start-date" label="Start Date">
         <DatePickerField
+          id="sales-report-start-date"
           value={startDate}
           placeholder="Start date"
           disabled={endDate ? (date) => date > parseISO(endDate) : undefined}
           onChange={(value) => onChange({ startDate: value, page: 1 })}
         />
       </FilterField>
-      <FilterField label="End Date">
+      <FilterField id="sales-report-end-date" label="End Date">
         <DatePickerField
+          id="sales-report-end-date"
           value={endDate}
           placeholder="End date"
           disabled={startDate ? (date) => date < parseISO(startDate) : undefined}
@@ -59,10 +62,20 @@ export function SalesReportFilters({
   );
 }
 
-function FilterField({ label, children }: { label: string; children: ReactNode }) {
+function FilterField({
+  id,
+  label,
+  children,
+}: {
+  id: string;
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <div className="w-40 shrink-0">
-      <Label className="mb-1.5 block text-xs text-muted-foreground">{label}</Label>
+      <Label htmlFor={id} className="mb-1.5 block text-xs text-muted-foreground">
+        {label}
+      </Label>
       {children}
     </div>
   );

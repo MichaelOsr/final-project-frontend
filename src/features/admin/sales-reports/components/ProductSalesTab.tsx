@@ -51,13 +51,14 @@ export function ProductSalesTab({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-background p-4">
-        <div className="min-w-[14rem] flex-1">
-          <Label className="mb-1.5 block text-xs text-muted-foreground">
+        <div className="min-w-56 flex-1">
+          <Label htmlFor="product-search" className="mb-1.5 block text-xs text-muted-foreground">
             Search Product
           </Label>
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              id="product-search"
               className="h-9 pl-9"
               placeholder="Search by name or SKU..."
               value={searchInput}
@@ -66,10 +67,11 @@ export function ProductSalesTab({
           </div>
         </div>
         <div className="w-48 shrink-0">
-          <Label className="mb-1.5 block text-xs text-muted-foreground">
+          <Label htmlFor="product-category" className="mb-1.5 block text-xs text-muted-foreground">
             Category
           </Label>
           <select
+            id="product-category"
             className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             value={categoryId}
             onChange={(e) => update({ categoryId: e.target.value, page: 1 })}

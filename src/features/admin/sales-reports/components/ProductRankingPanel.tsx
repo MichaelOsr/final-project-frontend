@@ -12,6 +12,7 @@ import { formatPrice } from "@/lib/format";
 import { formatNumber } from "@/features/admin/shared/utils/adminFormat";
 import { salesReportService } from "../services/salesReport.service";
 import { useReportError } from "@/features/admin/shared/hooks/useReportError";
+import { useLatestRequest } from "@/features/admin/shared/hooks/useLatestRequest";
 import type {
   ProductRankingItem,
   ProductSalesQuery,
@@ -25,6 +26,7 @@ import { SalesSummaryCards } from "./SalesSummaryCards";
 import { RangeCaption } from "@/features/admin/shared/components/RangeCaption";
 
 const DEFAULT_META: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
+const PLACEHOLDER = "—";
 
 export function ProductRankingPanel({
   query,
@@ -34,6 +36,7 @@ export function ProductRankingPanel({
   isActive: boolean;
 }) {
   const handleError = useReportError();
+  const { start, isCurrent } = useLatestRequest();
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<ProductRankingItem[]>([]);
   const [meta, setMeta] = useState(DEFAULT_META);
@@ -50,7 +53,7 @@ export function ProductRankingPanel({
 
   useEffect(() => {
     if (!isActive) return;
-    let mounted = true;
+    const requestId = start();
     async function load() {
       setIsLoading(true);
       setForbidden(false);
@@ -62,7 +65,7 @@ export function ProductRankingPanel({
           sortBy,
           sortOrder,
         });
-        if (!mounted) return;
+        if (!isCurrent(requestId)) return;
         setItems(res.data.data.items);
         setMeta(res.data.meta ?? DEFAULT_META);
         setTotalProducts(res.data.data.summary.totalProducts);
@@ -72,16 +75,14 @@ export function ProductRankingPanel({
         });
         setRange(res.data.data.filters.resolvedRange);
       } catch (error) {
-        if (mounted && handleError(error) === "forbidden") setForbidden(true);
+        if (!isCurrent(requestId)) return;
+        if (handleError(error) === "forbidden") setForbidden(true);
       } finally {
-        if (mounted) setIsLoading(false);
+        if (isCurrent(requestId)) setIsLoading(false);
       }
     }
     load();
-    return () => {
-      mounted = false;
-    };
-  }, [isActive, query, page, sortBy, sortOrder, handleError]);
+  }, [isActive, query, page, sortBy, sortOrder, handleError, start, isCurrent]);
 
   function update(updates: Record<string, string | number>) {
     setSearchParams(updateSearchParams(searchParams, updates));
@@ -94,9 +95,21 @@ export function ProductRankingPanel({
       <RangeCaption range={range} />
       <SalesSummaryCards
         metrics={[
-          { label: "Products Sold", value: formatNumber(totalProducts), icon: PackageIcon },
-          { label: "Items Sold", value: formatNumber(totals.items), icon: BoxesIcon },
-          { label: "Product Sales", value: formatPrice(totals.gross), icon: CoinsIcon },
+          {
+            label: "Products Sold",
+            value: isLoading ? PLACEHOLDER : formatNumber(totalProducts),
+            icon: PackageIcon,
+          },
+          {
+            label: "Items Sold",
+            value: isLoading ? PLACEHOLDER : formatNumber(totals.items),
+            icon: BoxesIcon,
+          },
+          {
+            label: "Product Sales",
+            value: isLoading ? PLACEHOLDER : formatPrice(totals.gross),
+            icon: CoinsIcon,
+          },
         ]}
       />
       <Card className="overflow-hidden rounded-lg p-0">
