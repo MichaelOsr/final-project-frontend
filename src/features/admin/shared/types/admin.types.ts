@@ -7,6 +7,11 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
+export interface ResolvedRange {
+  startDate: string; // exact YYYY-MM-DD used by the backend query
+  endDate: string;
+}
+
 export interface StoreOverview {
   id: string;
   name: string;

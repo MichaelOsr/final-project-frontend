@@ -22,7 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatPrice } from "@/lib/format";
 import { formatNumber } from "@/features/admin/shared/utils/adminFormat";
 import { salesReportService } from "../services/salesReport.service";
-import { useReportError } from "../hooks/useReportError";
+import { useReportError } from "@/features/admin/shared/hooks/useReportError";
 import type {
   ResolvedRange,
   SalesReportCommonQuery,
@@ -31,8 +31,8 @@ import type {
 } from "../types/salesReport.types";
 import { SalesSummaryCards } from "./SalesSummaryCards";
 import { GranularityToggle } from "./GranularityToggle";
-import { RangeCaption } from "./RangeCaption";
-import { AccessDenied, ChartEmpty, ChartLoading } from "./ChartFeedback";
+import { RangeCaption } from "@/features/admin/shared/components/RangeCaption";
+import { AccessDenied, ChartEmpty, ChartLoading } from "@/features/admin/shared/components/ChartFeedback";
 import { compactNumber, currencyTooltip } from "../utils/chart";
 
 export function SalesOverviewTab({

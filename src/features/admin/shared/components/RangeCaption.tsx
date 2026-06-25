@@ -1,5 +1,5 @@
 import { formatDate } from "@/features/admin/shared/utils/adminFormat";
-import type { ResolvedRange } from "../types/salesReport.types";
+import type { ResolvedRange } from "@/features/admin/shared/types/admin.types";
 
 // Shows the exact date window the totals cover, so "summary vs granularity"
 // is unambiguous (granularity only buckets the chart, not the totals).

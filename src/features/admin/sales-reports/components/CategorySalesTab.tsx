@@ -9,18 +9,18 @@ import {
 } from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { salesReportService } from "../services/salesReport.service";
-import { useReportError } from "../hooks/useReportError";
+import { useReportError } from "@/features/admin/shared/hooks/useReportError";
 import type {
   CategorySeries,
   CategoryShare,
   ResolvedRange,
   SalesReportCommonQuery,
 } from "../types/salesReport.types";
-import { AccessDenied, ChartEmpty, ChartLoading } from "./ChartFeedback";
+import { AccessDenied, ChartEmpty, ChartLoading } from "@/features/admin/shared/components/ChartFeedback";
 import { categoryColor, currencyTooltip } from "../utils/chart";
 import { StackedSalesChart } from "./StackedSalesChart";
 import { GranularityToggle } from "./GranularityToggle";
-import { RangeCaption } from "./RangeCaption";
+import { RangeCaption } from "@/features/admin/shared/components/RangeCaption";
 
 type CategoryChartRow = Record<string, string | number>;
 

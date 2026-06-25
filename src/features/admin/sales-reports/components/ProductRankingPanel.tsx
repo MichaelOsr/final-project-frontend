@@ -11,7 +11,7 @@ import {
 import { formatPrice } from "@/lib/format";
 import { formatNumber } from "@/features/admin/shared/utils/adminFormat";
 import { salesReportService } from "../services/salesReport.service";
-import { useReportError } from "../hooks/useReportError";
+import { useReportError } from "@/features/admin/shared/hooks/useReportError";
 import type {
   ProductRankingItem,
   ProductSalesQuery,
@@ -20,9 +20,9 @@ import type {
 } from "../types/salesReport.types";
 import { ProductSalesTable } from "./ProductSalesTable";
 import { ProductTrendDialog } from "./ProductTrendDialog";
-import { AccessDenied } from "./ChartFeedback";
+import { AccessDenied } from "@/features/admin/shared/components/ChartFeedback";
 import { SalesSummaryCards } from "./SalesSummaryCards";
-import { RangeCaption } from "./RangeCaption";
+import { RangeCaption } from "@/features/admin/shared/components/RangeCaption";
 
 const DEFAULT_META: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
 

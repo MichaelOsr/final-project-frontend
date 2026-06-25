@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { salesReportService } from "../services/salesReport.service";
-import { useReportError } from "../hooks/useReportError";
+import { useReportError } from "@/features/admin/shared/hooks/useReportError";
 import type { ProductSalesQuery, ProductSeries } from "../types/salesReport.types";
-import { AccessDenied, ChartEmpty, ChartLoading } from "./ChartFeedback";
+import { AccessDenied, ChartEmpty, ChartLoading } from "@/features/admin/shared/components/ChartFeedback";
 import { StackedSalesChart } from "./StackedSalesChart";
 import { GranularityToggle } from "./GranularityToggle";
 import { categoryColor } from "../utils/chart";

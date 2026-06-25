@@ -8,7 +8,7 @@ import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
 export type ReportErrorResult = "forbidden" | "handled";
 
 /**
- * Resolves sales-report request failures per the API contract:
+ * Resolves admin report request failures per the API contract:
  * 401 clears the session and redirects to login, 403 signals an access-denied
  * state, and any other error is surfaced as a toast near the filters.
  */

@@ -17,13 +17,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { salesReportService } from "../services/salesReport.service";
-import { useReportError } from "../hooks/useReportError";
+import { useReportError } from "@/features/admin/shared/hooks/useReportError";
 import type {
   ProductRankingItem,
   ProductTrendResponse,
   SalesReportCommonQuery,
 } from "../types/salesReport.types";
-import { ChartEmpty, ChartLoading } from "./ChartFeedback";
+import { ChartEmpty, ChartLoading } from "@/features/admin/shared/components/ChartFeedback";
 import { compactNumber, currencyTooltip } from "../utils/chart";
 
 interface ProductTrendDialogProps {
