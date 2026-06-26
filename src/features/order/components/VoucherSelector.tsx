@@ -12,7 +12,7 @@ function formatPrice(value: number): string {
 function getVoucherLabel(v: PublicVoucher): string {
   if (v.discountType === "percentage") {
     return v.maxDiscount
-      ? `${v.value}% off (maks. ${formatPrice(v.maxDiscount)})`
+      ? `${v.value}% off (max. ${formatPrice(v.maxDiscount)})`
       : `${v.value}% off`
   }
   return `${formatPrice(v.value)} off`
@@ -39,14 +39,14 @@ export function VoucherSelector({
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2Icon className="size-4 animate-spin" />
-        Memuat voucher...
+        Loading vouchers...
       </div>
     )
   }
 
   if (vouchers.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">Tidak ada voucher tersedia.</p>
+      <p className="text-sm text-muted-foreground">No vouchers available.</p>
     )
   }
 
@@ -80,7 +80,7 @@ export function VoucherSelector({
                         : "bg-primary/10 text-primary"
                     }`}
                   >
-                    {v.scope === "global" ? "Global" : "Toko Ini"}
+                    {v.scope === "global" ? "Global" : "This Store"}
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs font-semibold text-primary">
@@ -88,9 +88,9 @@ export function VoucherSelector({
                 </p>
                 {v.minimumTransaction !== null && (
                   <p className="text-xs text-muted-foreground">
-                    Min. belanja {formatPrice(v.minimumTransaction)}
+                    Min. purchase {formatPrice(v.minimumTransaction)}
                     {isDisabled && (
-                      <span className="ml-1 text-destructive">(belum memenuhi)</span>
+                      <span className="ml-1 text-destructive">(not met)</span>
                     )}
                   </p>
                 )}
