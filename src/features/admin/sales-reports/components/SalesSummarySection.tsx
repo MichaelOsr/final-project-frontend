@@ -22,7 +22,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatPrice } from "@/lib/format";
 import { formatNumber } from "@/features/admin/shared/utils/adminFormat";
 import { salesReportService } from "../services/salesReport.service";
-import { useReportError } from "../hooks/useReportError";
+import { useReportError } from "@/features/admin/shared/hooks/useReportError";
+import { useLatestRequest } from "@/features/admin/shared/hooks/useLatestRequest";
 import type {
   ResolvedRange,
   SalesReportCommonQuery,
@@ -31,18 +32,23 @@ import type {
 } from "../types/salesReport.types";
 import { SalesSummaryCards } from "./SalesSummaryCards";
 import { GranularityToggle } from "./GranularityToggle";
-import { RangeCaption } from "./RangeCaption";
-import { AccessDenied, ChartEmpty, ChartLoading } from "./ChartFeedback";
+import { RangeCaption } from "@/features/admin/shared/components/RangeCaption";
+import { AccessDenied, ChartEmpty, ChartLoading } from "@/features/admin/shared/components/ChartFeedback";
 import { compactNumber, currencyTooltip } from "../utils/chart";
 
-export function SalesOverviewTab({
-  query,
-  isActive,
-}: {
+interface SalesSummarySectionProps {
   query: SalesReportCommonQuery;
-  isActive: boolean;
-}) {
+  // When provided, the parent shows a single page-level AccessDenied instead
+  // of this section rendering its own (avoids two redundant "denied" panels
+  // when the tab below hits the same permission check).
+  onForbidden?: () => void;
+}
+
+// Always-visible summary cards + main sales chart, shown above the report
+// tabs (Transactions / Categories / Products) per the API docs layout.
+export function SalesSummarySection({ query, onForbidden }: SalesSummarySectionProps) {
   const handleError = useReportError();
+  const { start, isCurrent } = useLatestRequest();
   const [summary, setSummary] = useState<SalesTrendSummary | null>(null);
   const [chart, setChart] = useState<SalesTrendPoint[]>([]);
   const [range, setRange] = useState<ResolvedRange | null>(null);
@@ -50,35 +56,35 @@ export function SalesOverviewTab({
   const [forbidden, setForbidden] = useState(false);
 
   useEffect(() => {
-    if (!isActive) return;
-    let mounted = true;
+    const requestId = start();
     async function load() {
       setIsLoading(true);
       setForbidden(false);
       try {
         const res = await salesReportService.trend(query);
-        if (!mounted) return;
+        if (!isCurrent(requestId)) return;
         setSummary(res.data.data.summary);
         setChart(res.data.data.chart);
         setRange(res.data.data.filters.resolvedRange);
       } catch (error) {
-        if (mounted && handleError(error) === "forbidden") setForbidden(true);
+        if (!isCurrent(requestId)) return;
+        if (handleError(error) === "forbidden") {
+          setForbidden(true);
+          onForbidden?.();
+        }
       } finally {
-        if (mounted) setIsLoading(false);
+        if (isCurrent(requestId)) setIsLoading(false);
       }
     }
     load();
-    return () => {
-      mounted = false;
-    };
-  }, [isActive, query, handleError]);
+  }, [query, handleError, start, isCurrent, onForbidden]);
 
-  if (forbidden) return <AccessDenied />;
+  if (forbidden) return onForbidden ? null : <AccessDenied />;
 
   return (
     <div className="space-y-4">
       <RangeCaption range={range} />
-      <SalesSummaryCards metrics={buildMetrics(summary)} />
+      <SalesSummaryCards metrics={buildMetrics(summary, isLoading)} />
       <Card className="rounded-lg">
         <CardContent className="p-4">
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -136,14 +142,21 @@ function TrendChart({ data }: { data: SalesTrendPoint[] }) {
   );
 }
 
-function buildMetrics(summary: SalesTrendSummary | null) {
+const PLACEHOLDER = "—";
+
+function buildMetrics(summary: SalesTrendSummary | null, isLoading: boolean) {
+  const money = (value: number | undefined) =>
+    isLoading ? PLACEHOLDER : formatPrice(value ?? 0);
+  const count = (value: number | undefined) =>
+    isLoading ? PLACEHOLDER : formatNumber(value);
+
   return [
-    { label: "Total Revenue", value: formatPrice(summary?.totalRevenue ?? 0), icon: WalletIcon },
-    { label: "Product Sales", value: formatPrice(summary?.productSales ?? 0), icon: CoinsIcon },
-    { label: "Total Orders", value: formatNumber(summary?.totalOrders), icon: ShoppingCartIcon },
-    { label: "Items Sold", value: formatNumber(summary?.totalItemsSold), icon: BoxesIcon },
-    { label: "Voucher Discount", value: formatPrice(summary?.transactionVoucherDiscount ?? 0), icon: TicketIcon },
-    { label: "Delivery Revenue", value: formatPrice(summary?.deliveryRevenue ?? 0), icon: TruckIcon },
-    { label: "Average Order Value", value: formatPrice(summary?.averageOrderValue ?? 0), icon: ReceiptIcon },
+    { label: "Total Revenue", value: money(summary?.totalRevenue), icon: WalletIcon },
+    { label: "Product Sales", value: money(summary?.productSales), icon: CoinsIcon },
+    { label: "Total Orders", value: count(summary?.totalOrders), icon: ShoppingCartIcon },
+    { label: "Items Sold", value: count(summary?.totalItemsSold), icon: BoxesIcon },
+    { label: "Voucher Discount", value: money(summary?.transactionVoucherDiscount), icon: TicketIcon },
+    { label: "Delivery Revenue", value: money(summary?.deliveryRevenue), icon: TruckIcon },
+    { label: "Average Order Value", value: money(summary?.averageOrderValue), icon: ReceiptIcon },
   ];
 }

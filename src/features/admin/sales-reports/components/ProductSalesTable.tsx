@@ -79,6 +79,7 @@ export function ProductSalesTable({
       columns={columns}
       data={items}
       isLoading={isLoading}
+      skeletonRows={meta.limit}
       emptyMessage="No products for the selected filters."
       minWidth="min-w-[640px]"
       pagination={{ meta, onPageChange }}

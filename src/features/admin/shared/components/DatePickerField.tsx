@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TimePicker12 } from "./TimePicker12";
 
 interface DatePickerFieldProps {
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -16,6 +17,7 @@ interface DatePickerFieldProps {
 const DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm";
 
 export function DatePickerField({
+  id,
   value,
   onChange,
   placeholder = "Pick a date",
@@ -43,6 +45,7 @@ export function DatePickerField({
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           variant="outline"
           data-empty={!selected}
           className="h-9 w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"

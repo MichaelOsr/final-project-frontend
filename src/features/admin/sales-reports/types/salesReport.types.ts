@@ -2,6 +2,8 @@ import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 
 export type SalesReportGranularity = "daily" | "monthly" | "yearly";
 
+export type SalesReportStatus = "paid" | "process" | "onDelivery" | "confirmed";
+
 export type ProductSortBy =
   | "productName"
   | "totalItemsSold"
@@ -81,6 +83,17 @@ export interface CategorySalesResponse {
       totalItemsSold: number;
       productSales: number;
     }[];
+  };
+}
+
+// GET /categories/:categoryId — drilldown trend for a single category.
+export interface CategoryTrendResponse {
+  message: string;
+  data: {
+    filters: SalesReportFiltersInfo;
+    category: { id: string; name: string };
+    summary: { totalItemsSold: number; productSales: number };
+    chart: { period: string; totalItemsSold: number; productSales: number }[];
   };
 }
 

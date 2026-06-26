@@ -2,8 +2,8 @@ import { useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
-  ArrowRightLeftIcon,
   BarChart2Icon,
+  BoxesIcon,
   Building2Icon,
   LayoutDashboardIcon,
   Loader2Icon,
@@ -34,6 +34,7 @@ const superAdminNavItems: NavItem[] = [
   { label: "Stores", to: "/admin/stores", icon: StoreIcon },
   { label: "Transactions", to: "/admin/orders", icon: ReceiptIcon },
   { label: "Sales Reports", to: "/admin/sales-reports", icon: TrendingUpIcon },
+  { label: "Stock Reports", to: "/admin/stock-reports", icon: BoxesIcon },
   { label: "Accounts", to: "/admin/admin-accounts", icon: UserCogIcon },
 ];
 
@@ -44,11 +45,6 @@ const storeNavItems: NavItem[] = [
     icon: LayoutDashboardIcon,
   },
   { label: "Stock", to: "/admin/store/stock", icon: PackageIcon },
-  {
-    label: "Transfers",
-    to: "/admin/store/stock/transfers",
-    icon: ArrowRightLeftIcon,
-  },
   { label: "Discounts", to: "/admin/store/discounts", icon: PercentIcon },
   { label: "Vouchers", to: "/admin/store/vouchers", icon: TicketIcon },
   { label: "Reports", to: "/admin/store/promo-reports", icon: BarChart2Icon },

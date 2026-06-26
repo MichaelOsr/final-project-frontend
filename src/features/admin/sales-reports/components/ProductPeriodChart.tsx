@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { salesReportService } from "../services/salesReport.service";
-import { useReportError } from "../hooks/useReportError";
+import { useReportError } from "@/features/admin/shared/hooks/useReportError";
+import { useLatestRequest } from "@/features/admin/shared/hooks/useLatestRequest";
 import type { ProductSalesQuery, ProductSeries } from "../types/salesReport.types";
-import { AccessDenied, ChartEmpty, ChartLoading } from "./ChartFeedback";
+import { AccessDenied, ChartEmpty, ChartLoading } from "@/features/admin/shared/components/ChartFeedback";
 import { StackedSalesChart } from "./StackedSalesChart";
 import { GranularityToggle } from "./GranularityToggle";
 import { categoryColor } from "../utils/chart";
@@ -20,6 +21,7 @@ export function ProductPeriodChart({
   isActive: boolean;
 }) {
   const handleError = useReportError();
+  const { start, isCurrent } = useLatestRequest();
   const [chart, setChart] = useState<ChartRow[]>([]);
   const [series, setSeries] = useState<ProductSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,26 +29,24 @@ export function ProductPeriodChart({
 
   useEffect(() => {
     if (!isActive) return;
-    let mounted = true;
+    const requestId = start();
     async function load() {
       setIsLoading(true);
       setForbidden(false);
       try {
         const res = await salesReportService.products(query);
-        if (!mounted) return;
+        if (!isCurrent(requestId)) return;
         setChart(res.data.data.chart);
         setSeries(res.data.data.series);
       } catch (error) {
-        if (mounted && handleError(error) === "forbidden") setForbidden(true);
+        if (!isCurrent(requestId)) return;
+        if (handleError(error) === "forbidden") setForbidden(true);
       } finally {
-        if (mounted) setIsLoading(false);
+        if (isCurrent(requestId)) setIsLoading(false);
       }
     }
     load();
-    return () => {
-      mounted = false;
-    };
-  }, [isActive, query, handleError]);
+  }, [isActive, query, handleError, start, isCurrent]);
 
   // Backend already ranks top-N and folds the rest into an "Others" series.
   const chartSeries = useMemo(

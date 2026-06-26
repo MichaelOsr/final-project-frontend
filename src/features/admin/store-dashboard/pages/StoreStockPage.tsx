@@ -1,195 +1,107 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import { HistoryIcon, SearchIcon } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useDebouncedSearchParam } from "@/features/admin/shared/hooks/useDebouncedSearchParam";
-import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
+import { Button } from "@/components/ui/button";
 import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
-import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
-import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
-import { adminProductService } from "@/features/admin/products/services/adminProduct.service";
-import type { ProductCategory } from "@/features/admin/products/types/adminProduct.types";
-import { storeDashboardService } from "../services/storeDashboard.service";
-import { StoreStockTable } from "../components/StoreStockTable";
-import { StockMovementDialog } from "../components/StockMovementDialog";
-import { ClearStockDialog } from "../components/ClearStockDialog";
+import { StockReportView } from "@/features/admin/stock-reports/components/StockReportView";
+import { useAdminSessionStore } from "@/store/adminSession.store";
 import { useStoreContext } from "../hooks/useStoreContext";
-import type { StoreStock } from "../types/storeDashboard.types";
-import type { CreateMovementPayload } from "../types/stockMovement.types";
+import { StockListTab } from "../components/StockListTab";
+import { StockTransfersTab } from "../components/StockTransfersTab";
 
-const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
+type Tab = "stock" | "report" | "transfers";
+const TABS: { value: Tab; label: string }[] = [
+  { value: "stock", label: "Stock" },
+  { value: "report", label: "Report" },
+  { value: "transfers", label: "Transfers" },
+];
 
+const tabClass = (active: boolean) =>
+  `px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+    active
+      ? "border-primary text-primary"
+      : "border-transparent text-muted-foreground hover:text-foreground"
+  }`;
+
+// Consolidated store inventory page: stock list (+ adjust/clear), the stock
+// report (summary + movement history), and transfer requests — all scoped to
+// the active store. Store admins are locked to their own store; super admins act
+// as a store admin for the store they entered from the dashboard. The report
+// endpoint requires storeId, so both roles send the active store here.
 export function StoreStockPage() {
-  usePageTitle("Store Stock");
+  usePageTitle("Stock");
   const navigate = useNavigate();
-  const { storeId, isReady } = useStoreContext();
+  const logout = useAdminSessionStore((state) => state.logout);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { storeId, isReady, isStoreAdmin } = useStoreContext();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [isLoading, setIsLoading] = useState(true);
-  const [stocks, setStocks] = useState<StoreStock[]>([]);
-  const [meta, setMeta] = useState(defaultMeta);
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
-  const [searchInput, setSearchInput] = useDebouncedSearchParam("q");
-  const [adjustTarget, setAdjustTarget] = useState<StoreStock | null>(null);
-  const [clearTarget, setClearTarget] = useState<StoreStock | null>(null);
-  const [isClearing, setIsClearing] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const page = getPageParam(searchParams);
-  const query = searchParams.get("q") ?? "";
-  const categoryId = searchParams.get("categoryId") ?? "";
-  const sortBy = searchParams.get("sort") ?? "productName";
-  const sortOrder = (searchParams.get("order") ?? "asc") as "asc" | "desc";
 
-  useEffect(() => {
-    let isMounted = true;
-    adminProductService
-      .listCategories()
-      .then((response) => isMounted && setCategories(response.data.data ?? []))
-      .catch((error) => isMounted && toast.error(getAdminErrorMessage(error)));
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const tabParam = searchParams.get("tab");
+  const tab: Tab = TABS.some((t) => t.value === tabParam) ? (tabParam as Tab) : "stock";
 
-  useEffect(() => {
-    if (!isReady) return;
-    let isMounted = true;
-    async function loadStocks() {
-      try {
-        const response = await storeDashboardService.getStocks(storeId, {
-          page,
-          limit: 10,
-          sortBy,
-          sortOrder,
-          ...(query.trim() ? { q: query.trim() } : {}),
-          ...(categoryId ? { categoryId } : {}),
-        });
-        if (!isMounted) return;
-        setStocks(response.data.data ?? []);
-        setMeta(response.data.meta ?? defaultMeta);
-      } catch (error) {
-        if (isMounted) toast.error(getAdminErrorMessage(error));
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-    loadStocks();
-    return () => {
-      isMounted = false;
-    };
-  }, [isReady, storeId, page, query, categoryId, sortBy, sortOrder, refreshKey]);
-
-  function updateFilters(updates: Record<string, string | number>) {
-    setSearchParams(updateSearchParams(searchParams, updates));
+  // Switching tabs starts each tab from a clean slate — the tabs share generic
+  // param names (q, type, page, sortBy, startDate…) with different meanings, so
+  // leaking them between tabs would build wrong queries.
+  function switchTab(next: Tab) {
+    const params = new URLSearchParams();
+    params.set("tab", next);
+    const sid = searchParams.get("storeId");
+    if (sid) params.set("storeId", sid);
+    setSearchParams(params);
   }
 
-  async function submitMovement(values: CreateMovementPayload, helpers: { setSubmitting: (value: boolean) => void }) {
-    if (!adjustTarget) return;
-    try {
-      await storeDashboardService.createStockMovement(storeId, adjustTarget.productId, {
-        ...values,
-        quantity: Number(values.quantity),
-      });
-      toast.success("Stock updated");
-      setAdjustTarget(null);
-      setRefreshKey((key) => key + 1);
-    } catch (error) {
-      toast.error(getAdminErrorMessage(error));
-    } finally {
-      helpers.setSubmitting(false);
-    }
-  }
-
-  async function confirmClear(notes: string) {
-    if (!clearTarget) return;
-    setIsClearing(true);
-    try {
-      await storeDashboardService.clearStock(storeId, clearTarget.productId, notes ? { notes } : {});
-      toast.success("Stock cleared");
-      setClearTarget(null);
-      setRefreshKey((key) => key + 1);
-    } catch (error) {
-      toast.error(getAdminErrorMessage(error));
-    } finally {
-      setIsClearing(false);
-    }
+  if (!isReady) {
+    // Store admin with no assigned store would otherwise hang on a blank shell
+    // (super admins are redirected to /admin/stores by useStoreContext).
+    return (
+      <AdminDashboardShell>
+        {isStoreAdmin ? (
+          <div className="flex flex-col items-center gap-4 rounded-lg border border-border p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              No store is assigned to your account yet. Contact a super admin to get access.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoggingOut}
+              onClick={async () => {
+                setIsLoggingOut(true);
+                await logout();
+                navigate("/admin/login", { replace: true });
+              }}
+            >
+              Log out
+            </Button>
+          </div>
+        ) : null}
+      </AdminDashboardShell>
+    );
   }
 
   return (
     <AdminDashboardShell>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Store Stock</h1>
-          <p className="text-sm text-muted-foreground">Manage and monitor your store inventory.</p>
-        </div>
-        <Button asChild variant="outline">
-          <Link to="/admin/store/stock/history">
-            <HistoryIcon className="size-4" />
-            Stock History
-          </Link>
-        </Button>
+      <div>
+        <h1 className="text-xl font-semibold">Stock</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage inventory, review the stock report, and handle transfers for your store.
+        </p>
       </div>
 
-      <Card className="rounded-lg p-0">
-        <CardContent className="overflow-hidden p-0">
-          <div className="space-y-3 border-b border-border px-4 py-3 md:grid md:grid-cols-[minmax(0,1fr)_16rem] md:gap-3 md:space-y-0">
-            <div className="grid gap-1.5">
-              <Label className="text-xs text-muted-foreground">Search</Label>
-              <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="h-9 pl-9"
-                  placeholder="Search products"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid gap-1.5">
-              <Label className="text-xs text-muted-foreground">Category</Label>
-              <select
-                className="border-input bg-background h-9 rounded-md border px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={categoryId}
-                onChange={(e) => updateFilters({ categoryId: e.target.value, page: 1 })}
-              >
-                <option value="">All categories</option>
-                {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-              </select>
-            </div>
-          </div>
+      <div className="flex border-b border-border">
+        {TABS.map(({ value, label }) => (
+          <button
+            key={value}
+            className={tabClass(tab === value)}
+            onClick={() => switchTab(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-          <StoreStockTable
-            stocks={stocks}
-            isLoading={isLoading}
-            meta={meta}
-            page={page}
-            onView={(slug) => navigate(`/admin/store/products/${slug}`)}
-            onAdjust={setAdjustTarget}
-            onClear={setClearTarget}
-            onPageChange={(nextPage) => updateFilters({ page: nextPage })}
-          />
-        </CardContent>
-      </Card>
-
-      <StockMovementDialog
-        open={Boolean(adjustTarget)}
-        productName={adjustTarget?.product.name ?? ""}
-        currentStock={adjustTarget?.stock ?? 0}
-        onOpenChange={(open) => !open && setAdjustTarget(null)}
-        onSubmit={submitMovement}
-      />
-      <ClearStockDialog
-        open={Boolean(clearTarget)}
-        productName={clearTarget?.product.name ?? ""}
-        currentStock={clearTarget?.stock ?? 0}
-        isClearing={isClearing}
-        onConfirm={confirmClear}
-        onOpenChange={(open) => !open && setClearTarget(null)}
-      />
+      {tab === "stock" && <StockListTab storeId={storeId} />}
+      {tab === "report" && <StockReportView storeId={storeId} isActive />}
+      {tab === "transfers" && <StockTransfersTab storeId={storeId} />}
     </AdminDashboardShell>
   );
 }

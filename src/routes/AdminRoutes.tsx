@@ -19,10 +19,9 @@ import { AdminStoresPage } from "@/features/admin/stores/pages/AdminStoresPage";
 import { StoreDashboardPage } from "@/features/admin/store-dashboard/pages/StoreDashboardPage";
 import { StoreCategoriesPage } from "@/features/admin/store-dashboard/pages/StoreCategoriesPage";
 import { StoreStockPage } from "@/features/admin/store-dashboard/pages/StoreStockPage";
-import { StoreStockHistoryPage } from "@/features/admin/store-dashboard/pages/StoreStockHistoryPage";
+import { StockTabRedirect } from "@/features/admin/store-dashboard/pages/StockTabRedirect";
 import { StoreStaffPage } from "@/features/admin/store-dashboard/pages/StoreStaffPage";
 import { StoreProductDetailPage } from "@/features/admin/store-dashboard/pages/StoreProductDetailPage";
-import { StoreTransfersPage } from "@/features/admin/store-dashboard/pages/StoreTransfersPage";
 import { StoreDiscountsPage } from "@/features/admin/promos/pages/StoreDiscountsPage";
 import { CreateDiscountPage } from "@/features/admin/promos/pages/CreateDiscountPage";
 import { EditDiscountPage } from "@/features/admin/promos/pages/EditDiscountPage";
@@ -34,6 +33,7 @@ import { AdminOrdersPage } from "@/features/admin/orders/pages/AdminOrdersPage";
 import { AdminOrderDetailPage } from "@/features/admin/orders/pages/AdminOrderDetailPage";
 import { SalesReportsPage } from "@/features/admin/sales-reports/pages/SalesReportsPage";
 import { StoreSalesReportsPage } from "@/features/admin/sales-reports/pages/StoreSalesReportsPage";
+import { StockReportsPage } from "@/features/admin/stock-reports/pages/StockReportsPage";
 
 export const adminRoutes = (
   <Fragment>
@@ -85,7 +85,7 @@ export const adminRoutes = (
         path="/admin/store/stock/history"
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
-            <StoreStockHistoryPage />
+            <StockTabRedirect tab="report" />
           </AdminProtectedRoute>
         }
       />
@@ -93,7 +93,7 @@ export const adminRoutes = (
         path="/admin/store/stock/transfers"
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
-            <StoreTransfersPage />
+            <StockTabRedirect tab="transfers" />
           </AdminProtectedRoute>
         }
       />
@@ -274,6 +274,22 @@ export const adminRoutes = (
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
             <StoreSalesReportsPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/stock-reports"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin"]}>
+            <StockReportsPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/store/stock-reports"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin", "storeAdmin"]}>
+            <StockTabRedirect tab="report" />
           </AdminProtectedRoute>
         }
       />

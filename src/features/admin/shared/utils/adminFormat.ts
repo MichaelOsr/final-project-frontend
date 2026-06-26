@@ -1,5 +1,9 @@
 const numberFormatter = new Intl.NumberFormat("en-US");
 
+const percentFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 1,
+});
+
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
@@ -8,6 +12,10 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 
 export function formatNumber(value: number | undefined) {
   return numberFormatter.format(value ?? 0);
+}
+
+export function formatPercentage(value: number | undefined) {
+  return percentFormatter.format(value ?? 0);
 }
 
 export function formatDate(value?: string) {

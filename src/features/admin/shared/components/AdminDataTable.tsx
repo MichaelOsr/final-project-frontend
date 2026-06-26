@@ -7,7 +7,6 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -18,11 +17,8 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { PaginationMeta } from "../types/admin.types";
-
-interface ServerPagination {
-  meta: PaginationMeta;
-  onPageChange: (page: number) => void;
-}
+import { AdminTablePagination, type ServerPagination } from "./AdminTablePagination";
+import { AdminTableSkeletonRows } from "./AdminTableSkeleton";
 
 export type SortOrder = "asc" | "desc";
 
@@ -38,6 +34,8 @@ interface AdminDataTableProps<TData, TValue> {
   emptyMessage: string;
   isLoading?: boolean;
   loadingMessage?: string;
+  // When set, the loading state shows shimmer rows instead of a text message.
+  skeletonRows?: number;
   minWidth?: string;
   pagination?: ServerPagination;
   sorting?: ServerSorting;
@@ -49,6 +47,7 @@ export function AdminDataTable<TData, TValue>({
   emptyMessage,
   isLoading = false,
   loadingMessage = "Loading data...",
+  skeletonRows,
   minWidth,
   pagination,
   sorting,
@@ -74,7 +73,7 @@ export function AdminDataTable<TData, TValue>({
     },
   });
 
-  if (isLoading) {
+  if (isLoading && !skeletonRows) {
     return <TableMessage message={loadingMessage} />;
   }
 
@@ -95,7 +94,9 @@ export function AdminDataTable<TData, TValue>({
           ))}
         </TableHeader>
         <TableBody className="divide-y divide-border">
-          {table.getRowModel().rows.length ? (
+          {isLoading && skeletonRows ? (
+            <AdminTableSkeletonRows rows={skeletonRows} columnCount={columns.length} />
+          ) : table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
@@ -114,7 +115,7 @@ export function AdminDataTable<TData, TValue>({
           )}
         </TableBody>
       </Table>
-      {pagination ? <TablePagination meta={pagination.meta} table={table} /> : null}
+      {pagination ? <AdminTablePagination pagination={pagination} table={table} /> : null}
     </>
   );
 }
@@ -156,19 +157,4 @@ function TableHeaderContent<TData>({ header, sorting }: {
 function SortIcon({ isActive, order }: { isActive: boolean; order: SortOrder }) {
   if (!isActive) return <ChevronsUpDownIcon className="size-3.5 opacity-50" />;
   return order === "asc" ? <ArrowUpIcon className="size-3.5" /> : <ArrowDownIcon className="size-3.5" />;
-}
-
-function TablePagination<TData>({ meta, table }: {
-  meta: PaginationMeta;
-  table: ReturnType<typeof useReactTable<TData>>;
-}) {
-  return (
-    <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm">
-      <span className="text-muted-foreground">Page {meta.page} of {meta.totalPages || 1}</span>
-      <div className="flex gap-2">
-        <Button variant="outline" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>Previous</Button>
-        <Button variant="outline" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>Next</Button>
-      </div>
-    </div>
-  );
 }

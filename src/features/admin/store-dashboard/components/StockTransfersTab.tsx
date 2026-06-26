@@ -5,25 +5,27 @@ import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { usePageTitle } from "@/hooks/usePageTitle";
 import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
-import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
-import { useStoreContext } from "../hooks/useStoreContext";
 import { stockTransferService } from "../services/stockTransfer.service";
-import type { StockTransferRequest, TransferAction, TransferDirection, TransferSortField, TransferStatus } from "../types/stockTransfer.types";
-import { CreateTransferDialog } from "../components/CreateTransferDialog";
-import { TransferActionDialog } from "../components/TransferActionDialog";
-import { TransferDetailDialog } from "../components/TransferDetailDialog";
-import { TransferFilters } from "../components/TransferFilters";
-import { TransferRequestsTable } from "../components/TransferRequestsTable";
+import type {
+  StockTransferRequest,
+  TransferAction,
+  TransferDirection,
+  TransferSortField,
+  TransferStatus,
+} from "../types/stockTransfer.types";
+import { CreateTransferDialog } from "./CreateTransferDialog";
+import { TransferActionDialog } from "./TransferActionDialog";
+import { TransferDetailDialog } from "./TransferDetailDialog";
+import { TransferFilters } from "./TransferFilters";
+import { TransferRequestsTable } from "./TransferRequestsTable";
 
 const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
 
-export function StoreTransfersPage() {
-  usePageTitle("Stock Transfers");
-  const { storeId, isReady } = useStoreContext();
+// Inventory > Transfers tab: stock transfer requests for the store.
+export function StockTransfersTab({ storeId }: { storeId: string }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [requests, setRequests] = useState<StockTransferRequest[]>([]);
@@ -45,7 +47,6 @@ export function StoreTransfersPage() {
   const sortOrder = (searchParams.get("sortOrder") ?? "desc") as "asc" | "desc";
 
   useEffect(() => {
-    if (!isReady) return;
     let isMounted = true;
     async function load() {
       setIsLoading(true);
@@ -70,8 +71,10 @@ export function StoreTransfersPage() {
       }
     }
     load();
-    return () => { isMounted = false; };
-  }, [isReady, storeId, page, status, direction, startDate, endDate, sortBy, sortOrder]);
+    return () => {
+      isMounted = false;
+    };
+  }, [storeId, page, status, direction, startDate, endDate, sortBy, sortOrder]);
 
   function updateFilters(updates: Record<string, string | number>) {
     setSearchParams(updateSearchParams(searchParams, updates));
@@ -116,12 +119,8 @@ export function StoreTransfersPage() {
   }
 
   return (
-    <AdminDashboardShell>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Stock Transfers</h1>
-          <p className="text-sm text-muted-foreground">Manage stock transfer requests between stores.</p>
-        </div>
+    <>
+      <div className="flex justify-end">
         <Button onClick={() => setIsCreateOpen(true)}>
           <PlusIcon className="size-4" />
           New Request
@@ -176,6 +175,6 @@ export function StoreTransfersPage() {
         onOpenChange={setIsActionOpen}
         onDone={handleActionDone}
       />
-    </AdminDashboardShell>
+    </>
   );
 }
