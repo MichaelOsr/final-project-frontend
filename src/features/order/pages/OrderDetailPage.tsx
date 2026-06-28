@@ -2,13 +2,8 @@ import { useEffect, useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { toast } from "sonner"
 import {
-  ArrowLeftIcon,
-  StoreIcon,
-  MapPinIcon,
-  TruckIcon,
-  ReceiptIcon,
-  CreditCardIcon,
-  BuildingIcon,
+  ArrowLeftIcon, StoreIcon, MapPinIcon, TruckIcon,
+  ReceiptIcon, CreditCardIcon, BuildingIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useOrderStore } from "@/store/order.store"
@@ -20,7 +15,7 @@ import { geocodeService } from "@/features/home/services/geocode.service"
 import type { OrderItem } from "../types/order.types"
 
 export function OrderDetailPage() {
-  usePageTitle("Detail Pesanan")
+  usePageTitle("Order Details")
   const { orderId } = useParams<{ orderId: string }>()
   const navigate = useNavigate()
   const {
@@ -36,7 +31,6 @@ export function OrderDetailPage() {
     return () => clearDetail()
   }, [orderId, fetchOrderDetail, clearDetail])
 
-  // Geocode koordinat alamat pengiriman untuk tampil label yang readable.
   const [addressLabel, setAddressLabel] = useState<string | null>(null)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
 
@@ -55,17 +49,11 @@ export function OrderDetailPage() {
             )
             setAddressLabel(geo.data?.label ?? addr.notes ?? addr.name)
           } catch {
-            // Geocode gagal, fallback ke nama atau notes
             setAddressLabel(addr.notes ?? addr.name)
           }
         }
-        // Kalau address tidak ditemukan di list, addressLabel tetap null
-        // dan section akan menampilkan addressId sebagai fallback
-      } catch {
-        // Silently fail
-      } finally {
-        setIsLoadingAddress(false)
-      }
+      } catch { /* silently fail */ }
+      finally { setIsLoadingAddress(false) }
     }
     fetchAddressLabel()
   }, [orderDetail?.addressId])
@@ -74,16 +62,16 @@ export function OrderDetailPage() {
     if (!orderDetail) return
     const confirmMsg =
       status === "cancel"
-        ? "Yakin mau batalkan pesanan ini?"
-        : "Konfirmasi bahwa pesanan sudah kamu terima?"
+        ? "Are you sure you want to cancel this order?"
+        : "Confirm that you have received this order?"
     if (!window.confirm(confirmMsg)) return
     try {
       await updateOrderStatus(orderDetail.id, status)
       toast.success(
-        status === "cancel" ? "Pesanan berhasil dibatalkan" : "Pesanan dikonfirmasi, terima kasih!"
+        status === "cancel" ? "Order cancelled successfully" : "Order confirmed, thank you!"
       )
     } catch {
-      toast.error("Gagal mengubah status pesanan")
+      toast.error("Failed to update order status")
     }
   }
 
@@ -102,20 +90,16 @@ export function OrderDetailPage() {
   if (!orderDetail) {
     return (
       <div className="mx-auto flex max-w-2xl flex-col items-center justify-center px-4 py-24 text-center">
-        <p className="mb-4 text-muted-foreground">Pesanan tidak ditemukan.</p>
-        <Button
-          variant="outline"
-          className="rounded-full"
-          onClick={() => navigate("/orders")}
-        >
-          Kembali ke daftar pesanan
+        <p className="mb-4 text-muted-foreground">Order not found.</p>
+        <Button variant="outline" className="rounded-full" onClick={() => navigate("/orders")}>
+          Back to orders
         </Button>
       </div>
     )
   }
 
   const order = orderDetail
-  const orderDate = new Date(order.createdAt).toLocaleDateString("id-ID", {
+  const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -123,13 +107,10 @@ export function OrderDetailPage() {
     minute: "2-digit",
   })
 
+  // Cancel hanya boleh sebelum upload bukti bayar (PRD).
   const isCancellable =
-    order.transactionStatus === "waitingPayment" ||
-    order.transactionStatus === "waitingConfirmation"
+    order.transactionStatus === "waitingPayment"
 
-  // Tentukan route tombol lanjut bayar berdasarkan paymentType.
-  // paymentType "midtrans" → user sudah pernah hit getSnapToken, lanjutkan ke Midtrans.
-  // null (belum ada aksi) → default ke manual transfer.
   const isMidtrans = order.paymentType === "midtrans"
 
   return (
@@ -141,11 +122,11 @@ export function OrderDetailPage() {
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeftIcon className="size-4" />
-          Pesanan Saya
+          My Orders
         </Link>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold">Detail Pesanan</h1>
+            <h1 className="text-xl font-bold">Order Details</h1>
             <p className="mt-0.5 text-xs text-muted-foreground">
               #{order.id.slice(0, 8).toUpperCase()} · {orderDate}
             </p>
@@ -155,11 +136,11 @@ export function OrderDetailPage() {
       </div>
 
       <div className="grid gap-4">
-        {/* Info toko */}
+        {/* Store info */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-center gap-2">
             <StoreIcon className="size-4 text-primary" />
-            <h2 className="text-sm font-bold">Toko</h2>
+            <h2 className="text-sm font-bold">Store</h2>
           </div>
           <p className="text-sm font-medium">{order.store.name}</p>
           {order.store.address && (
@@ -167,11 +148,11 @@ export function OrderDetailPage() {
           )}
         </div>
 
-        {/* Daftar produk */}
+        {/* Products */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-center gap-2">
             <ReceiptIcon className="size-4 text-primary" />
-            <h2 className="text-sm font-bold">Produk</h2>
+            <h2 className="text-sm font-bold">Products</h2>
           </div>
           <div className="grid gap-3">
             {order.items.map((item: OrderItem) => {
@@ -191,12 +172,10 @@ export function OrderDetailPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{item.name}</p>
                     {item.discount && (
-                      <p className="text-xs text-primary">
-                        Diskon: {item.discount.name}
-                      </p>
+                      <p className="text-xs text-primary">Discount: {item.discount.name}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      {item.quantity} item
+                      {item.quantity} item{item.quantity > 1 ? "s" : ""}
                     </p>
                   </div>
                   <span className="shrink-0 text-sm font-semibold">
@@ -208,64 +187,61 @@ export function OrderDetailPage() {
           </div>
         </div>
 
-        {/* Pengiriman */}
+        {/* Shipping */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-center gap-2">
             <TruckIcon className="size-4 text-primary" />
-            <h2 className="text-sm font-bold">Pengiriman</h2>
+            <h2 className="text-sm font-bold">Shipping</h2>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Kurir</span>
+            <span className="text-muted-foreground">Courier</span>
             <span className="font-medium">{order.shipping_vendor}</span>
           </div>
         </div>
 
-        {/* Alamat Pengiriman */}
+        {/* Delivery Address */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-center gap-2">
             <MapPinIcon className="size-4 text-primary" />
-            <h2 className="text-sm font-bold">Alamat Pengiriman</h2>
+            <h2 className="text-sm font-bold">Delivery Address</h2>
           </div>
           {isLoadingAddress ? (
-            <p className="text-sm text-muted-foreground">Memuat alamat...</p>
+            <p className="text-sm text-muted-foreground">Loading address...</p>
           ) : addressLabel ? (
             <p className="text-sm text-foreground">{addressLabel}</p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Detail alamat akan tersedia setelah address management (Feature 1) selesai diintegrasikan.
+              Address details are not available.
             </p>
           )}
         </div>
 
-        {/* Ringkasan harga */}
+        {/* Price summary */}
         <div className="rounded-xl border border-border bg-card p-5">
-          <h2 className="mb-4 text-sm font-bold">Ringkasan Harga</h2>
-
+          <h2 className="mb-4 text-sm font-bold">Price Summary</h2>
           <div className="grid gap-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal produk</span>
-              <span>{formatPrice(order.totalPrice - order.deliveryFee)}</span>
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>{formatPrice(order.totalPrice)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Ongkos kirim</span>
+              <span className="text-muted-foreground">Shipping</span>
               <span>{formatPrice(order.deliveryFee)}</span>
             </div>
             {order.voucher && (
               <div className="flex justify-between text-primary">
                 <span>Voucher: {order.voucher.name}</span>
-                <span>Dipakai</span>
+                <span>Applied</span>
               </div>
             )}
             {order.deliveryVoucher && (
               <div className="flex justify-between text-primary">
-                <span>Voucher ongkir: {order.deliveryVoucher.name}</span>
-                <span>Dipakai</span>
+                <span>Shipping voucher: {order.deliveryVoucher.name}</span>
+                <span>Applied</span>
               </div>
             )}
           </div>
-
           <div className="my-4 border-t border-border" />
-
           <div className="flex items-center justify-between font-bold">
             <span>Total</span>
             <span className="text-base text-primary">{formatPrice(order.totalPrice)}</span>
@@ -274,11 +250,10 @@ export function OrderDetailPage() {
 
         {/* Action buttons */}
         <div className="flex flex-col gap-3">
-          {/* waitingPayment: satu tombol sesuai metode yang dipilih di checkout */}
           {order.transactionStatus === "waitingPayment" && (
             <>
               <p className="text-center text-xs text-muted-foreground">
-                Kamu punya 1 jam untuk melakukan pembayaran sebelum pesanan otomatis dibatalkan.
+                You have 1 hour to complete payment before this order is automatically cancelled.
               </p>
               {isMidtrans ? (
                 <Button
@@ -286,7 +261,7 @@ export function OrderDetailPage() {
                   onClick={() => navigate(`/payment/midtrans/${order.id}`)}
                 >
                   <CreditCardIcon className="mr-2 size-4" />
-                  Bayar via Midtrans
+                  Pay via Midtrans
                 </Button>
               ) : (
                 <Button
@@ -294,46 +269,41 @@ export function OrderDetailPage() {
                   onClick={() => navigate(`/payment/manual-transfer/${order.id}`)}
                 >
                   <BuildingIcon className="mr-2 size-4" />
-                  Upload Bukti Transfer
+                  Upload Transfer Proof
                 </Button>
               )}
             </>
           )}
 
-          {/* waitingConfirmation: info menunggu konfirmasi admin */}
           {order.transactionStatus === "waitingConfirmation" && (
             <div className="rounded-lg bg-blue-50 px-4 py-3 text-center">
-              <p className="text-sm font-semibold text-blue-700">
-                Menunggu konfirmasi admin
-              </p>
+              <p className="text-sm font-semibold text-blue-700">Awaiting admin confirmation</p>
               <p className="mt-0.5 text-xs text-blue-600">
-                Bukti pembayaran kamu sedang diverifikasi oleh admin.
+                Your payment is being verified by our team.
               </p>
             </div>
           )}
 
-          {/* Tombol cancel: muncul di waitingPayment dan waitingConfirmation */}
           {isCancellable && (
             <Button
               variant="destructive"
               className="h-11 w-full rounded-full"
               onClick={() => handleUpdateStatus("cancel")}
             >
-              Batalkan Pesanan
+              Cancel Order
             </Button>
           )}
 
-          {/* Tombol konfirmasi terima: muncul di onDelivery */}
           {order.transactionStatus === "onDelivery" && (
             <>
               <p className="text-center text-xs text-muted-foreground">
-                Pesanan akan otomatis dikonfirmasi dalam 2×24 jam jika kamu tidak melakukan konfirmasi.
+                Order will be automatically confirmed within 2×24 hours if you don't confirm receipt.
               </p>
               <Button
                 className="h-11 w-full rounded-full"
                 onClick={() => handleUpdateStatus("confirmed")}
               >
-                Konfirmasi Pesanan Diterima
+                Confirm Order Received
               </Button>
             </>
           )}

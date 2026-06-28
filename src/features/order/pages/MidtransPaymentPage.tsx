@@ -6,7 +6,7 @@ import { paymentService } from "../services/payment.service"
 import { usePageTitle } from "@/hooks/usePageTitle"
 
 export function MidtransPaymentPage() {
-  usePageTitle("Pembayaran")
+  usePageTitle("Payment")
   const { orderId } = useParams<{ orderId: string }>()
   const navigate = useNavigate()
 
@@ -15,11 +15,10 @@ export function MidtransPaymentPage() {
   const [isLoadingToken, setIsLoadingToken] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const hasEmbedded = useRef(false)
-  // Guard supaya getSnapToken API tidak dipanggil dua kali
-  // (React Strict Mode double-invocation di development)
+  // Guard against double invocation in React Strict Mode (development).
   const hasFetchedToken = useRef(false)
 
-  // Step 1: Load Snap.js dari CDN Midtrans secara dinamis.
+  // Step 1: Dynamically load Snap.js from Midtrans CDN.
   useEffect(() => {
     const isProduction = import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === "true"
     const snapUrl = isProduction
@@ -28,12 +27,9 @@ export function MidtransPaymentPage() {
 
     const script = document.createElement("script")
     script.src = snapUrl
-    script.setAttribute(
-      "data-client-key",
-      import.meta.env.VITE_MIDTRANS_CLIENT_KEY ?? "",
-    )
+    script.setAttribute("data-client-key", import.meta.env.VITE_MIDTRANS_CLIENT_KEY ?? "")
     script.onload = () => setIsScriptLoaded(true)
-    script.onerror = () => setError("Gagal memuat halaman pembayaran. Periksa koneksi internet kamu.")
+    script.onerror = () => setError("Failed to load payment page. Please check your internet connection.")
     document.head.appendChild(script)
 
     return () => {
@@ -43,8 +39,7 @@ export function MidtransPaymentPage() {
     }
   }, [])
 
-  // Step 2: Request Snap Token dari backend.
-  // hasFetchedToken.current mencegah double-call di React Strict Mode.
+  // Step 2: Request Snap Token from backend.
   useEffect(() => {
     if (!orderId || hasFetchedToken.current) return
     hasFetchedToken.current = true
@@ -56,7 +51,7 @@ export function MidtransPaymentPage() {
       } catch (err: unknown) {
         const message =
           (err as { response?: { data?: { message?: string } } })?.response?.data
-            ?.message ?? "Gagal mendapatkan token pembayaran"
+            ?.message ?? "Failed to get payment token"
         setError(message)
       } finally {
         setIsLoadingToken(false)
@@ -65,7 +60,7 @@ export function MidtransPaymentPage() {
     fetchToken()
   }, [orderId])
 
-  // Step 3: Embed Snap setelah script dan token keduanya siap.
+  // Step 3: Embed Snap once both script and token are ready.
   useEffect(() => {
     if (!isScriptLoaded || !snapToken || hasEmbedded.current) return
     if (!window.snap) return
@@ -77,7 +72,7 @@ export function MidtransPaymentPage() {
       onSuccess: () => navigate(`/orders/${orderId}`),
       onPending: () => navigate(`/orders/${orderId}`),
       onError: () => {
-        toast.error("Pembayaran gagal. Silakan coba lagi dari halaman pesanan.")
+        toast.error("Payment failed. Please try again from your order page.")
         navigate(`/orders/${orderId}`)
       },
       onClose: () => navigate(`/orders/${orderId}`),
@@ -88,7 +83,6 @@ export function MidtransPaymentPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      {/* Header */}
       <div className="mb-6">
         <button
           type="button"
@@ -96,9 +90,9 @@ export function MidtransPaymentPage() {
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeftIcon className="size-4" />
-          Kembali ke detail pesanan
+          Back to order details
         </button>
-        <h1 className="text-xl font-bold">Pembayaran</h1>
+        <h1 className="text-xl font-bold">Payment</h1>
       </div>
 
       {error ? (
@@ -109,12 +103,12 @@ export function MidtransPaymentPage() {
             className="mt-3 text-sm text-muted-foreground underline hover:text-foreground"
             onClick={() => navigate(`/orders/${orderId}`)}
           >
-            Kembali ke detail pesanan
+            Back to order details
           </button>
         </div>
       ) : (
         <div className="grid gap-4">
-          {/* Info card di atas snap container */}
+          {/* Info card above snap container */}
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -122,15 +116,13 @@ export function MidtransPaymentPage() {
                   <CreditCardIcon className="size-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">Pilih metode pembayaran</p>
-                  <p className="text-xs text-muted-foreground">
-                    Didukung oleh Midtrans
-                  </p>
+                  <p className="text-sm font-semibold">Choose payment method</p>
+                  <p className="text-xs text-muted-foreground">Powered by Midtrans</p>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1">
                 <ShieldCheckIcon className="size-3.5 text-green-600" />
-                <span className="text-xs font-medium text-green-700">Aman & Terenkripsi</span>
+                <span className="text-xs font-medium text-green-700">Secure & Encrypted</span>
               </div>
             </div>
           </div>
@@ -138,15 +130,13 @@ export function MidtransPaymentPage() {
           {isLoading && (
             <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card py-16">
               <Loader2Icon className="size-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">
-                Menyiapkan halaman pembayaran...
-              </p>
+              <p className="text-sm text-muted-foreground">Loading payment page...</p>
             </div>
           )}
 
-          {/* Container target untuk snap.embed().
-              Harus ada di DOM saat snap.embed dipanggil,
-              jadi kita hide via class bukan conditional render. */}
+          {/* Target container for snap.embed().
+              Must exist in the DOM when snap.embed is called,
+              so we hide with class instead of conditional render. */}
           <div
             id="snap-container"
             className={isLoading ? "hidden" : "min-h-125 w-full overflow-hidden rounded-xl border border-border"}

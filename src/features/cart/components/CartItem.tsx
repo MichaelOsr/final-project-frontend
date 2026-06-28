@@ -68,15 +68,14 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
     product.discounts
   )
 
-  // Stok dari toko terdekat berdasarkan resolvedStoreId dari session storage.
-  // Fallback ke stok tertinggi di semua toko kalau storeId belum ada.
+  // Stok toko terdekat dari session storage — dipakai untuk warning overstocked.
   const nearestStoreStock =
     product.stocks.find((s) => s.storeId === resolvedStoreId)?.stock ?? null
-  const maxStock =
-    nearestStoreStock ??
-    Math.max(...product.stocks.map((s) => s.stock), 0)
 
-  // Overstocked: quantity di cart melebihi stok yang tersedia di toko terdekat.
+  // Limit tombol + berdasarkan total stok semua toko.
+  const maxStock = product.stocks.reduce((sum, s) => sum + s.stock, 0)
+
+  // Warning muncul kalau quantity di cart melebihi stok toko terdekat.
   const isOverstocked = nearestStoreStock !== null && item.quantity > nearestStoreStock
 
   const [localQty, setLocalQty] = useState(item.quantity)
@@ -94,7 +93,7 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
         try {
           await updateItem(cartItemId, qty)
         } catch {
-          toast.error("Gagal memperbarui jumlah produk")
+          toast.error("Failed to update product quantity")
           setLocalQty(item.quantity)
         }
       }, DEBOUNCE_MS)
@@ -129,9 +128,9 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
     setIsRemoving(true)
     try {
       await removeItem(cartItemId)
-      toast.success(`${product.name} dihapus dari cart`)
+      toast.success(`${product.name} removed from cart`)
     } catch {
-      toast.error("Gagal menghapus produk dari cart")
+      toast.error("Failed to remove product from cart")
       setIsRemoving(false)
     }
   }
@@ -140,7 +139,7 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
 
   return (
     <div className={`flex gap-4 rounded-xl border bg-card p-4 ${isOverstocked ? "border-destructive/50" : "border-border"}`}>
-      {/* Gambar produk */}
+      {/* Product image */}
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
         <img
           src={mainImage}
@@ -157,7 +156,7 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
         )}
       </div>
 
-      {/* Info produk */}
+      {/* Product info */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-sm font-semibold text-foreground">{product.name}</p>
         {(product.brand || product.variant || product.size) && (
@@ -183,7 +182,7 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
               className="h-7 w-7 rounded-full"
               onClick={handleDecrease}
               disabled={localQty <= 1 || isRemoving}
-              aria-label="Kurangi jumlah"
+              aria-label="Decrease quantity"
             >
               <MinusIcon className="size-3" />
             </Button>
@@ -194,7 +193,7 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
               className="h-7 w-7 rounded-full"
               onClick={handleIncrease}
               disabled={localQty >= maxStock || isRemoving}
-              aria-label="Tambah jumlah"
+              aria-label="Increase quantity"
             >
               <PlusIcon className="size-3" />
             </Button>
@@ -208,19 +207,19 @@ export function CartItem({ item, resolvedStoreId }: CartItemProps) {
               className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={handleRemove}
               disabled={isRemoving}
-              aria-label={`Hapus ${product.name} dari cart`}
+              aria-label={`Remove ${product.name} from cart`}
             >
               <Trash2Icon className="size-4" />
             </Button>
           </div>
         </div>
 
-        {/* Warning overstocked */}
+        {/* Warning per item kalau stok toko terdekat tidak cukup */}
         {isOverstocked && (
           <div className="mt-1 flex items-center gap-1.5 text-xs text-destructive">
             <AlertCircleIcon className="size-3 shrink-0" />
             <span>
-              Stok tersedia: {nearestStoreStock}. Kurangi jumlah sebelum checkout.
+              Only {nearestStoreStock} available at your nearest store. Please reduce the quantity.
             </span>
           </div>
         )}

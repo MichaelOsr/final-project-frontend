@@ -1,28 +1,23 @@
 import type { TransactionStatus } from "../types/order.types"
 
-// Label yang ditampilkan ke user per status.
 export const STATUS_LABEL: Record<TransactionStatus, string> = {
-  waitingPayment: "Menunggu Pembayaran",
-  waitingConfirmation: "Menunggu Konfirmasi",
-  paid: "Pembayaran Berhasil",
-  process: "Diproses",
-  onDelivery: "Dikirim",
-  confirmed: "Pesanan Dikonfirmasi",
-  cancel: "Dibatalkan",
+  waitingPayment: "Awaiting Payment",
+  waitingConfirmation: "Awaiting Confirmation",
+  paid: "Payment Confirmed",
+  process: "Processing",
+  onDelivery: "On Delivery",
+  confirmed: "Order Confirmed",
+  cancel: "Cancelled",
 }
 
-// Warna badge per status (Tailwind classes).
-export const STATUS_COLOR: Record<
-  TransactionStatus,
-  { bg: string; text: string }
-> = {
-  waitingPayment: { bg: "bg-yellow-100", text: "text-yellow-700" },
-  waitingConfirmation: { bg: "bg-blue-100", text: "text-blue-700" },
-  paid: { bg: "bg-teal-100", text: "text-teal-700" },
-  process: { bg: "bg-indigo-100", text: "text-indigo-700" },
-  onDelivery: { bg: "bg-cyan-100", text: "text-cyan-700" },
-  confirmed: { bg: "bg-green-100", text: "text-green-700" },
-  cancel: { bg: "bg-red-100", text: "text-red-600" },
+export const STATUS_COLOR: Record<TransactionStatus, { bg: string; text: string }> = {
+  waitingPayment:      { bg: "bg-yellow-100", text: "text-yellow-700" },
+  waitingConfirmation: { bg: "bg-blue-100",   text: "text-blue-700"   },
+  paid:                { bg: "bg-teal-100",   text: "text-teal-700"   },
+  process:             { bg: "bg-indigo-100", text: "text-indigo-700" },
+  onDelivery:          { bg: "bg-cyan-100",   text: "text-cyan-700"   },
+  confirmed:           { bg: "bg-green-100",  text: "text-green-700"  },
+  cancel:              { bg: "bg-red-100",    text: "text-red-600"    },
 }
 
 interface OrderStatusBadgeProps {

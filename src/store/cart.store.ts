@@ -32,6 +32,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       const { data } = await cartService.getCart(storeId)
       const cart = data.data ?? null
       const items = cart?.items ?? []
+      console.log(items)
       set({ cart, totalItems: computeTotalItems(items) })
     } catch {
       // Jika gagal (misal belum login), biarkan cart tetap null.

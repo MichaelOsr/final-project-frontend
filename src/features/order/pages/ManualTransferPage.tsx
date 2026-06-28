@@ -16,8 +16,7 @@ import { formatPrice, getTimeRemaining } from "../utils/order.utils"
 import { usePageTitle } from "@/hooks/usePageTitle"
 import type { TimeRemaining } from "../utils/order.utils"
 
-// Info rekening tujuan transfer — satu rekening untuk semua cabang.
-// Ganti sesuai rekening bisnis aktual sebelum production.
+// Bank transfer destination — update with actual business account before production.
 const BANK_INFO = {
   bankName: "BCA",
   accountNumber: "1234567890",
@@ -25,7 +24,7 @@ const BANK_INFO = {
 }
 
 export function ManualTransferPage() {
-  usePageTitle("Transfer Manual")
+  usePageTitle("Manual Transfer")
   const { orderId } = useParams<{ orderId: string }>()
   const navigate = useNavigate()
   const { orderDetail, isLoadingDetail, fetchOrderDetail, clearDetail } = useOrderStore()
@@ -36,26 +35,24 @@ export function ManualTransferPage() {
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Fetch order detail saat mount
   useEffect(() => {
     if (orderId) fetchOrderDetail(orderId)
     return () => clearDetail()
   }, [orderId, fetchOrderDetail, clearDetail])
 
-  // Redirect ke order detail kalau status sudah bukan waitingPayment.
-  // Misal user akses ulang URL ini setelah bukti sudah diupload.
+  // Redirect to order detail if status is no longer waitingPayment.
   useEffect(() => {
     if (!isLoadingDetail && orderDetail && orderDetail.transactionStatus !== "waitingPayment") {
       navigate(`/orders/${orderId}`, { replace: true })
     }
   }, [isLoadingDetail, orderDetail, orderId, navigate])
 
-  // Mulai countdown interval setelah paymentExpiredAt tersedia
+  // Start countdown once paymentExpiredAt is available.
   useEffect(() => {
     if (!orderDetail?.paymentExpiredAt) return
     const expiredAt = orderDetail.paymentExpiredAt
     const tick = () => setTimeLeft(getTimeRemaining(expiredAt))
-    tick() // langsung hitung sekali dulu tanpa nunggu 1 detik
+    tick()
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [orderDetail?.paymentExpiredAt])
@@ -64,11 +61,11 @@ export function ManualTransferPage() {
     const file = e.target.files?.[0]
     if (!file) return
     if (!["image/jpeg", "image/png"].includes(file.type)) {
-      toast.error("Hanya file JPG atau PNG yang diizinkan")
+      toast.error("Only JPG or PNG files are allowed")
       return
     }
     if (file.size > 1024 * 1024) {
-      toast.error("Ukuran file maksimal 1MB")
+      toast.error("File size must not exceed 1MB")
       return
     }
     setSelectedFile(file)
@@ -78,7 +75,6 @@ export function ManualTransferPage() {
   const handleClearFile = () => {
     setSelectedFile(null)
     setPreviewUrl(null)
-    // Reset input value supaya file yang sama bisa dipilih ulang
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
@@ -87,12 +83,12 @@ export function ManualTransferPage() {
     setIsUploading(true)
     try {
       await paymentService.uploadPaymentProof(orderId, selectedFile)
-      toast.success("Bukti pembayaran berhasil dikirim!")
+      toast.success("Payment proof submitted successfully!")
       navigate(`/orders/${orderId}`)
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "Gagal mengirim bukti pembayaran"
+          ?.message ?? "Failed to submit payment proof"
       toast.error(message)
     } finally {
       setIsUploading(false)
@@ -110,7 +106,7 @@ export function ManualTransferPage() {
   if (!orderDetail) {
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center justify-center px-4 py-20 text-center">
-        <p className="text-muted-foreground">Pesanan tidak ditemukan.</p>
+        <p className="text-muted-foreground">Order not found.</p>
       </div>
     )
   }
@@ -126,9 +122,9 @@ export function ManualTransferPage() {
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeftIcon className="size-4" />
-          Kembali ke detail pesanan
+          Back to order details
         </button>
-        <h1 className="text-xl font-bold">Transfer Manual</h1>
+        <h1 className="text-xl font-bold">Manual Transfer</h1>
       </div>
 
       <div className="grid gap-4">
@@ -139,14 +135,12 @@ export function ManualTransferPage() {
           }`}
         >
           <div className="mb-2 flex items-center gap-2">
-            <TimerIcon
-              className={`size-4 ${isExpired ? "text-destructive" : "text-primary"}`}
-            />
-            <h2 className="text-sm font-bold">Batas Waktu Pembayaran</h2>
+            <TimerIcon className={`size-4 ${isExpired ? "text-destructive" : "text-primary"}`} />
+            <h2 className="text-sm font-bold">Payment Deadline</h2>
           </div>
           {isExpired ? (
             <p className="text-sm font-semibold text-destructive">
-              Waktu pembayaran sudah habis. Pesanan akan dibatalkan secara otomatis.
+              Payment time has expired. This order will be automatically cancelled.
             </p>
           ) : timeLeft ? (
             <p className="text-3xl font-bold tabular-nums text-primary">
@@ -159,25 +153,25 @@ export function ManualTransferPage() {
           )}
         </div>
 
-        {/* Total yang harus dibayar */}
+        {/* Amount to pay */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-2 flex items-center gap-2">
             <ReceiptIcon className="size-4 text-primary" />
-            <h2 className="text-sm font-bold">Total Pembayaran</h2>
+            <h2 className="text-sm font-bold">Amount to Pay</h2>
           </div>
           <p className="text-2xl font-bold text-primary">
             {formatPrice(orderDetail.totalPrice)}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Pastikan nominal transfer sesuai persis dengan angka di atas.
+            Make sure the transfer amount exactly matches the number above.
           </p>
         </div>
 
-        {/* Info rekening tujuan */}
+        {/* Bank account info */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-center gap-2">
             <Building2Icon className="size-4 text-primary" />
-            <h2 className="text-sm font-bold">Rekening Tujuan</h2>
+            <h2 className="text-sm font-bold">Transfer Destination</h2>
           </div>
           <div className="grid gap-2.5 text-sm">
             <div className="flex items-center justify-between">
@@ -185,27 +179,27 @@ export function ManualTransferPage() {
               <span className="font-semibold">{BANK_INFO.bankName}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">No. Rekening</span>
+              <span className="text-muted-foreground">Account Number</span>
               <span className="font-mono font-semibold tracking-wider">
                 {BANK_INFO.accountNumber}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Atas Nama</span>
+              <span className="text-muted-foreground">Account Name</span>
               <span className="font-semibold">{BANK_INFO.accountName}</span>
             </div>
           </div>
         </div>
 
-        {/* Upload bukti bayar — disembunyikan kalau sudah expired */}
+        {/* Upload proof — hidden when expired */}
         {!isExpired && (
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="mb-3 flex items-center gap-2">
               <UploadIcon className="size-4 text-primary" />
-              <h2 className="text-sm font-bold">Upload Bukti Pembayaran</h2>
+              <h2 className="text-sm font-bold">Upload Payment Proof</h2>
             </div>
             <p className="mb-3 text-xs text-muted-foreground">
-              Format JPG atau PNG, maksimal 1MB.
+              JPG or PNG format, max 1MB.
             </p>
 
             <input
@@ -220,7 +214,7 @@ export function ManualTransferPage() {
               <div className="mb-3">
                 <img
                   src={previewUrl}
-                  alt="Preview bukti pembayaran"
+                  alt="Payment proof preview"
                   className="max-h-52 w-full rounded-lg border border-border object-contain"
                 />
                 <button
@@ -228,7 +222,7 @@ export function ManualTransferPage() {
                   className="mt-2 text-xs text-muted-foreground underline hover:text-foreground"
                   onClick={handleClearFile}
                 >
-                  Ganti gambar
+                  Change image
                 </button>
               </div>
             ) : (
@@ -238,7 +232,7 @@ export function ManualTransferPage() {
                 onClick={() => fileInputRef.current?.click()}
               >
                 <UploadIcon className="size-6 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Klik untuk pilih gambar</span>
+                <span className="text-sm text-muted-foreground">Click to select an image</span>
               </button>
             )}
 
@@ -250,10 +244,10 @@ export function ManualTransferPage() {
               {isUploading ? (
                 <>
                   <Loader2Icon className="mr-2 size-4 animate-spin" />
-                  Mengirim...
+                  Uploading...
                 </>
               ) : (
-                "Kirim Bukti Pembayaran"
+                "Submit Payment Proof"
               )}
             </Button>
           </div>

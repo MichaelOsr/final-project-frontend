@@ -22,8 +22,6 @@ interface VoucherSelectorProps {
   vouchers: PublicVoucher[]
   selected: PublicVoucher | null
   onSelect: (v: PublicVoucher | null) => void
-  // relevantAmount: subtotal untuk transaction voucher, deliveryFee untuk delivery voucher.
-  // Dipakai untuk cek minimumTransaction.
   relevantAmount: number
   isLoading: boolean
 }

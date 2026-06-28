@@ -20,6 +20,7 @@ export function AdminOrdersPage() {
   usePageTitle("Transactions")
   const navigate = useNavigate()
   const admin = useAdminSessionStore((state) => state.user)
+  const isStoreAdmin = admin?.role === "storeAdmin"
   const isSuperAdmin = admin?.role === "superAdmin"
   const [searchParams, setSearchParams] = useSearchParams()
   const [orders, setOrders] = useState<AdminOrderSummary[]>([])
@@ -29,10 +30,27 @@ export function AdminOrdersPage() {
   const [searchInput, setSearchInput] = useDebouncedSearchParam("search")
   const page = getPageParam(searchParams)
   const status = searchParams.get("status") ?? ""
-  const storeId = searchParams.get("storeId") ?? ""
+  const queryStoreId = searchParams.get("storeId") ?? ""
   const startDate = searchParams.get("startDate") ?? ""
   const endDate = searchParams.get("endDate") ?? ""
   const search = searchParams.get("search") ?? ""
+
+  // Untuk storeAdmin, sync store mereka ke URL supaya konsisten dengan pola Alwi.
+  // Untuk superAdmin, URL adalah satu-satunya sumber kebenaran — tidak ada fallback
+  // ke lastAccessedStoreId supaya superAdmin yang kembali ke main nav tidak
+  // tersangkut di filter store yang terakhir dikunjungi.
+  const storeAdminStoreId = isStoreAdmin ? (admin?.store?.id ?? "") : ""
+  const isStoreIdPending = isStoreAdmin && !!storeAdminStoreId && storeAdminStoreId !== queryStoreId
+
+  useEffect(() => {
+    if (!isStoreAdmin) return
+    if (!storeAdminStoreId) return
+    if (storeAdminStoreId === queryStoreId) return
+    setSearchParams(
+      updateSearchParams(searchParams, { storeId: storeAdminStoreId }),
+      { replace: true }
+    )
+  }, [isStoreAdmin, storeAdminStoreId, queryStoreId, searchParams, setSearchParams])
 
   useEffect(() => {
     if (!isSuperAdmin) return
@@ -49,7 +67,7 @@ export function AdminOrdersPage() {
         page,
         limit: 10,
         ...(status ? { status } : {}),
-        ...(storeId ? { storeId } : {}),
+        ...(queryStoreId ? { storeId: queryStoreId } : {}),
         ...(startDate ? { startDate } : {}),
         ...(endDate ? { endDate } : {}),
         ...(search.trim() ? { search: search.trim() } : {}),
@@ -61,11 +79,12 @@ export function AdminOrdersPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [page, status, storeId, startDate, endDate, search])
+  }, [page, status, queryStoreId, startDate, endDate, search])
 
   useEffect(() => {
+    if (isStoreIdPending) return
     loadOrders()
-  }, [loadOrders])
+  }, [loadOrders, isStoreIdPending])
 
   function updateFilters(updates: Record<string, string | number>) {
     setSearchParams(updateSearchParams(searchParams, updates))
@@ -83,7 +102,7 @@ export function AdminOrdersPage() {
         <AdminOrderFilters
           search={searchInput}
           status={status}
-          storeId={storeId}
+          storeId={queryStoreId}
           startDate={startDate}
           endDate={endDate}
           stores={stores}
