@@ -21,6 +21,10 @@ export interface AdminOrderItem {
   quantity: number
   totalPrice: number
   discountId: string | null
+  requiresFulfillment: boolean
+  storeStockAtOrder: number | null
+  shortageQuantity: number | null
+  notes: string | null
   product: {
     id: string
     name: string

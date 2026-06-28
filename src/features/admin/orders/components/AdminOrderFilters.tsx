@@ -7,13 +7,13 @@ import type { TransactionStatus } from "@/features/order/types/order.types"
 
 const STATUS_OPTIONS: { value: TransactionStatus | ""; label: string }[] = [
   { value: "", label: "All statuses" },
-  { value: "waitingPayment", label: "Menunggu Pembayaran" },
-  { value: "waitingConfirmation", label: "Menunggu Konfirmasi" },
-  { value: "paid", label: "Pembayaran Berhasil" },
-  { value: "process", label: "Diproses" },
-  { value: "onDelivery", label: "Dikirim" },
-  { value: "confirmed", label: "Pesanan Dikonfirmasi" },
-  { value: "cancel", label: "Dibatalkan" },
+  { value: "waitingPayment", label: "Awaiting Payment" },
+  { value: "waitingConfirmation", label: "Awaiting Confirmation" },
+  { value: "paid", label: "Payment Confirmed" },
+  { value: "process", label: "Processing" },
+  { value: "onDelivery", label: "On Delivery" },
+  { value: "confirmed", label: "Order Confirmed" },
+  { value: "cancel", label: "Cancelled" },
 ]
 
 interface AdminOrderFiltersProps {
@@ -55,17 +55,13 @@ export function AdminOrderFilters({
           <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="h-9 pl-9"
-            placeholder="Cari order ID..."
+            placeholder="Search by order ID..."
             value={search}
             onChange={(e) => onChangeSearch(e.target.value)}
           />
         </div>
       </div>
-      <FilterSelect
-        label="Status"
-        value={status}
-        onChange={onChangeStatus}
-      >
+      <FilterSelect label="Status" value={status} onChange={onChangeStatus}>
         {STATUS_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
@@ -73,11 +69,7 @@ export function AdminOrderFilters({
         ))}
       </FilterSelect>
       {isSuperAdmin && (
-        <FilterSelect
-          label="Store"
-          value={storeId}
-          onChange={onChangeStoreId}
-        >
+        <FilterSelect label="Store" value={storeId} onChange={onChangeStoreId}>
           <option value="">All stores</option>
           {stores.map((s) => (
             <option key={s.id} value={s.id}>
@@ -86,16 +78,8 @@ export function AdminOrderFilters({
           ))}
         </FilterSelect>
       )}
-      <FilterDate
-        label="Start Date"
-        value={startDate}
-        onChange={onChangeStartDate}
-      />
-      <FilterDate
-        label="End Date"
-        value={endDate}
-        onChange={onChangeEndDate}
-      />
+      <FilterDate label="Start Date" value={startDate} onChange={onChangeStartDate} />
+      <FilterDate label="End Date" value={endDate} onChange={onChangeEndDate} />
     </div>
   )
 }

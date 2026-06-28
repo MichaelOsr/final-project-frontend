@@ -79,15 +79,29 @@ function DashboardNav({
   admin: IAdminSessionUser | null;
   className: string;
 }) {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const urlParams = new URLSearchParams(search);
+  const currentStoreId = urlParams.get("storeId") ?? "";
+  const hasStoreIdParam = currentStoreId !== "";
 
-  const isStoreContext = pathname.startsWith("/admin/store/");
+  const isStoreContext =
+    pathname.startsWith("/admin/store/") ||
+    (pathname.startsWith("/admin/orders") && hasStoreIdParam);
+
+  // Buat link Transactions di store sidebar dinamis — include storeId dari URL
+  // supaya saat superAdmin klik Transactions, storeId ikut terbawa ke URL.
+  const resolvedStoreNavItems = storeNavItems.map((item) => {
+    if (item.to === "/admin/orders" && isStoreContext && currentStoreId) {
+      return { ...item, to: `/admin/orders?storeId=${encodeURIComponent(currentStoreId)}` };
+    }
+    return item;
+  });
 
   let navItems: NavItem[];
   if (admin?.role === "storeAdmin") {
     navItems = storeNavItems;
   } else if (admin?.role === "superAdmin" && isStoreContext) {
-    navItems = storeNavItems;
+    navItems = resolvedStoreNavItems;
   } else {
     navItems = superAdminNavItems;
   }
@@ -106,14 +120,16 @@ function DashboardNav({
       {(() => {
         const EXACT = new Set(["/admin/dashboard", "/admin/store/dashboard"]);
         const activeItem = navItems.reduce<string | null>((best, item) => {
-          const matches = EXACT.has(item.to)
-            ? pathname === item.to
-            : pathname.startsWith(item.to);
+          const baseTo = item.to.split("?")[0];
+          const matches = EXACT.has(baseTo)
+            ? pathname === baseTo
+            : pathname.startsWith(baseTo);
           if (!matches) return best;
-          return best === null || item.to.length > best.length ? item.to : best;
+          return best === null || baseTo.length > best.length ? baseTo : best;
         }, null);
         return navItems.map(({ label, to, icon: Icon }) => {
-          const isActive = activeItem === to;
+          const baseTo = to.split("?")[0];
+          const isActive = activeItem === baseTo;
           return (
             <Link
               key={label}

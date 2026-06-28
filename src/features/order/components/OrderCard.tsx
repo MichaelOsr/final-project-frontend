@@ -28,21 +28,21 @@ export function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
         <OrderStatusBadge status={order.transactionStatus} />
       </div>
 
-      {/* Tanggal order */}
+      {/* Order date */}
       <p className="mb-3 text-xs text-muted-foreground">
-        {new Date(order.createdAt).toLocaleDateString("id-ID", {
+        {new Date(order.createdAt).toLocaleDateString("en-US", {
           day: "numeric",
           month: "long",
           year: "numeric",
         })}
       </p>
 
-      {/* Produk preview */}
+      {/* Product preview */}
       <div className="mb-3 flex items-center gap-3">
         <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
           <img
             src={mainImage}
-            alt={firstItem?.product.name ?? "Produk"}
+            alt={firstItem?.product.name ?? "Product"}
             className="h-full w-full object-cover"
             onError={(e) => {
               ;(e.target as HTMLImageElement).src = "/placeholder-product.png"
@@ -54,15 +54,15 @@ export function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
             {firstItem?.name ?? firstItem?.product.name}
           </p>
           <p className="text-xs text-muted-foreground">
-            {firstItem?.quantity} item
-            {extraCount > 0 && ` + ${extraCount} produk lainnya`}
+            {firstItem?.quantity} item{(firstItem?.quantity ?? 0) > 1 ? "s" : ""}
+            {extraCount > 0 && ` + ${extraCount} more`}
           </p>
         </div>
       </div>
 
       {/* Total */}
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Total pesanan</span>
+        <span className="text-xs text-muted-foreground">Order total</span>
         <span className="text-sm font-bold text-primary">
           {formatPrice(order.totalPrice)}
         </span>
@@ -77,7 +77,7 @@ export function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
           className="h-8 rounded-full px-4 text-xs"
         >
           <Link to={`/orders/${order.id}`}>
-            Detail <ChevronRightIcon className="size-3" />
+            Details <ChevronRightIcon className="size-3" />
           </Link>
         </Button>
 
@@ -89,7 +89,7 @@ export function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
               className="h-8 rounded-full px-4 text-xs"
               onClick={() => onUpdateStatus(order.id, "cancel")}
             >
-              Batalkan
+              Cancel
             </Button>
           )}
           {order.transactionStatus === "onDelivery" && (
@@ -98,7 +98,7 @@ export function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
               className="h-8 rounded-full px-4 text-xs"
               onClick={() => onUpdateStatus(order.id, "confirmed")}
             >
-              Konfirmasi Diterima
+              Confirm Received
             </Button>
           )}
         </div>

@@ -143,28 +143,28 @@ export function getDialogProps(action: ActionType) {
     case "approve":
       return {
         title: "Approve Payment?",
-        description: "Bukti bayar dikonfirmasi. Status akan berubah menjadi 'Diproses'.",
+        description: "Payment proof confirmed. Order status will change to 'Processing'.",
         actionLabel: "Approve",
         variant: "default" as const,
       }
     case "reject":
       return {
         title: "Reject Payment?",
-        description: "Pembayaran ditolak. Status akan kembali ke 'Menunggu Pembayaran'.",
+        description: "Payment rejected. Order status will revert to 'Awaiting Payment'.",
         actionLabel: "Reject",
         variant: "destructive" as const,
       }
     case "ship":
       return {
         title: "Mark as Shipped?",
-        description: "Pastikan semua barang siap dikirim. Status akan berubah menjadi 'Dikirim'.",
+        description: "Make sure all items are ready to ship. Status will change to 'On Delivery'.",
         actionLabel: "Ship",
         variant: "default" as const,
       }
     case "cancel":
       return {
         title: "Cancel Transaction?",
-        description: "Transaksi dibatalkan dan stok dikembalikan. Aksi ini tidak bisa dibatalkan.",
+        description: "Transaction will be cancelled and stock restored. This action cannot be undone.",
         actionLabel: "Cancel",
         variant: "destructive" as const,
       }
