@@ -75,10 +75,12 @@ export function VoucherSelector({
                     className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
                       v.scope === "global"
                         ? "bg-blue-100 text-blue-700"
-                        : "bg-primary/10 text-primary"
+                        : v.scope === "personal"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-primary/10 text-primary"
                     }`}
                   >
-                    {v.scope === "global" ? "Global" : "This Store"}
+                    {v.scope === "global" ? "Global" : v.scope === "personal" ? "Voucher Kamu" : "This Store"}
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs font-semibold text-primary">

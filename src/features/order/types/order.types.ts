@@ -215,8 +215,8 @@ export interface PublicVoucher {
   value: number
   startDate: string
   endDate: string
-  // "global" = storeId null, "store" = store-scoped
-  scope: "global" | "store"
+  // "global" = storeId null, "store" = store-scoped, "personal" = reward referral
+  scope: "global" | "store" | "personal"
 }
 
 // Response GET /api/vouchers/store/:storeId
@@ -226,4 +226,27 @@ export interface GetStoreVouchersResponse {
     vouchers: PublicVoucher[]         // voucherType = transaction
     deliveryVouchers: PublicVoucher[] // voucherType = delivery
   }
+}
+
+// Shape satu item dari GET /api/auth/vouchers
+export interface UserVoucherItem {
+  id: string
+  voucherId: string
+  isUsed: boolean
+  expiresAt: string | null
+  voucher: {
+    id: string
+    name: string
+    code: string
+    discountType: VoucherDiscountType
+    voucherType: VoucherType
+    value: number
+    minimumTransaction: number | null
+    endDate: string
+  }
+}
+
+// Response GET /api/auth/vouchers
+export interface GetUserVouchersResponse {
+  data: UserVoucherItem[]
 }
