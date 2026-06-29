@@ -3,9 +3,12 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import {
   ShoppingBagIcon, MapPinIcon, TruckIcon, CreditCardIcon,
-  BuildingIcon, Loader2Icon, TagIcon,
+  BuildingIcon, Loader2Icon, TagIcon, CheckCircle2Icon, PlusIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog"
 import { useCartStore } from "@/store/cart.store"
 import { useOrderStore } from "@/store/order.store"
 import { useLocationStore } from "@/store/location.store"
@@ -57,6 +60,8 @@ export function CheckoutPage() {
   const storeId = useLocationStore((s) => s.storeId)
 
   const [selectedAddress, setSelectedAddress] = useState<UserAddress | null>(null)
+  const [allAddresses, setAllAddresses] = useState<UserAddress[]>([])
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(true)
   const [addressLabel, setAddressLabel] = useState<string | null>(null)
 
@@ -74,11 +79,12 @@ export function CheckoutPage() {
   const [selectedDeliveryVoucher, setSelectedDeliveryVoucher] = useState<PublicVoucher | null>(null)
   const [isLoadingVouchers, setIsLoadingVouchers] = useState(false)
 
-  // Load default address — used for order addressId, displayed read-only.
+  // Load addresses — default pre-selected, all kept for the change modal.
   useEffect(() => {
     const loadAddress = async () => {
       try {
         const { data } = await addressService.getAddresses()
+        setAllAddresses(data.data)
         const defaultAddr = data.data.find((a) => a.isDefault) ?? data.data[0]
         if (defaultAddr) setSelectedAddress(defaultAddr)
       } catch {
@@ -140,9 +146,37 @@ export function CheckoutPage() {
     if (!storeId) return
     setIsLoadingVouchers(true)
     try {
-      const { data } = await voucherService.getStoreVouchers(storeId)
-      setVouchers(data.data.vouchers)
-      setDeliveryVouchers(data.data.deliveryVouchers)
+      const [storeRes, userRes] = await Promise.allSettled([
+        voucherService.getStoreVouchers(storeId),
+        voucherService.getUserVouchers(),
+      ])
+
+      const publicVouchers = storeRes.status === "fulfilled" ? storeRes.value.data.data.vouchers : []
+      const publicDelivery = storeRes.status === "fulfilled" ? storeRes.value.data.data.deliveryVouchers : []
+
+      const personal: PublicVoucher[] = userRes.status === "fulfilled"
+        ? userRes.value.data.data.map((uv) => ({
+            id: uv.voucher.id,
+            name: uv.voucher.name,
+            code: uv.voucher.code,
+            quantity: 1,
+            storeId: null,
+            minimumTransaction: uv.voucher.minimumTransaction,
+            maxDiscount: null,
+            discountType: uv.voucher.discountType,
+            voucherType: uv.voucher.voucherType,
+            value: uv.voucher.value,
+            startDate: "",
+            endDate: uv.expiresAt ?? "",
+            scope: "personal" as const,
+          }))
+        : []
+
+      const personalTx = personal.filter((v) => v.voucherType === "transaction")
+      const personalDelivery = personal.filter((v) => v.voucherType === "delivery")
+
+      setVouchers([...publicVouchers, ...personalTx])
+      setDeliveryVouchers([...publicDelivery, ...personalDelivery])
     } catch { /* silently fail — voucher section still appears but empty */ }
     finally { setIsLoadingVouchers(false) }
   }, [storeId])
@@ -250,11 +284,21 @@ export function CheckoutPage() {
       </div>
 
       <div className="grid gap-4">
-        {/* Shipping Address — read-only, cannot be changed on this page */}
+        {/* Shipping Address */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-center gap-2">
             <MapPinIcon className="size-4 text-primary" />
             <h2 className="text-sm font-bold">Shipping Address</h2>
+            {!isLoadingAddresses && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto h-7 rounded-full px-3 text-xs"
+                onClick={() => setIsAddressModalOpen(true)}
+              >
+                Change
+              </Button>
+            )}
           </div>
           {isLoadingAddresses ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -276,6 +320,64 @@ export function CheckoutPage() {
             </div>
           )}
         </div>
+
+        {/* Address Selection Modal */}
+        <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Select Shipping Address</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-2 pt-1">
+              {allAddresses.map((addr) => {
+                const isSelected = addr.id === selectedAddress?.id
+                return (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAddress(addr)
+                      setAddressLabel(null)
+                      setIsAddressModalOpen(false)
+                    }}
+                    className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
+                      isSelected
+                        ? "border-primary bg-accent"
+                        : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{addr.name}</p>
+                      {addr.notes && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">{addr.notes}</p>
+                      )}
+                      {addr.isDefault && (
+                        <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                          Default
+                        </span>
+                      )}
+                    </div>
+                    {isSelected && (
+                      <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" />
+                    )}
+                  </button>
+                )
+              })}
+              <div className="mt-1 border-t border-border pt-3">
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => {
+                    setIsAddressModalOpen(false)
+                    navigate("/profile?tab=address")
+                  }}
+                >
+                  <PlusIcon className="size-4" />
+                  Add New Address
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Shipping Method */}
         <div className="rounded-xl border border-border bg-card p-5">
