@@ -7,11 +7,18 @@ import { useStoreProduct } from "../hooks/useStoreProduct";
 import type { PricePreview, StoreProduct } from "../types/product.types";
 
 function formatPrice(value: number): string {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
 }
 
 export function ProductViewPage() {
-  const { storeId: routeStoreId, slug = "" } = useParams<{ storeId?: string; slug: string }>();
+  const { storeId: routeStoreId, slug = "" } = useParams<{
+    storeId?: string;
+    slug: string;
+  }>();
   const { storeId: locationStoreId } = useStoreLocation();
   const storeId = routeStoreId ?? locationStoreId ?? "";
   const { product, isLoading } = useStoreProduct(storeId, slug);
@@ -30,11 +37,22 @@ export function ProductViewPage() {
   );
 }
 
-function PriceDisplay({ price, pricePreview }: { price: number; pricePreview?: PricePreview }) {
+function PriceDisplay({
+  price,
+  pricePreview,
+}: {
+  price: number;
+  pricePreview?: PricePreview;
+}) {
   if (!pricePreview?.isDiscounted) {
-    return <p className="text-4xl font-bold text-primary">{formatPrice(price)}</p>;
+    return (
+      <p className="text-4xl font-bold text-primary">{formatPrice(price)}</p>
+    );
   }
-  if (pricePreview.calculationMode === "unitPrice" && pricePreview.finalPrice !== null) {
+  if (
+    pricePreview.calculationMode === "unitPrice" &&
+    pricePreview.finalPrice !== null
+  ) {
     return (
       <div className="flex flex-col gap-1">
         {pricePreview.label && (
@@ -42,8 +60,12 @@ function PriceDisplay({ price, pricePreview }: { price: number; pricePreview?: P
             {pricePreview.label}
           </span>
         )}
-        <p className="text-xl text-muted-foreground line-through">{formatPrice(pricePreview.originalPrice)}</p>
-        <p className="text-4xl font-bold text-primary">{formatPrice(pricePreview.finalPrice)}</p>
+        <p className="text-xl text-muted-foreground line-through">
+          {formatPrice(pricePreview.originalPrice)}
+        </p>
+        <p className="text-4xl font-bold text-primary">
+          {formatPrice(pricePreview.finalPrice)}
+        </p>
       </div>
     );
   }
@@ -57,37 +79,68 @@ function PriceDisplay({ price, pricePreview }: { price: number; pricePreview?: P
       </div>
     );
   }
-  return <p className="text-4xl font-bold text-primary">{formatPrice(price)}</p>;
+  return (
+    <p className="text-4xl font-bold text-primary">{formatPrice(price)}</p>
+  );
 }
 
-function ProductInfo({ product, storeId }: { product: StoreProduct; storeId: string }) {
+function ProductInfo({
+  product,
+  storeId,
+}: {
+  product: StoreProduct;
+  storeId: string;
+}) {
   const { storeStock } = product;
   return (
     <div className="flex flex-col gap-6">
       <div>
-        {product.brand && <p className="text-sm text-muted-foreground">{product.brand}</p>}
+        {product.brand && (
+          <p className="text-sm text-muted-foreground">{product.brand}</p>
+        )}
         <h1 className="text-3xl font-bold leading-tight">{product.name}</h1>
       </div>
       <PriceDisplay price={product.price} pricePreview={product.pricePreview} />
-      <StockStatus stock={storeStock.stock} isAvailable={storeStock.isAvailable} storeName={storeStock.store.name} />
-      <AddToCartControl productId={product.id} storeId={storeId} stock={storeStock.stock} isAvailable={storeStock.isAvailable} />
+      <StockStatus
+        stock={storeStock.stock}
+        isAvailable={storeStock.isAvailable}
+        storeName={storeStock.store.name}
+      />
+      <AddToCartControl
+        productId={product.id}
+        storeId={storeId}
+        stock={storeStock.stock}
+        isAvailable={storeStock.isAvailable}
+      />
       <ProductMeta product={product} />
       {product.description && (
         <div>
           <h2 className="mb-2 text-sm font-semibold">Description</h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">{product.description}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {product.description}
+          </p>
         </div>
       )}
     </div>
   );
 }
 
-function StockStatus({ stock, isAvailable, storeName }: { stock: number; isAvailable: boolean; storeName: string }) {
+function StockStatus({
+  stock,
+  isAvailable,
+  storeName,
+}: {
+  stock: number;
+  isAvailable: boolean;
+  storeName: string;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <span
         className={`rounded-full px-3 py-1 font-semibold ${
-          isAvailable ? "bg-accent text-primary" : "bg-destructive/10 text-destructive"
+          isAvailable
+            ? "bg-accent text-primary"
+            : "bg-destructive/10 text-destructive"
         }`}
       >
         {isAvailable ? `In stock (${stock})` : "Out of stock"}
@@ -103,6 +156,7 @@ function ProductMeta({ product }: { product: StoreProduct }) {
     { label: "Category", value: product.category.name },
     product.variant ? { label: "Variant", value: product.variant } : null,
     product.size ? { label: "Size", value: product.size } : null,
+    product.weight ? { label: "Weight", value: `${product.weight} gr` } : null,
   ].filter(Boolean) as { label: string; value: string }[];
 
   return (
@@ -119,6 +173,8 @@ function ProductMeta({ product }: { product: StoreProduct }) {
 
 function StateMessage({ message }: { message: string }) {
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-16 text-center text-sm text-muted-foreground sm:px-6">{message}</div>
+    <div className="mx-auto w-full max-w-7xl px-4 py-16 text-center text-sm text-muted-foreground sm:px-6">
+      {message}
+    </div>
   );
 }
