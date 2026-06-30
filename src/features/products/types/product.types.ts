@@ -29,6 +29,7 @@ export interface StoreStock {
 
 export interface StoreProduct {
   id: string;
+  weight: number;
   name: string;
   slug: string;
   categoryId: string;
@@ -73,7 +74,15 @@ export interface CatalogProductsParams {
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
-  sortBy?: "name" | "slug" | "sku" | "brand" | "price" | "categoryName" | "createdAt" | "updatedAt";
+  sortBy?:
+    | "name"
+    | "slug"
+    | "sku"
+    | "brand"
+    | "price"
+    | "categoryName"
+    | "createdAt"
+    | "updatedAt";
   sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;

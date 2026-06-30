@@ -1,7 +1,10 @@
 import adminAxios from "@/lib/adminAxios";
 import type { ApiResponse } from "@/types/api.types";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
-import type { AdminProduct, ProductCategory } from "../types/adminProduct.types";
+import type {
+  AdminProduct,
+  ProductCategory,
+} from "../types/adminProduct.types";
 
 interface PaginatedApiResponse<T> extends ApiResponse<T[]> {
   meta?: PaginationMeta;
@@ -14,6 +17,7 @@ interface CreateProductPayload {
   variant?: string;
   size?: string;
   description?: string;
+  weight: number;
   price: number;
   images: File[];
 }
@@ -36,20 +40,41 @@ interface UpdateProductImagesPayload {
 
 export const adminProductService = {
   list: (params: Record<string, string | number>) =>
-    adminAxios.get<PaginatedApiResponse<AdminProduct>>("/admin/product", { params }),
+    adminAxios.get<PaginatedApiResponse<AdminProduct>>("/admin/product", {
+      params,
+    }),
   getBySlug: (slug: string) =>
     adminAxios.get<ApiResponse<AdminProduct>>(`/admin/product/${slug}`),
   create: (payload: CreateProductPayload) =>
-    adminAxios.post<ApiResponse<AdminProduct>>("/admin/product", toProductFormData(payload)),
+    adminAxios.post<ApiResponse<AdminProduct>>(
+      "/admin/product",
+      toProductFormData(payload)
+    ),
   update: (slug: string, payload: UpdateProductPayload) =>
-    adminAxios.patch<ApiResponse<AdminProduct>>(`/admin/product/${slug}`, payload),
+    adminAxios.patch<ApiResponse<AdminProduct>>(
+      `/admin/product/${slug}`,
+      payload
+    ),
   updateImages: (slug: string, payload: UpdateProductImagesPayload) =>
-    adminAxios.patch<ApiResponse<AdminProduct>>(`/admin/product/${slug}/images`, toProductImagesFormData(payload)),
+    adminAxios.patch<ApiResponse<AdminProduct>>(
+      `/admin/product/${slug}/images`,
+      toProductImagesFormData(payload)
+    ),
   delete: (slug: string) =>
-    adminAxios.delete<ApiResponse<Pick<AdminProduct, "id" | "name" | "slug" | "images" | "stocks">>>(`/admin/product/${slug}`),
+    adminAxios.delete<
+      ApiResponse<
+        Pick<AdminProduct, "id" | "name" | "slug" | "images" | "stocks">
+      >
+    >(`/admin/product/${slug}`),
   listCategories: (params?: Record<string, string | number>) =>
     adminAxios.get<PaginatedApiResponse<ProductCategory>>("/categories", {
-      params: { page: 1, limit: 100, sortBy: "name", sortOrder: "asc", ...params },
+      params: {
+        page: 1,
+        limit: 100,
+        sortBy: "name",
+        sortOrder: "asc",
+        ...params,
+      },
     }),
 };
 
@@ -58,11 +83,15 @@ function toProductFormData(payload: CreateProductPayload) {
   formData.append("name", payload.name);
   formData.append("categoryId", payload.categoryId);
   formData.append("price", String(payload.price));
+  formData.append("weight", String(payload.weight));
   appendOptional(formData, "brand", payload.brand);
   appendOptional(formData, "variant", payload.variant);
   appendOptional(formData, "size", payload.size);
   appendOptional(formData, "description", payload.description);
-  formData.append("positions", JSON.stringify(payload.images.map((_, index) => index + 1)));
+  formData.append(
+    "positions",
+    JSON.stringify(payload.images.map((_, index) => index + 1))
+  );
   payload.images.forEach((file) => formData.append("images", file));
   return formData;
 }
@@ -74,7 +103,10 @@ function appendOptional(formData: FormData, key: string, value?: string) {
 function toProductImagesFormData(payload: UpdateProductImagesPayload) {
   const formData = new FormData();
   formData.append("existingImages", JSON.stringify(payload.existingImages));
-  formData.append("newImagePositions", JSON.stringify(payload.newImagePositions));
+  formData.append(
+    "newImagePositions",
+    JSON.stringify(payload.newImagePositions)
+  );
   payload.newImages.forEach((file) => formData.append("images", file));
   return formData;
 }

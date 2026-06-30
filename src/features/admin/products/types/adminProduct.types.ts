@@ -57,6 +57,7 @@ export interface AdminProduct {
 }
 
 export interface CreateProductFormValues {
+  weight: number;
   name: string;
   categoryId: string;
   brand: string;
