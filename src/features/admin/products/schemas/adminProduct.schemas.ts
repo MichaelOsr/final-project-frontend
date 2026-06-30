@@ -10,6 +10,11 @@ export const createProductSchema = Yup.object({
   variant: Yup.string().trim().optional(),
   size: Yup.string().trim().optional(),
   description: Yup.string().trim().optional(),
+  weight: Yup.number()
+    .typeError("Weight must be a number")
+    .integer("Weight must be a whole number")
+    .positive("Weight must be greater than 0")
+    .required("Weight is required"),
   price: Yup.number()
     .typeError("Price must be a number")
     .integer("Price must be a whole number")
@@ -20,10 +25,10 @@ export const createProductSchema = Yup.object({
     .min(1, "Upload at least one image")
     .max(5, "Upload up to 5 images")
     .test("fileType", "Images must be JPG, PNG, or GIF", (files) =>
-      (files ?? []).every((file) => PRODUCT_IMAGE_TYPES.includes(file.type)),
+      (files ?? []).every((file) => PRODUCT_IMAGE_TYPES.includes(file.type))
     )
     .test("fileSize", "Each image must be 1MB or smaller", (files) =>
-      (files ?? []).every((file) => file.size <= PRODUCT_IMAGE_MAX_SIZE),
+      (files ?? []).every((file) => file.size <= PRODUCT_IMAGE_MAX_SIZE)
     )
     .required("Upload at least one image"),
 });
