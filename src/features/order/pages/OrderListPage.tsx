@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input"
 import { useOrderStore } from "@/store/order.store"
 import { OrderCard } from "../components/OrderCard"
 import { usePageTitle } from "@/hooks/usePageTitle"
-import type { TransactionStatus } from "../types/order.types"
 import { STATUS_LABEL } from "../components/OrderStatusBadge"
 
 const STATUS_TABS: { value: string; label: string }[] = [
