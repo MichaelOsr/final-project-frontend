@@ -112,6 +112,7 @@ export function AdminOrderDetailPage() {
         actionLabel={dialogProps.actionLabel}
         variant={dialogProps.variant}
         onConfirm={handleAction}
+        cancelLabel={dialogProps.cancelLabel}
         onOpenChange={(open) => !open && setAction(null)}
       />
     </AdminDashboardShell>

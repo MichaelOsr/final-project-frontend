@@ -12,6 +12,7 @@ interface OrderActionDialogProps {
   title: string
   description: string
   actionLabel: string
+  cancelLabel?: string
   variant?: "default" | "destructive"
   isLoading: boolean
   open: boolean
@@ -23,6 +24,7 @@ export function OrderActionDialog({
   title,
   description,
   actionLabel,
+  cancelLabel = "Cancel",
   variant = "default",
   isLoading,
   open,
@@ -42,7 +44,7 @@ export function OrderActionDialog({
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
-            Cancel
+            {cancelLabel}
           </Button>
           <Button variant={variant} onClick={onConfirm} disabled={isLoading}>
             {isLoading ? "Processing..." : actionLabel}
