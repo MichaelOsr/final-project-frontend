@@ -165,7 +165,8 @@ export function getDialogProps(action: ActionType) {
       return {
         title: "Cancel Transaction?",
         description: "Transaction will be cancelled and stock restored. This action cannot be undone.",
-        actionLabel: "Cancel",
+        actionLabel: "Cancel Order",
+        cancelLabel: "Keep Order",
         variant: "destructive" as const,
       }
     default:
