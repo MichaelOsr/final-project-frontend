@@ -11,12 +11,12 @@ export type ActionType = "approve" | "reject" | "ship" | "cancel" | null
 
 export function OrderInfoCard({
   order,
-  addressLabel,
-  isLoadingAddress,
+  addressLabel = null,
+  isLoadingAddress = false,
 }: {
   order: AdminOrderDetail
-  addressLabel: string | null
-  isLoadingAddress: boolean
+  addressLabel?: string | null
+  isLoadingAddress?: boolean
 }) {
   return (
     <Card className="rounded-lg">
@@ -47,6 +47,13 @@ export function OrderInfoCard({
       </CardContent>
     </Card>
   )
+}
+
+function formatPaymentType(type: string): string {
+  return type
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
 }
 
 export function PaymentProofCard({ proofUrl }: { proofUrl: string }) {
@@ -206,12 +213,4 @@ function SummaryRow({ label, value, bold }: { label: string; value: string; bold
       <span>{value}</span>
     </div>
   )
-}
-
-function formatPaymentType(type: string | null): string {
-  if (!type) return "-"
-  return type
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ")
 }

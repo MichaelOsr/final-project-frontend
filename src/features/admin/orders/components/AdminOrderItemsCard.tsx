@@ -5,14 +5,14 @@ import type { AdminOrderItem, TransactionStatus } from "../types/adminOrder.type
 
 interface AdminOrderItemsCardProps {
   items: AdminOrderItem[]
-  status: TransactionStatus
+  status?: TransactionStatus
 }
 
 const FULFILLED_STATUSES: TransactionStatus[] = ["onDelivery", "confirmed"]
 
 export function AdminOrderItemsCard({ items, status }: AdminOrderItemsCardProps) {
   const fulfillmentCount = items.filter((i) => i.requiresFulfillment).length
-  const isFulfilled = FULFILLED_STATUSES.includes(status)
+  const isFulfilled = status ? FULFILLED_STATUSES.includes(status) : false
 
   return (
     <Card className="rounded-lg">
