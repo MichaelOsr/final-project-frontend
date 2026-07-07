@@ -17,7 +17,10 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { PaginationMeta } from "../types/admin.types";
-import { AdminTablePagination, type ServerPagination } from "./AdminTablePagination";
+import {
+  AdminTablePagination,
+  type ServerPagination,
+} from "./AdminTablePagination";
 import { AdminTableSkeletonRows } from "./AdminTableSkeleton";
 
 export type SortOrder = "asc" | "desc";
@@ -62,7 +65,8 @@ export function AdminDataTable<TData, TValue>({
     manualSorting: Boolean(sorting),
     onPaginationChange: (updater) => {
       if (!pagination) return;
-      const next = typeof updater === "function" ? updater(paginationState) : updater;
+      const next =
+        typeof updater === "function" ? updater(paginationState) : updater;
       pagination.onPageChange(next.pageIndex + 1);
     },
     pageCount: pagination?.meta.totalPages,
@@ -95,7 +99,10 @@ export function AdminDataTable<TData, TValue>({
         </TableHeader>
         <TableBody className="divide-y divide-border">
           {isLoading && skeletonRows ? (
-            <AdminTableSkeletonRows rows={skeletonRows} columnCount={columns.length} />
+            <AdminTableSkeletonRows
+              rows={skeletonRows}
+              columnCount={columns.length}
+            />
           ) : table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id}>
@@ -108,39 +115,62 @@ export function AdminDataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="px-4 py-10 text-center text-sm text-muted-foreground">
+              <TableCell
+                colSpan={columns.length}
+                className="px-4 py-10 text-center text-sm text-muted-foreground"
+              >
                 {emptyMessage}
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
-      {pagination ? <AdminTablePagination pagination={pagination} table={table} /> : null}
+      {pagination ? (
+        <AdminTablePagination pagination={pagination} table={table} />
+      ) : null}
     </>
   );
 }
 
 function TableMessage({ message }: { message: string }) {
-  return <div className="px-4 py-10 text-center text-sm text-muted-foreground">{message}</div>;
+  return (
+    <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+      {message}
+    </div>
+  );
 }
 
 function getPaginationState(meta?: PaginationMeta): PaginationState {
-  return { pageIndex: Math.max((meta?.page ?? 1) - 1, 0), pageSize: meta?.limit ?? 10 };
+  return {
+    pageIndex: Math.max((meta?.page ?? 1) - 1, 0),
+    pageSize: meta?.limit ?? 10,
+  };
 }
 
 function getSortingState(sorting?: ServerSorting): SortingState {
-  return sorting ? [{ id: sorting.sortBy, desc: sorting.sortOrder === "desc" }] : [];
+  return sorting
+    ? [{ id: sorting.sortBy, desc: sorting.sortOrder === "desc" }]
+    : [];
 }
 
-function TableHeaderContent<TData>({ header, sorting }: {
-  header: ReturnType<ReturnType<typeof useReactTable<TData>>["getHeaderGroups"]>[number]["headers"][number];
+function TableHeaderContent<TData>({
+  header,
+  sorting,
+}: {
+  header: ReturnType<
+    ReturnType<typeof useReactTable<TData>>["getHeaderGroups"]
+  >[number]["headers"][number];
   sorting?: ServerSorting;
 }) {
-  const content = flexRender(header.column.columnDef.header, header.getContext());
+  const content = flexRender(
+    header.column.columnDef.header,
+    header.getContext()
+  );
   if (!sorting || !header.column.getCanSort()) return content;
 
   const isActive = sorting.sortBy === header.column.id;
-  const nextOrder: SortOrder = isActive && sorting.sortOrder === "asc" ? "desc" : "asc";
+  const nextOrder: SortOrder =
+    isActive && sorting.sortOrder === "asc" ? "desc" : "asc";
 
   return (
     <button
@@ -154,7 +184,17 @@ function TableHeaderContent<TData>({ header, sorting }: {
   );
 }
 
-function SortIcon({ isActive, order }: { isActive: boolean; order: SortOrder }) {
+function SortIcon({
+  isActive,
+  order,
+}: {
+  isActive: boolean;
+  order: SortOrder;
+}) {
   if (!isActive) return <ChevronsUpDownIcon className="size-3.5 opacity-50" />;
-  return order === "asc" ? <ArrowUpIcon className="size-3.5" /> : <ArrowDownIcon className="size-3.5" />;
+  return order === "asc" ? (
+    <ArrowUpIcon className="size-3.5" />
+  ) : (
+    <ArrowDownIcon className="size-3.5" />
+  );
 }

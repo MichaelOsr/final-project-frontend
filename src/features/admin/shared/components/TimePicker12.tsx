@@ -44,14 +44,20 @@ export function TimePicker12({ date, onChange }: Props) {
           value={String(minutes)}
           disabled={disabled}
           onValueChange={(v) => emit(hour12, Number(v), meridiem)}
-          options={MINUTES.map((m) => ({ value: String(m), label: String(m).padStart(2, "0") }))}
+          options={MINUTES.map((m) => ({
+            value: String(m),
+            label: String(m).padStart(2, "0"),
+          }))}
         />
         <TimeSelect
           ariaLabel="AM or PM"
           value={meridiem}
           disabled={disabled}
           onValueChange={(v) => emit(hour12, minutes, v)}
-          options={[{ value: "AM", label: "AM" }, { value: "PM", label: "PM" }]}
+          options={[
+            { value: "AM", label: "AM" },
+            { value: "PM", label: "PM" },
+          ]}
         />
       </div>
     </div>
@@ -66,7 +72,13 @@ interface TimeSelectProps {
   options: { value: string; label: string }[];
 }
 
-function TimeSelect({ ariaLabel, value, disabled, onValueChange, options }: TimeSelectProps) {
+function TimeSelect({
+  ariaLabel,
+  value,
+  disabled,
+  onValueChange,
+  options,
+}: TimeSelectProps) {
   return (
     <Select value={value} disabled={disabled} onValueChange={onValueChange}>
       <SelectTrigger size="sm" aria-label={ariaLabel} className="w-16">
@@ -74,7 +86,9 @@ function TimeSelect({ ariaLabel, value, disabled, onValueChange, options }: Time
       </SelectTrigger>
       <SelectContent position="popper">
         {options.map((o) => (
-          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+          <SelectItem key={o.value} value={o.value}>
+            {o.label}
+          </SelectItem>
         ))}
       </SelectContent>
     </Select>

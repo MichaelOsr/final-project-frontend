@@ -1,7 +1,13 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 
 // Shimmer placeholder rows shown while a table's data is loading.
-export function AdminTableSkeletonRows({ rows, columnCount }: { rows: number; columnCount: number }) {
+export function AdminTableSkeletonRows({
+  rows,
+  columnCount,
+}: {
+  rows: number;
+  columnCount: number;
+}) {
   return (
     <>
       {Array.from({ length: rows }).map((_, rowIndex) => (

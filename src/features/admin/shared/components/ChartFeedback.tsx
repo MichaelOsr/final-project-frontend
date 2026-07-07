@@ -1,6 +1,10 @@
 import { Loader2Icon } from "lucide-react";
 
-export function ChartLoading({ message = "Loading report..." }: { message?: string }) {
+export function ChartLoading({
+  message = "Loading report...",
+}: {
+  message?: string;
+}) {
   return (
     <div className="flex h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
       <Loader2Icon className="size-4 animate-spin" />
@@ -9,7 +13,11 @@ export function ChartLoading({ message = "Loading report..." }: { message?: stri
   );
 }
 
-export function ChartEmpty({ message = "No data for the selected filters." }: { message?: string }) {
+export function ChartEmpty({
+  message = "No data for the selected filters.",
+}: {
+  message?: string;
+}) {
   return (
     <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
       {message}

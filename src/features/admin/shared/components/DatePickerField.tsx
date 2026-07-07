@@ -2,7 +2,11 @@ import { format, parseISO } from "date-fns";
 import { CalendarIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { TimePicker12 } from "./TimePicker12";
 
 interface DatePickerFieldProps {
@@ -51,7 +55,11 @@ export function DatePickerField({
           className="h-9 w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
         >
           <CalendarIcon className="size-4" />
-          {selected ? format(selected, withTime ? "PPP p" : "PPP") : <span>{placeholder}</span>}
+          {selected ? (
+            format(selected, withTime ? "PPP p" : "PPP")
+          ) : (
+            <span>{placeholder}</span>
+          )}
           {selected && (
             <span
               role="button"
@@ -69,7 +77,12 @@ export function DatePickerField({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={selected} disabled={disabled} onSelect={handleDateSelect} />
+        <Calendar
+          mode="single"
+          selected={selected}
+          disabled={disabled}
+          onSelect={handleDateSelect}
+        />
         {withTime && (
           <div className="border-t border-border p-3">
             <TimePicker12 date={selected} onChange={handleTimeChange} />

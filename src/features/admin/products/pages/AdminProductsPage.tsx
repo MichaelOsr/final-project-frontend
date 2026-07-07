@@ -10,14 +10,25 @@ import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError";
 import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell";
 import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable";
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
-import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams";
+import {
+  getPageParam,
+  updateSearchParams,
+} from "@/features/admin/shared/utils/searchParams";
 import { DeleteProductDialog } from "../components/DeleteProductDialog";
 import { ProductFilters } from "../components/ProductFilters";
 import { ProductsTable, type ProductSortBy } from "../components/ProductsTable";
 import { adminProductService } from "../services/adminProduct.service";
-import type { AdminProduct, ProductCategory } from "../types/adminProduct.types";
+import type {
+  AdminProduct,
+  ProductCategory,
+} from "../types/adminProduct.types";
 
-const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
+const defaultMeta: PaginationMeta = {
+  page: 1,
+  limit: 10,
+  total: 0,
+  totalPages: 1,
+};
 
 export function AdminProductsPage() {
   usePageTitle("Products");
@@ -93,8 +104,13 @@ export function AdminProductsPage() {
     try {
       await adminProductService.delete(deleteTarget.slug);
       toast.success("Product deleted successfully");
-      setProducts((currentProducts) => currentProducts.filter((product) => product.id !== deleteTarget.id));
-      setMeta((currentMeta) => ({ ...currentMeta, total: Math.max(currentMeta.total - 1, 0) }));
+      setProducts((currentProducts) =>
+        currentProducts.filter((product) => product.id !== deleteTarget.id)
+      );
+      setMeta((currentMeta) => ({
+        ...currentMeta,
+        total: Math.max(currentMeta.total - 1, 0),
+      }));
       setDeleteTarget(null);
     } catch (error) {
       toast.error(getAdminErrorMessage(error));
@@ -112,34 +128,43 @@ export function AdminProductsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold">Products</h1>
-          <p className="text-sm text-muted-foreground">Create and browse catalog products.</p>
+          <p className="text-sm text-muted-foreground">
+            Create and browse catalog products.
+          </p>
         </div>
         <Button asChild>
-          <Link to="/admin/products/new"><PlusIcon className="size-4" />Create Product</Link>
+          <Link to="/admin/products/new">
+            <PlusIcon className="size-4" />
+            Create Product
+          </Link>
         </Button>
       </div>
       <Card className="rounded-lg p-0">
         <CardContent className="overflow-hidden p-0">
-        <ProductFilters
-          categories={categories}
-          categoryId={categoryId}
-          query={searchInput}
-          onChangeCategory={(value) => updateFilters({ categoryId: value, page: 1 })}
-          onChangePage={(nextPage) => updateFilters({ page: nextPage })}
-          onChangeQuery={setSearchInput}
-        />
-        <ProductsTable
-          isLoading={isLoading}
-          products={products}
-          onDelete={setDeleteTarget}
-          onEdit={editProduct}
-          onPageChange={(nextPage) => updateFilters({ page: nextPage })}
-          onSortChange={(nextSortBy, nextOrder) => updateFilters({ sort: nextSortBy, order: nextOrder, page: 1 })}
-          onView={openDetail}
-          paginationMeta={meta}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-        />
+          <ProductFilters
+            categories={categories}
+            categoryId={categoryId}
+            query={searchInput}
+            onChangeCategory={(value) =>
+              updateFilters({ categoryId: value, page: 1 })
+            }
+            onChangePage={(nextPage) => updateFilters({ page: nextPage })}
+            onChangeQuery={setSearchInput}
+          />
+          <ProductsTable
+            isLoading={isLoading}
+            products={products}
+            onDelete={setDeleteTarget}
+            onEdit={editProduct}
+            onPageChange={(nextPage) => updateFilters({ page: nextPage })}
+            onSortChange={(nextSortBy, nextOrder) =>
+              updateFilters({ sort: nextSortBy, order: nextOrder, page: 1 })
+            }
+            onView={openDetail}
+            paginationMeta={meta}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+          />
         </CardContent>
       </Card>
       <DeleteProductDialog
@@ -154,7 +179,15 @@ export function AdminProductsPage() {
 }
 
 function getSortParam(value: string | null): ProductSortBy {
-  if (value === "name" || value === "sku" || value === "brand" || value === "price" || value === "categoryName" || value === "updatedAt") return value;
+  if (
+    value === "name" ||
+    value === "sku" ||
+    value === "brand" ||
+    value === "price" ||
+    value === "categoryName" ||
+    value === "updatedAt"
+  )
+    return value;
   return "createdAt";
 }
 
