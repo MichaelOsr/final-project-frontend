@@ -62,4 +62,6 @@ export const voucherSchema = Yup.object({
     }),
 
   isGlobal: Yup.boolean(),
+
+  storeId: Yup.string(),
 });

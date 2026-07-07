@@ -4,6 +4,7 @@ import { TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { DatePickerField } from "@/features/admin/shared/components/DatePickerField";
+import type { StoreOption } from "@/features/admin/shared/types/admin.types";
 import { voucherSchema } from "../schemas/voucher.schemas";
 import type { VoucherFormValues } from "../types/voucher.types";
 import { isOutsideRange } from "../utils/dateTime";
@@ -15,9 +16,12 @@ interface Props {
   isEdit: boolean;
   onSubmit: (values: VoucherFormValues, helpers: FormikHelpers<VoucherFormValues>) => void | Promise<void>;
   onCancel: () => void;
+  // When provided (super admin cross-store area), render a store scope dropdown
+  // instead of the store-context "Apply globally" checkbox.
+  stores?: StoreOption[];
 }
 
-export function VoucherForm({ initialValues, isSuperAdmin, isEdit, onSubmit, onCancel }: Props) {
+export function VoucherForm({ initialValues, isSuperAdmin, isEdit, onSubmit, onCancel, stores }: Props) {
   return (
     <Formik enableReinitialize initialValues={initialValues} validationSchema={voucherSchema} onSubmit={onSubmit}>
       {({ values, isSubmitting }) => {
@@ -77,7 +81,7 @@ export function VoucherForm({ initialValues, isSuperAdmin, isEdit, onSubmit, onC
               <VoucherDateField name="endDate" label="End date & time" minDate={values.startDate} />
             </div>
 
-            {isSuperAdmin ? <GlobalScopeField /> : null}
+            {stores ? <StoreScopeField stores={stores} /> : isSuperAdmin ? <GlobalScopeField /> : null}
 
             <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-muted-foreground">
@@ -119,6 +123,19 @@ function VoucherDateField(
       />
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
+  );
+}
+
+function StoreScopeField({ stores }: { stores: StoreOption[] }) {
+  return (
+    <VoucherSelectField name="storeId" label="Store scope">
+      <option value="">Global / All Stores</option>
+      {stores.map((store) => (
+        <option key={store.id} value={store.id}>
+          {store.name}
+        </option>
+      ))}
+    </VoucherSelectField>
   );
 }
 

@@ -33,6 +33,7 @@ const superAdminNavItems: NavItem[] = [
   { label: "Categories", to: "/admin/categories", icon: TagsIcon },
   { label: "Stores", to: "/admin/stores", icon: StoreIcon },
   { label: "Transactions", to: "/admin/orders", icon: ReceiptIcon },
+  { label: "Vouchers", to: "/admin/vouchers", icon: TicketIcon },
   { label: "Sales Reports", to: "/admin/sales-reports", icon: TrendingUpIcon },
   { label: "Stock Reports", to: "/admin/stock-reports", icon: BoxesIcon },
   { label: "Accounts", to: "/admin/admin-accounts", icon: UserCogIcon },

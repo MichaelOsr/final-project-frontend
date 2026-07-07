@@ -29,6 +29,9 @@ import { StoreVouchersPage } from "@/features/admin/promos/pages/StoreVouchersPa
 import { CreateVoucherPage } from "@/features/admin/promos/pages/CreateVoucherPage";
 import { EditVoucherPage } from "@/features/admin/promos/pages/EditVoucherPage";
 import { StorePromoReportsPage } from "@/features/admin/promos/pages/StorePromoReportsPage";
+import { SuperVouchersPage } from "@/features/admin/promos/pages/SuperVouchersPage";
+import { SuperCreateVoucherPage } from "@/features/admin/promos/pages/SuperCreateVoucherPage";
+import { SuperEditVoucherPage } from "@/features/admin/promos/pages/SuperEditVoucherPage";
 import { AdminOrdersPage } from "@/features/admin/orders/pages/AdminOrdersPage";
 import { AdminOrderDetailPage } from "@/features/admin/orders/pages/AdminOrderDetailPage";
 import { SalesReportsPage } from "@/features/admin/sales-reports/pages/SalesReportsPage";
@@ -198,6 +201,30 @@ export const adminRoutes = (
         element={
           <AdminProtectedRoute allowedRoles={["superAdmin"]}>
             <EditProductPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/vouchers"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin"]}>
+            <SuperVouchersPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/vouchers/new"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin"]}>
+            <SuperCreateVoucherPage />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/vouchers/:id/edit"
+        element={
+          <AdminProtectedRoute allowedRoles={["superAdmin"]}>
+            <SuperEditVoucherPage />
           </AdminProtectedRoute>
         }
       />
