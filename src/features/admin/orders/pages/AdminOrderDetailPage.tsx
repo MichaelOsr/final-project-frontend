@@ -17,6 +17,7 @@ import {
   OrderSummaryCard,
   getDialogProps,
 } from "../components/AdminOrderDetailCards"
+import { geocodeService } from "@/features/home/services/geocode.service"
 import type { AdminOrderDetail } from "../types/adminOrder.types"
 
 export function AdminOrderDetailPage() {
@@ -27,6 +28,8 @@ export function AdminOrderDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [action, setAction] = useState<ActionType>(null)
   const [isActing, setIsActing] = useState(false)
+  const [addressLabel, setAddressLabel] = useState<string | null>(null)
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false)
 
   const loadOrder = useCallback(async () => {
     if (!orderId) return
@@ -43,6 +46,25 @@ export function AdminOrderDetailPage() {
   }, [orderId, navigate])
 
   useEffect(() => { loadOrder() }, [loadOrder])
+
+  useEffect(() => {
+    if (!order?.address) return
+    setIsLoadingAddress(true)
+    const fetchLabel = async () => {
+      try {
+        const { data } = await geocodeService.getAddress(
+          parseFloat(order.address!.latitude),
+          parseFloat(order.address!.longitude),
+        )
+        setAddressLabel(data.data?.label ?? order.address!.notes ?? order.address!.name)
+      } catch {
+        setAddressLabel(order.address!.notes ?? order.address!.name)
+      } finally {
+        setIsLoadingAddress(false)
+      }
+    }
+    fetchLabel()
+  }, [order?.address])
 
   async function handleAction() {
     if (!orderId || !action) return
@@ -94,8 +116,15 @@ export function AdminOrderDetailPage() {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-4">
-          <OrderInfoCard order={order} />
-          <AdminOrderItemsCard items={order.items} />
+          <OrderInfoCard
+            order={order}
+            addressLabel={addressLabel}
+            isLoadingAddress={isLoadingAddress}
+          />
+          <AdminOrderItemsCard
+            items={order.items}
+            status={order.transactionStatus}
+          />
           {order.paymentProof && <PaymentProofCard proofUrl={order.paymentProof} />}
         </div>
         <div className="space-y-4">

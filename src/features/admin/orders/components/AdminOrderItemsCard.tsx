@@ -1,14 +1,18 @@
-import { AlertTriangleIcon } from "lucide-react"
+import { AlertTriangleIcon, CheckCircle2Icon } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatPrice } from "@/lib/format"
-import type { AdminOrderItem } from "../types/adminOrder.types"
+import type { AdminOrderItem, TransactionStatus } from "../types/adminOrder.types"
 
 interface AdminOrderItemsCardProps {
   items: AdminOrderItem[]
+  status?: TransactionStatus
 }
 
-export function AdminOrderItemsCard({ items }: AdminOrderItemsCardProps) {
+const FULFILLED_STATUSES: TransactionStatus[] = ["onDelivery", "confirmed"]
+
+export function AdminOrderItemsCard({ items, status }: AdminOrderItemsCardProps) {
   const fulfillmentCount = items.filter((i) => i.requiresFulfillment).length
+  const isFulfilled = status ? FULFILLED_STATUSES.includes(status) : false
 
   return (
     <Card className="rounded-lg">
@@ -16,16 +20,23 @@ export function AdminOrderItemsCard({ items }: AdminOrderItemsCardProps) {
         <div className="flex items-center justify-between">
           <CardTitle>Items ({items.length})</CardTitle>
           {fulfillmentCount > 0 && (
-            <span className="flex items-center gap-1.5 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-700">
-              <AlertTriangleIcon className="size-3.5" />
-              {fulfillmentCount} item{fulfillmentCount > 1 ? "s" : ""} need fulfillment
-            </span>
+            isFulfilled ? (
+              <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+                <CheckCircle2Icon className="size-3.5" />
+                Fulfillment complete
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-700">
+                <AlertTriangleIcon className="size-3.5" />
+                {fulfillmentCount} item{fulfillmentCount > 1 ? "s" : ""} need fulfillment
+              </span>
+            )
           )}
         </div>
       </CardHeader>
       <CardContent className="divide-y divide-border p-0">
         {items.map((item) => (
-          <OrderItemRow key={item.id} item={item} />
+          <OrderItemRow key={item.id} item={item} isFulfilled={isFulfilled} />
         ))}
       </CardContent>
     </Card>
@@ -38,11 +49,11 @@ function getItemImage(item: AdminOrderItem): string {
   return sorted[0].image ?? "/placeholder-product.png"
 }
 
-function OrderItemRow({ item }: { item: AdminOrderItem }) {
+function OrderItemRow({ item, isFulfilled }: { item: AdminOrderItem; isFulfilled: boolean }) {
   const imageUrl = getItemImage(item)
 
   return (
-    <div className={`flex items-start gap-3 p-4 ${item.requiresFulfillment ? "bg-orange-50/60" : ""}`}>
+    <div className={`flex items-start gap-3 p-4 ${item.requiresFulfillment && !isFulfilled ? "bg-orange-50/60" : ""}`}>
       <img
         src={imageUrl}
         alt={item.name}
@@ -57,13 +68,20 @@ function OrderItemRow({ item }: { item: AdminOrderItem }) {
           <p className="text-xs text-green-600">Discount: {item.discount.name}</p>
         )}
         {item.requiresFulfillment && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-orange-700">
-            <AlertTriangleIcon className="size-3.5 shrink-0" />
-            <span>
-              Needs fulfillment: {item.shortageQuantity} unit{(item.shortageQuantity ?? 0) > 1 ? "s" : ""} short
-              {item.storeStockAtOrder !== null && ` (store had ${item.storeStockAtOrder} at order time)`}
-            </span>
-          </div>
+          isFulfilled ? (
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-green-700">
+              <CheckCircle2Icon className="size-3.5 shrink-0" />
+              <span>Stock transfer received</span>
+            </div>
+          ) : (
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-orange-700">
+              <AlertTriangleIcon className="size-3.5 shrink-0" />
+              <span>
+                Needs fulfillment: {item.shortageQuantity} unit{(item.shortageQuantity ?? 0) > 1 ? "s" : ""} short
+                {item.storeStockAtOrder !== null && ` (store had ${item.storeStockAtOrder} at order time)`}
+              </span>
+            </div>
+          )
         )}
       </div>
       <p className="shrink-0 font-semibold">{formatPrice(item.totalPrice)}</p>

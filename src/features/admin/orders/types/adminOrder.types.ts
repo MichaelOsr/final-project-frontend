@@ -14,6 +14,14 @@ export interface AdminOrderStore {
   address: string | null
 }
 
+export interface AdminOrderAddress {
+  id: string
+  name: string
+  latitude: string
+  longitude: string
+  notes: string | null
+}
+
 export interface AdminOrderItem {
   id: string
   productId: string
@@ -86,6 +94,7 @@ export interface AdminOrderDetail {
   store: AdminOrderStore
   customer: AdminOrderCustomer
   items: AdminOrderItem[]
+  address: AdminOrderAddress | null
   voucher: { id: string; name: string; value: number; discountType: string } | null
   deliveryVoucher: { id: string; name: string; value: number; discountType: string } | null
 }
