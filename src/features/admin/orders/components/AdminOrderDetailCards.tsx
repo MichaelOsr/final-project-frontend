@@ -9,7 +9,15 @@ import type { AdminOrderDetail } from "../types/adminOrder.types"
 
 export type ActionType = "approve" | "reject" | "ship" | "cancel" | null
 
-export function OrderInfoCard({ order }: { order: AdminOrderDetail }) {
+export function OrderInfoCard({
+  order,
+  addressLabel,
+  isLoadingAddress,
+}: {
+  order: AdminOrderDetail
+  addressLabel: string | null
+  isLoadingAddress: boolean
+}) {
   return (
     <Card className="rounded-lg">
       <CardHeader className="border-b border-border">
@@ -26,8 +34,16 @@ export function OrderInfoCard({ order }: { order: AdminOrderDetail }) {
           value={`${order.shipping_vendor} · ${formatPrice(order.deliveryFee)}`}
         />
         {order.paymentType && (
-          <DetailRow label="Payment Method" value={order.paymentType} />
+          <DetailRow label="Payment Method" value={formatPaymentType(order.paymentType)} />
         )}
+        <DetailRow
+          label="Delivery Address"
+          value={
+            isLoadingAddress
+              ? "Loading..."
+              : addressLabel ?? "Address details are not available."
+          }
+        />
       </CardContent>
     </Card>
   )
@@ -190,4 +206,12 @@ function SummaryRow({ label, value, bold }: { label: string; value: string; bold
       <span>{value}</span>
     </div>
   )
+}
+
+function formatPaymentType(type: string | null): string {
+  if (!type) return "-"
+  return type
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
 }

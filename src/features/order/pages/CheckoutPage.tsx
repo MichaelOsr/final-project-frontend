@@ -69,6 +69,7 @@ export function CheckoutPage() {
   const [selectedShipping, setSelectedShipping] = useState<ShippingCostItem | null>(null)
   const [isLoadingShipping, setIsLoadingShipping] = useState(false)
   const [shippingOriginStore, setShippingOriginStore] = useState<string>("")
+  const [shippingOriginStoreId, setShippingOriginStoreId] = useState<string | null>(null)
 
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>("manual_transfer")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -122,10 +123,12 @@ export function CheckoutPage() {
     setIsLoadingShipping(true)
     setShippingOptions([])
     setSelectedShipping(null)
+    setShippingOriginStoreId(null)
     try {
       const { data } = await shippingService.getShippingCost(addressId)
       setShippingOptions(data.data.costs)
       setShippingOriginStore(data.data.origin.store)
+      setShippingOriginStoreId(data.data.origin.storeId)
       if (data.data.costs.length > 0) setSelectedShipping(data.data.costs[0])
     } catch {
       toast.error("Failed to calculate shipping cost")
@@ -219,14 +222,15 @@ export function CheckoutPage() {
   const total = Math.max(0, subtotal - voucherDiscount) + finalDeliveryFee
 
   const handlePlaceOrder = async () => {
-    if (!storeId) { toast.error("Store location not ready, please refresh the page"); return }
+    const orderStoreId = shippingOriginStoreId ?? storeId
+    if (!orderStoreId) { toast.error("Store location not ready, please refresh the page"); return }
     if (!cart?.items.length) { toast.error("Your cart is empty"); return }
     if (!selectedAddress) { toast.error("Shipping address not available"); return }
     if (!selectedShipping) { toast.error("Please select a shipping method"); return }
     setIsSubmitting(true)
     try {
       const orderId = await createOrder({
-        storeId,
+        storeId: orderStoreId,
         addressId: selectedAddress.id,
         shippingVendor: `${selectedShipping.name} ${selectedShipping.service}`,
         deliveryFee,
@@ -235,7 +239,9 @@ export function CheckoutPage() {
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          discountId: item.product.discounts[0]?.id,
+          discountId: orderStoreId === storeId
+            ? item.product.discounts[0]?.id
+            : undefined,
         })),
       })
       clearCart()
@@ -252,7 +258,7 @@ export function CheckoutPage() {
       toast.error(message)
       // State might be stale (stock/discount/voucher changed). Refresh data for the same
       // store & reset selected vouchers so user picks from updated data.
-      void fetchCart(storeId)
+      void fetchCart(storeId ?? "")
       void fetchVouchers()
       setSelectedVoucher(null)
       setSelectedDeliveryVoucher(null)
