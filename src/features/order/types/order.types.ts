@@ -123,7 +123,6 @@ export interface GetOrderDetailResponse {
 
 // Payload POST /api/orders
 export interface CreateOrderPayload {
-  // Store checkout — harus sama dengan storeId yang dipakai fetch cart & voucher.
   storeId: string
   addressId: string
   shippingVendor: string
@@ -175,7 +174,7 @@ export interface ShippingCostItem {
 export interface GetShippingCostResponse {
   message: string
   data: {
-    origin: { id: number; label: string; store: string }
+    origin: { id: number; label: string; store: string; storeId: string }
     destination: { id: number; label: string }
     costs: ShippingCostItem[]
   }
