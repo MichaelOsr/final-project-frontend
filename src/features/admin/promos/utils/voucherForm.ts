@@ -18,6 +18,7 @@ export const EMPTY_VOUCHER_VALUES: VoucherFormValues = {
   startDate: "",
   endDate: "",
   isGlobal: false,
+  storeId: "",
 };
 
 export function toVoucherFormValues(voucher: Voucher): VoucherFormValues {
@@ -33,14 +34,11 @@ export function toVoucherFormValues(voucher: Voucher): VoucherFormValues {
     startDate: toLocalDateTime(voucher.startDate),
     endDate: toLocalDateTime(voucher.endDate),
     isGlobal: voucher.storeId === null,
+    storeId: voucher.storeId ?? "",
   };
 }
 
-export function buildVoucherPayload(
-  values: VoucherFormValues,
-  storeId: string,
-  isSuperAdmin: boolean,
-) {
+function buildBaseVoucherPayload(values: VoucherFormValues) {
   const isPercentage = values.discountType === "percentage";
   return {
     name: values.name.trim(),
@@ -57,6 +55,24 @@ export function buildVoucherPayload(
       : {}),
     startDate: toIso(values.startDate),
     endDate: toIso(values.endDate),
+  };
+}
+
+export function buildVoucherPayload(
+  values: VoucherFormValues,
+  storeId: string,
+  isSuperAdmin: boolean,
+) {
+  return {
+    ...buildBaseVoucherPayload(values),
     ...(isSuperAdmin ? { storeId: values.isGlobal ? null : storeId } : {}),
+  };
+}
+
+// Super admin cross-store scope: empty selection = global voucher (storeId null).
+export function buildSuperVoucherPayload(values: VoucherFormValues) {
+  return {
+    ...buildBaseVoucherPayload(values),
+    storeId: values.storeId === "" ? null : values.storeId,
   };
 }

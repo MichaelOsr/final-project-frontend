@@ -1,5 +1,6 @@
 import { DatePickerField } from "@/features/admin/shared/components/DatePickerField";
 import { Input } from "@/components/ui/input";
+import type { StoreOption } from "@/features/admin/shared/types/admin.types";
 import type { VoucherDiscountType, VoucherType } from "../types/voucher.types";
 
 const SELECT_CLASS =
@@ -12,9 +13,12 @@ interface Props {
   startDate: string;
   endDate: string;
   onChange: (updates: Record<string, string | number>) => void;
+  // Super admin cross-store list only: render a store scope filter.
+  stores?: StoreOption[];
+  storeId?: string;
 }
 
-export function VoucherFilters({ q, discountType, voucherType, startDate, endDate, onChange }: Props) {
+export function VoucherFilters({ q, discountType, voucherType, startDate, endDate, onChange, stores, storeId }: Props) {
   return (
     <div className="grid gap-3 border-b border-border p-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
       <Input
@@ -22,6 +26,20 @@ export function VoucherFilters({ q, discountType, voucherType, startDate, endDat
         value={q}
         onChange={(e) => onChange({ q: e.target.value, page: 1 })}
       />
+      {stores ? (
+        <select
+          className={SELECT_CLASS}
+          value={storeId ?? ""}
+          onChange={(e) => onChange({ storeId: e.target.value, page: 1 })}
+        >
+          <option value="">All stores</option>
+          {stores.map((store) => (
+            <option key={store.id} value={store.id}>
+              {store.name}
+            </option>
+          ))}
+        </select>
+      ) : null}
       <select
         className={SELECT_CLASS}
         value={discountType}
