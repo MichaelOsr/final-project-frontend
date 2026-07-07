@@ -103,4 +103,5 @@ export interface VoucherFormValues {
   startDate: string;
   endDate: string;
   isGlobal: boolean;
+  storeId: string;
 }
