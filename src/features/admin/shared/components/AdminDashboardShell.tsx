@@ -49,7 +49,11 @@ const storeNavItems: NavItem[] = [
   { label: "Discounts", to: "/admin/store/discounts", icon: PercentIcon },
   { label: "Vouchers", to: "/admin/store/vouchers", icon: TicketIcon },
   { label: "Reports", to: "/admin/store/promo-reports", icon: BarChart2Icon },
-  { label: "Sales Reports", to: "/admin/store/sales-reports", icon: TrendingUpIcon },
+  {
+    label: "Sales Reports",
+    to: "/admin/store/sales-reports",
+    icon: TrendingUpIcon,
+  },
   { label: "Transactions", to: "/admin/orders", icon: ReceiptIcon },
   { label: "Categories", to: "/admin/store/categories", icon: TagsIcon },
   { label: "Staff", to: "/admin/store/staff", icon: UserCogIcon },
@@ -93,7 +97,10 @@ function DashboardNav({
   // supaya saat superAdmin klik Transactions, storeId ikut terbawa ke URL.
   const resolvedStoreNavItems = storeNavItems.map((item) => {
     if (item.to === "/admin/orders" && isStoreContext && currentStoreId) {
-      return { ...item, to: `/admin/orders?storeId=${encodeURIComponent(currentStoreId)}` };
+      return {
+        ...item,
+        to: `/admin/orders?storeId=${encodeURIComponent(currentStoreId)}`,
+      };
     }
     return item;
   });

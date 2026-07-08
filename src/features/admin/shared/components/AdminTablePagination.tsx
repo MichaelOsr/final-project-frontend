@@ -10,7 +10,10 @@ export interface ServerPagination {
   onPageSizeChange?: (size: number) => void;
 }
 
-export function AdminTablePagination<TData>({ pagination, table }: {
+export function AdminTablePagination<TData>({
+  pagination,
+  table,
+}: {
   pagination: ServerPagination;
   table: ReturnType<typeof useReactTable<TData>>;
 }) {
@@ -18,7 +21,9 @@ export function AdminTablePagination<TData>({ pagination, table }: {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm">
       <div className="flex items-center gap-3">
-        <span className="text-muted-foreground">Page {meta.page} of {meta.totalPages || 1}</span>
+        <span className="text-muted-foreground">
+          Page {meta.page} of {meta.totalPages || 1}
+        </span>
         {pageSizeOptions && onPageSizeChange && (
           <PageSizeSelect
             value={meta.limit}
@@ -28,14 +33,30 @@ export function AdminTablePagination<TData>({ pagination, table }: {
         )}
       </div>
       <div className="flex gap-2">
-        <Button variant="outline" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>Previous</Button>
-        <Button variant="outline" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>Next</Button>
+        <Button
+          variant="outline"
+          disabled={!table.getCanPreviousPage()}
+          onClick={() => table.previousPage()}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outline"
+          disabled={!table.getCanNextPage()}
+          onClick={() => table.nextPage()}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );
 }
 
-function PageSizeSelect({ value, options, onChange }: {
+function PageSizeSelect({
+  value,
+  options,
+  onChange,
+}: {
   value: number;
   options: number[];
   onChange: (size: number) => void;
