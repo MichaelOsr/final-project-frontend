@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react"
 import { toast } from "sonner"
-import { ClipboardListIcon, SearchIcon } from "lucide-react"
+import { ClipboardListIcon, SearchIcon, ArrowUpDownIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useOrderStore } from "@/store/order.store"
@@ -26,23 +26,21 @@ export function OrderListPage() {
   const [activeStatus, setActiveStatus] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
-  // Search + date filter state
   const [searchInput, setSearchInput] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
 
-  // Debounce search input 500ms
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 500)
     return () => clearTimeout(timer)
   }, [searchInput])
 
-  // Reset ke page 1 kalau filter berubah
   useEffect(() => {
     setCurrentPage(1)
-  }, [debouncedSearch, startDate, endDate])
+  }, [debouncedSearch, startDate, endDate, sortOrder])
 
   const load = useCallback(
     (status: string, page: number) => {
@@ -53,9 +51,11 @@ export function OrderListPage() {
         search: debouncedSearch || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
+        sortBy: "createdAt",
+        sortOrder,
       })
     },
-    [fetchOrders, debouncedSearch, startDate, endDate]
+    [fetchOrders, debouncedSearch, startDate, endDate, sortOrder]
   )
 
   useEffect(() => {
@@ -65,6 +65,10 @@ export function OrderListPage() {
   const handleTabChange = (status: string) => {
     setActiveStatus(status)
     setCurrentPage(1)
+  }
+
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
   }
 
   const handleUpdateStatus = async (orderId: string, status: "cancel" | "confirmed") => {
@@ -94,7 +98,6 @@ export function OrderListPage() {
         <h1 className="text-2xl font-bold">My Orders</h1>
       </div>
 
-      {/* Search + date filter */}
       <div className="mb-4 grid gap-2 sm:grid-cols-3">
         <div className="relative sm:col-span-1">
           <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -119,23 +122,34 @@ export function OrderListPage() {
         />
       </div>
 
-      {/* Status filter tabs — scrollable on mobile */}
-      <div className="mb-6 -mx-4 px-4">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => handleTabChange(tab.value)}
-              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                activeStatus === tab.value
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="-mx-4 px-4">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => handleTabChange(tab.value)}
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                  activeStatus === tab.value
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-3 h-8 shrink-0 gap-1.5 rounded-full px-3 text-xs"
+          onClick={toggleSortOrder}
+        >
+          <ArrowUpDownIcon className="size-3" />
+          {sortOrder === "desc" ? "Newest" : "Oldest"}
+        </Button>
       </div>
 
       {isLoadingList ? (
@@ -169,7 +183,6 @@ export function OrderListPage() {
         </div>
       )}
 
-      {/* Pagination */}
       {meta && meta.totalPages > 1 && (
         <div className="mt-8 flex items-center justify-center gap-2">
           <Button

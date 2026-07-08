@@ -144,6 +144,8 @@ export interface GetOrdersQuery {
   startDate?: string
   endDate?: string
   search?: string
+  sortBy?: "createdAt"
+  sortOrder?: "asc" | "desc"
 }
 
 // Address user dari GET /api/addresses
