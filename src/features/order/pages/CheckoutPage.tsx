@@ -97,12 +97,14 @@ export function CheckoutPage() {
     loadAddress()
   }, [])
 
-  // Always fetch cart with active storeId — product discounts are store-scoped,
-  // so without storeId the preview could use discounts from other stores.
+  // Re-fetch cart whenever the active store changes. shippingOriginStoreId takes
+  // priority over the GPS-based storeId so that product discounts shown in the
+  // summary always match the store that will actually fulfil the order.
   useEffect(() => {
-    if (!storeId) return
-    void fetchCart(storeId)
-  }, [storeId, fetchCart])
+    const activeStoreId = shippingOriginStoreId ?? storeId
+    if (!activeStoreId) return
+    void fetchCart(activeStoreId)
+  }, [shippingOriginStoreId, storeId, fetchCart])
 
   // Reverse geocode selected address for a more descriptive label.
   useEffect(() => {
@@ -239,9 +241,9 @@ export function CheckoutPage() {
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          discountId: orderStoreId === storeId
-            ? item.product.discounts[0]?.id
-            : undefined,
+          // Cart was re-fetched with orderStoreId so discounts already reflect
+          // the fulfilling store. Safe to send directly.
+          discountId: item.product.discounts[0]?.id,
         })),
       })
       clearCart()
@@ -258,7 +260,7 @@ export function CheckoutPage() {
       toast.error(message)
       // State might be stale (stock/discount/voucher changed). Refresh data for the same
       // store & reset selected vouchers so user picks from updated data.
-      void fetchCart(storeId ?? "")
+      void fetchCart(orderStoreId)
       void fetchVouchers()
       setSelectedVoucher(null)
       setSelectedDeliveryVoucher(null)
