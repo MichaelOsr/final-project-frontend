@@ -11,9 +11,8 @@ import {
 } from "recharts";
 import {
   BoxesIcon,
-  CoinsIcon,
-  ReceiptIcon,
   ShoppingCartIcon,
+  TagIcon,
   TicketIcon,
   TruckIcon,
   WalletIcon,
@@ -113,10 +112,6 @@ function TrendChart({ data }: { data: SalesTrendPoint[] }) {
             <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
             <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
           </linearGradient>
-          <linearGradient id="product" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
-            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-          </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis dataKey="period" tick={{ fontSize: 12 }} />
@@ -129,13 +124,6 @@ function TrendChart({ data }: { data: SalesTrendPoint[] }) {
           name="Total Revenue"
           stroke="#6366f1"
           fill="url(#revenue)"
-        />
-        <Area
-          type="monotone"
-          dataKey="productSales"
-          name="Product Sales"
-          stroke="#10b981"
-          fill="url(#product)"
         />
       </AreaChart>
     </ResponsiveContainer>
@@ -150,13 +138,14 @@ function buildMetrics(summary: SalesTrendSummary | null, isLoading: boolean) {
   const count = (value: number | undefined) =>
     isLoading ? PLACEHOLDER : formatNumber(value);
 
+  // Per the revenue contract: totalRevenue excludes shipping fee, and
+  // deliveryRevenue is the shipping fee (labelled "Delivery Fee", never revenue).
   return [
     { label: "Total Revenue", value: money(summary?.totalRevenue), icon: WalletIcon },
-    { label: "Product Sales", value: money(summary?.productSales), icon: CoinsIcon },
     { label: "Total Orders", value: count(summary?.totalOrders), icon: ShoppingCartIcon },
     { label: "Items Sold", value: count(summary?.totalItemsSold), icon: BoxesIcon },
-    { label: "Voucher Discount", value: money(summary?.transactionVoucherDiscount), icon: TicketIcon },
-    { label: "Delivery Revenue", value: money(summary?.deliveryRevenue), icon: TruckIcon },
-    { label: "Average Order Value", value: money(summary?.averageOrderValue), icon: ReceiptIcon },
+    { label: "Delivery Fee", value: money(summary?.deliveryRevenue), icon: TruckIcon },
+    { label: "Total Discount", value: money(summary?.totalDiscountAmount), icon: TagIcon },
+    { label: "Promotion Used", value: count(summary?.totalPromotionUsed), icon: TicketIcon },
   ];
 }

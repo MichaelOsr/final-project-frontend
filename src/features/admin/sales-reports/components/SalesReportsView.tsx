@@ -18,7 +18,15 @@ import type {
 
 // Tab-specific params that must not leak across tabs (e.g. a product search
 // query showing up after switching to Transactions).
-const TAB_SCOPED_PARAMS = ["q", "status", "categoryId", "sortBy", "sortOrder"];
+const TAB_SCOPED_PARAMS = ["q", "categoryId", "sortBy", "sortOrder"];
+
+// Each chart owns its own granularity so toggling one doesn't move the others.
+// "granularity" also drives the Transactions table (which has no toggle).
+const GRANULARITY_PARAMS = [
+  "granularity",
+  "categoryGranularity",
+  "productGranularity",
+] as const;
 
 type Tab = "transactions" | "categories" | "products";
 const TABS: { value: Tab; label: string }[] = [
@@ -53,6 +61,10 @@ export function SalesReportsView({ isSuperAdmin, stores, forcedStoreId }: SalesR
 
   const tab = (searchParams.get("tab") ?? "transactions") as Tab;
   const granularity = (searchParams.get("granularity") ?? "monthly") as SalesReportGranularity;
+  const categoryGranularity = (searchParams.get("categoryGranularity") ??
+    "monthly") as SalesReportGranularity;
+  const productGranularity = (searchParams.get("productGranularity") ??
+    "monthly") as SalesReportGranularity;
   const storeId = forcedStoreId ?? searchParams.get("storeId") ?? "";
   const startDate = searchParams.get("startDate") ?? "";
   const endDate = searchParams.get("endDate") ?? "";
@@ -78,19 +90,29 @@ export function SalesReportsView({ isSuperAdmin, stores, forcedStoreId }: SalesR
     update({ ...cleared, tab: value, page: 1 });
   }
 
-  // Keep granularity valid for the selected range: if the range no longer
-  // supports the active granularity (e.g. switched to a 3-day range while on
-  // "yearly"), fall back to the finest one that fits.
+  // Keep every chart's granularity valid for the selected range: if the range
+  // no longer supports one (e.g. switched to a 3-day range while on "yearly"),
+  // fall back to the finest one that fits. The range is shared, so one
+  // `granularityEnabled` result clamps all three params at once. Depends only
+  // on the primitive granularity values (not the whole searchParams object)
+  // so it doesn't re-run on unrelated param changes like search or page.
   useEffect(() => {
     const enabled = granularityEnabled(startDate, endDate);
-    if (enabled[granularity]) return;
     const next = pickGranularity(enabled);
     if (!next) return;
-    setSearchParams(
-      (prev) => updateSearchParams(prev, { granularity: next, page: 1 }),
-      { replace: true },
-    );
-  }, [granularity, startDate, endDate, setSearchParams]);
+    const current: Record<(typeof GRANULARITY_PARAMS)[number], SalesReportGranularity> = {
+      granularity,
+      categoryGranularity,
+      productGranularity,
+    };
+    const updates: Record<string, string | number> = {};
+    for (const key of GRANULARITY_PARAMS) {
+      if (!enabled[current[key]]) updates[key] = next;
+    }
+    if (Object.keys(updates).length === 0) return;
+    updates.page = 1;
+    setSearchParams((prev) => updateSearchParams(prev, updates), { replace: true });
+  }, [startDate, endDate, granularity, categoryGranularity, productGranularity, setSearchParams]);
 
   const accessDenied = deniedQuery === query;
   const handleSummaryForbidden = useCallback(() => setDeniedQuery(query), [query]);
