@@ -10,6 +10,7 @@ import type { AdminCategory } from "@/features/admin/categories/types/adminCateg
 import type {
   ProductSalesQuery,
   SalesReportCommonQuery,
+  SalesReportGranularity,
 } from "../types/salesReport.types";
 import { ProductPeriodChart } from "./ProductPeriodChart";
 import { ProductRankingPanel } from "./ProductRankingPanel";
@@ -27,6 +28,8 @@ export function ProductSalesTab({
 
   const categoryId = searchParams.get("categoryId") ?? "";
   const q = searchParams.get("q") ?? "";
+  const productGranularity = (searchParams.get("productGranularity") ??
+    "monthly") as SalesReportGranularity;
 
   useEffect(() => {
     adminCategoryService
@@ -35,13 +38,17 @@ export function ProductSalesTab({
       .catch(() => {});
   }, []);
 
+  // This tab's charts bucket by their own granularity, independent of the
+  // Sales Trend chart above. Ranking is range-aggregate so granularity doesn't
+  // change its output, but sharing the query keeps the drilldown consistent.
   const productQuery = useMemo<ProductSalesQuery>(
     () => ({
       ...query,
+      granularity: productGranularity,
       ...(categoryId ? { categoryId } : {}),
       ...(q.trim() ? { q: q.trim() } : {}),
     }),
-    [query, categoryId, q],
+    [query, productGranularity, categoryId, q],
   );
 
   function update(updates: Record<string, string | number>) {

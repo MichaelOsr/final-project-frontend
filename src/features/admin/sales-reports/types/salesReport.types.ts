@@ -2,7 +2,9 @@ import type { PaginationMeta } from "@/features/admin/shared/types/admin.types";
 
 export type SalesReportGranularity = "daily" | "monthly" | "yearly";
 
-export type SalesReportStatus = "paid" | "process" | "onDelivery" | "confirmed";
+// Sales report only counts confirmed transactions (store revenue is realized
+// on confirmation). "confirmed" is the sole valid status in the new contract.
+export type SalesReportStatus = "confirmed";
 
 export type ProductSortBy =
   | "productName"
@@ -36,6 +38,12 @@ export interface SalesTrendSummary {
   transactionVoucherDiscount: number;
   deliveryRevenue: number;
   totalRevenue: number;
+  // Money-value discount (transaction vouchers + product %/nominal discounts),
+  // excluding buy-X-get-Y and delivery vouchers.
+  totalDiscountAmount: number;
+  // Promotion usage count across transaction/delivery vouchers and all product
+  // discounts, including buy-X-get-Y.
+  totalPromotionUsed: number;
   averageOrderValue: number;
 }
 

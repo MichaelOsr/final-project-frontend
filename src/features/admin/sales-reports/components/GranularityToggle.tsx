@@ -12,10 +12,11 @@ const OPTIONS: { value: SalesReportGranularity; label: string }[] = [
 
 // Controls chart bucketing only (not the summary totals), so it lives in the
 // chart header rather than the report-wide filter bar. Options that don't fit
-// the selected date range are disabled (see granularityEnabled).
-export function GranularityToggle() {
+// the selected date range are disabled (see granularityEnabled). Each chart
+// binds to its own `param` so their granularities don't move together.
+export function GranularityToggle({ param = "granularity" }: { param?: string }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const granularity = (searchParams.get("granularity") ?? "monthly") as SalesReportGranularity;
+  const granularity = (searchParams.get(param) ?? "monthly") as SalesReportGranularity;
   const enabled = granularityEnabled(
     searchParams.get("startDate") ?? "",
     searchParams.get("endDate") ?? "",
@@ -33,7 +34,7 @@ export function GranularityToggle() {
             title={isEnabled ? undefined : "Not available for the selected date range"}
             onClick={() =>
               setSearchParams(
-                updateSearchParams(searchParams, { granularity: opt.value, page: 1 }),
+                updateSearchParams(searchParams, { [param]: opt.value, page: 1 }),
               )
             }
             className={cn(

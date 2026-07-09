@@ -15,21 +15,13 @@ import { useLatestRequest } from "@/features/admin/shared/hooks/useLatestRequest
 import { AccessDenied } from "@/features/admin/shared/components/ChartFeedback";
 import { RangeCaption } from "@/features/admin/shared/components/RangeCaption";
 import { salesReportService } from "../services/salesReport.service";
-import type { SalesReportCommonQuery, SalesReportStatus } from "../types/salesReport.types";
+import type { SalesReportCommonQuery } from "../types/salesReport.types";
 import type { ResolvedRange } from "@/features/admin/shared/types/admin.types";
 import type { TransactionItem } from "../types/transactionReport.types";
 import { TransactionsTable } from "./TransactionsTable";
 import { TransactionDetailDialog } from "./TransactionDetailDialog";
 
 const DEFAULT_META: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
-
-const STATUS_OPTIONS: { value: SalesReportStatus | ""; label: string }[] = [
-  { value: "", label: "All statuses" },
-  { value: "paid", label: "Paid" },
-  { value: "process", label: "Process" },
-  { value: "onDelivery", label: "On Delivery" },
-  { value: "confirmed", label: "Confirmed" },
-];
 
 interface TransactionsTabProps {
   query: SalesReportCommonQuery;
@@ -52,18 +44,18 @@ export function TransactionsTab({ query, isActive, forcedStoreId }: Transactions
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const page = getPageParam(searchParams);
-  const status = (searchParams.get("status") ?? "") as SalesReportStatus | "";
   const q = searchParams.get("q") ?? "";
 
+  // Backend already scopes the report to confirmed transactions only, so there
+  // is no status filter to send here.
   const transactionQuery = useMemo(
     () => ({
       ...query,
-      ...(status ? { status } : {}),
       ...(q.trim() ? { q: q.trim() } : {}),
       page,
       limit: 10,
     }),
-    [query, status, q, page],
+    [query, q, page],
   );
 
   useEffect(() => {
@@ -109,23 +101,6 @@ export function TransactionsTab({ query, isActive, forcedStoreId }: Transactions
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
-        </div>
-        <div className="w-48 shrink-0">
-          <Label htmlFor="transaction-status" className="mb-1.5 block text-xs text-muted-foreground">
-            Status
-          </Label>
-          <select
-            id="transaction-status"
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            value={status}
-            onChange={(e) => update({ status: e.target.value, page: 1 })}
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
