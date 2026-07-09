@@ -64,7 +64,7 @@ export function ProductPeriodChart({
       <CardContent className="p-4">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-sm font-medium">Product Sales by Period</h2>
-          <GranularityToggle />
+          <GranularityToggle param="productGranularity" />
         </div>
         {forbidden ? (
           <AccessDenied />

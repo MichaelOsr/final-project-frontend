@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Cell,
   Legend,
@@ -16,6 +17,7 @@ import type {
   CategoryShare,
   ResolvedRange,
   SalesReportCommonQuery,
+  SalesReportGranularity,
 } from "../types/salesReport.types";
 import { AccessDenied, ChartEmpty, ChartLoading } from "@/features/admin/shared/components/ChartFeedback";
 import { categoryColor, currencyTooltip } from "../utils/chart";
@@ -36,6 +38,14 @@ export function CategorySalesTab({
 }) {
   const handleError = useReportError();
   const { start, isCurrent } = useLatestRequest();
+  const [searchParams] = useSearchParams();
+  const categoryGranularity = (searchParams.get("categoryGranularity") ??
+    "monthly") as SalesReportGranularity;
+  // This chart buckets by its own granularity, independent of the other charts.
+  const categoryQuery = useMemo<SalesReportCommonQuery>(
+    () => ({ ...query, granularity: categoryGranularity }),
+    [query, categoryGranularity],
+  );
   const [chart, setChart] = useState<CategoryChartRow[]>([]);
   const [series, setSeries] = useState<CategorySeries[]>([]);
   const [share, setShare] = useState<CategoryShare[]>([]);
@@ -51,7 +61,7 @@ export function CategorySalesTab({
       setIsLoading(true);
       setForbidden(false);
       try {
-        const res = await salesReportService.categories(query);
+        const res = await salesReportService.categories(categoryQuery);
         if (!isCurrent(requestId)) return;
         setChart(res.data.data.chart);
         setSeries(res.data.data.series);
@@ -65,7 +75,7 @@ export function CategorySalesTab({
       }
     }
     load();
-  }, [isActive, query, handleError, start, isCurrent]);
+  }, [isActive, categoryQuery, handleError, start, isCurrent]);
 
   // One stable colour per category so the bar and pie agree visually.
   const colorById = useMemo(
@@ -90,7 +100,7 @@ export function CategorySalesTab({
           <CardContent className="p-4">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-sm font-medium">Sales by Category</h2>
-              <GranularityToggle />
+              <GranularityToggle param="categoryGranularity" />
             </div>
             <CategoryChartBody
               forbidden={forbidden}
@@ -115,7 +125,7 @@ export function CategorySalesTab({
       </div>
       <CategoryTrendDialog
         category={selected}
-        query={query}
+        query={categoryQuery}
         onClose={() => setSelected(null)}
       />
     </div>

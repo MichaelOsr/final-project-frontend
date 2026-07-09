@@ -99,6 +99,8 @@ export interface AdminOrderDetail {
   deliveryVoucher: { id: string; name: string; value: number; discountType: string } | null
 }
 
+export type AdminOrderSortBy = "createdAt" | "totalPrice"
+
 export interface AdminGetOrdersQuery {
   page?: number
   limit?: number
@@ -107,6 +109,8 @@ export interface AdminGetOrdersQuery {
   startDate?: string
   endDate?: string
   search?: string
+  sortBy?: AdminOrderSortBy
+  sortOrder?: "asc" | "desc"
 }
 
 export interface AdminOrderMeta {

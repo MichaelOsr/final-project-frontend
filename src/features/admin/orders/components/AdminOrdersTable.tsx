@@ -2,11 +2,12 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { EyeIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AdminDataTable } from "@/features/admin/shared/components/AdminDataTable"
+import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable"
 import type { PaginationMeta } from "@/features/admin/shared/types/admin.types"
 import { formatDate } from "@/features/admin/shared/utils/adminFormat"
 import { OrderStatusBadge } from "@/features/order/components/OrderStatusBadge"
 import { formatPrice } from "@/lib/format"
-import type { AdminOrderSummary } from "../types/adminOrder.types"
+import type { AdminOrderSummary, AdminOrderSortBy } from "../types/adminOrder.types"
 
 interface AdminOrdersTableProps {
   orders: AdminOrderSummary[]
@@ -14,6 +15,9 @@ interface AdminOrdersTableProps {
   paginationMeta: PaginationMeta
   onPageChange: (page: number) => void
   onView: (order: AdminOrderSummary) => void
+  sortBy: AdminOrderSortBy
+  sortOrder: SortOrder
+  onSortChange: (sortBy: AdminOrderSortBy, sortOrder: SortOrder) => void
 }
 
 export function AdminOrdersTable({
@@ -22,18 +26,25 @@ export function AdminOrdersTable({
   paginationMeta,
   onPageChange,
   onView,
+  sortBy,
+  sortOrder,
+  onSortChange,
 }: AdminOrdersTableProps) {
-  const columns = getOrderColumns({ onView })
-
   return (
     <AdminDataTable
-      columns={columns}
+      columns={getOrderColumns({ onView })}
       data={orders}
       emptyMessage="No transactions found."
       isLoading={isLoading}
       loadingMessage="Loading transactions..."
       minWidth="min-w-[780px]"
       pagination={{ meta: paginationMeta, onPageChange }}
+      sorting={{
+        sortBy,
+        sortOrder,
+        onSortChange: (nextSortBy, nextOrder) =>
+          onSortChange(nextSortBy as AdminOrderSortBy, nextOrder),
+      }}
     />
   )
 }
@@ -69,8 +80,9 @@ function getOrderColumns({
       ),
     },
     {
-      id: "total",
+      accessorKey: "totalPrice",
       header: "Total",
+      enableSorting: true,
       cell: ({ row }) => (
         <span className="text-sm font-medium">{formatPrice(row.original.totalPrice)}</span>
       ),
@@ -83,8 +95,9 @@ function getOrderColumns({
       ),
     },
     {
-      id: "date",
+      accessorKey: "createdAt",
       header: "Date",
+      enableSorting: true,
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">{formatDate(row.original.createdAt)}</span>
       ),

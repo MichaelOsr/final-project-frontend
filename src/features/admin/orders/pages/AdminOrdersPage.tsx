@@ -7,12 +7,13 @@ import { getAdminErrorMessage } from "@/features/admin/auth/utils/adminError"
 import { AdminDashboardShell } from "@/features/admin/shared/components/AdminDashboardShell"
 import { getPageParam, updateSearchParams } from "@/features/admin/shared/utils/searchParams"
 import type { PaginationMeta, StoreOption } from "@/features/admin/shared/types/admin.types"
+import type { SortOrder } from "@/features/admin/shared/components/AdminDataTable"
 import { adminOptionsService } from "@/features/admin/shared/services/adminOptions.service"
 import { useAdminSessionStore } from "@/store/adminSession.store"
 import { adminOrderService } from "../services/adminOrder.service"
 import { AdminOrderFilters } from "../components/AdminOrderFilters"
 import { AdminOrdersTable } from "../components/AdminOrdersTable"
-import type { AdminOrderSummary } from "../types/adminOrder.types"
+import type { AdminOrderSummary, AdminOrderSortBy } from "../types/adminOrder.types"
 
 const defaultMeta: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 }
 
@@ -34,11 +35,9 @@ export function AdminOrdersPage() {
   const startDate = searchParams.get("startDate") ?? ""
   const endDate = searchParams.get("endDate") ?? ""
   const search = searchParams.get("search") ?? ""
+  const sortBy = (searchParams.get("sortBy") ?? "createdAt") as AdminOrderSortBy
+  const sortOrder = (searchParams.get("sortOrder") ?? "desc") as SortOrder
 
-  // Untuk storeAdmin, sync store mereka ke URL supaya konsisten dengan pola Alwi.
-  // Untuk superAdmin, URL adalah satu-satunya sumber kebenaran — tidak ada fallback
-  // ke lastAccessedStoreId supaya superAdmin yang kembali ke main nav tidak
-  // tersangkut di filter store yang terakhir dikunjungi.
   const storeAdminStoreId = isStoreAdmin ? (admin?.store?.id ?? "") : ""
   const isStoreIdPending = isStoreAdmin && !!storeAdminStoreId && storeAdminStoreId !== queryStoreId
 
@@ -71,6 +70,8 @@ export function AdminOrdersPage() {
         ...(startDate ? { startDate } : {}),
         ...(endDate ? { endDate } : {}),
         ...(search.trim() ? { search: search.trim() } : {}),
+        sortBy,
+        sortOrder,
       })
       setOrders(res.data.data ?? [])
       setMeta(res.data.meta ?? defaultMeta)
@@ -79,7 +80,7 @@ export function AdminOrdersPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [page, status, queryStoreId, startDate, endDate, search])
+  }, [page, status, queryStoreId, startDate, endDate, search, sortBy, sortOrder])
 
   useEffect(() => {
     if (isStoreIdPending) return
@@ -88,6 +89,10 @@ export function AdminOrdersPage() {
 
   function updateFilters(updates: Record<string, string | number>) {
     setSearchParams(updateSearchParams(searchParams, updates))
+  }
+
+  function handleSortChange(nextSortBy: AdminOrderSortBy, nextOrder: SortOrder) {
+    updateFilters({ sortBy: nextSortBy, sortOrder: nextOrder, page: 1 })
   }
 
   return (
@@ -119,6 +124,9 @@ export function AdminOrdersPage() {
           paginationMeta={meta}
           onPageChange={(nextPage) => updateFilters({ page: nextPage })}
           onView={(order) => navigate(`/admin/orders/${order.id}`)}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
         />
       </section>
     </AdminDashboardShell>
