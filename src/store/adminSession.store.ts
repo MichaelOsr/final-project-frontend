@@ -23,10 +23,8 @@ const normalizeAdminUser = (payload: IAdminSessionUser): IAdminSessionUser => {
 interface IAdminSessionStore {
   user: IAdminSessionUser | null;
   status: "loading" | "authenticated" | "unauthenticated";
-  lastAccessedStoreId: string | null;
   setSession: (user: IAdminSessionUser) => void;
   setUser: (user: IAdminSessionUser) => void;
-  setLastAccessedStoreId: (storeId: string) => void;
   fetchMe: () => Promise<IAdminSessionUser | null>;
   logout: () => Promise<void>;
   clearSession: () => void;
@@ -37,7 +35,6 @@ export const useAdminSessionStore = create<IAdminSessionStore>()(
     (set) => ({
       user: null,
       status: "loading",
-      lastAccessedStoreId: null,
 
       setSession: (user) =>
         set({
@@ -50,9 +47,6 @@ export const useAdminSessionStore = create<IAdminSessionStore>()(
           user: normalizeAdminUser(user),
           status: "authenticated",
         }),
-
-      setLastAccessedStoreId: (storeId) =>
-        set({ lastAccessedStoreId: storeId }),
 
       fetchMe: async () => {
         try {
@@ -90,7 +84,6 @@ export const useAdminSessionStore = create<IAdminSessionStore>()(
       name: "admin-auth-storage",
       partialize: (state) => ({
         user: state.user,
-        lastAccessedStoreId: state.lastAccessedStoreId,
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {

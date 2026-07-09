@@ -7,23 +7,24 @@ export function useStoreContext() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const admin = useAdminSessionStore((state) => state.user);
-  const lastAccessedStoreId = useAdminSessionStore((state) => state.lastAccessedStoreId);
-  const setLastAccessedStoreId = useAdminSessionStore((state) => state.setLastAccessedStoreId);
 
   const isStoreAdmin = admin?.role === "storeAdmin";
   const queryStoreId = searchParams.get("storeId");
-  const storeId = isStoreAdmin ? admin?.store?.id ?? "" : queryStoreId ?? lastAccessedStoreId ?? "";
+  // No cross-request/cross-tab fallback: a super admin's active store comes
+  // strictly from the URL. Falling back to a remembered store here previously
+  // caused a store viewed in one tab to silently leak into another tab (or a
+  // later visit) that had no storeId of its own.
+  const storeId = isStoreAdmin ? admin?.store?.id ?? "" : queryStoreId ?? "";
 
   useEffect(() => {
     if (!storeId) {
       if (!isStoreAdmin) navigate("/admin/stores", { replace: true });
       return;
     }
-    setLastAccessedStoreId(storeId);
     if (queryStoreId !== storeId) {
       setSearchParams(updateSearchParams(searchParams, { storeId }), { replace: true });
     }
-  }, [storeId, isStoreAdmin, queryStoreId, searchParams, navigate, setSearchParams, setLastAccessedStoreId]);
+  }, [storeId, isStoreAdmin, queryStoreId, searchParams, navigate, setSearchParams]);
 
   return { storeId, isStoreAdmin, isReady: Boolean(storeId) };
 }
