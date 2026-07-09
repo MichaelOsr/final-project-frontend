@@ -9,7 +9,7 @@ export interface SummaryMetric {
 
 export function SalesSummaryCards({ metrics }: { metrics: SummaryMetric[] }) {
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {metrics.map(({ label, value, icon: Icon }) => (
         <Card key={label} size="sm" className="rounded-lg">
           <CardContent className="flex items-center justify-between gap-3">
