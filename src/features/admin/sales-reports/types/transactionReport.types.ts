@@ -39,3 +39,21 @@ export interface TransactionReportResponse {
   };
   meta: PaginationMeta;
 }
+
+// GET /transactions/export — same filters as above, minus page/limit; returns
+// every matching row (no pagination) so the frontend can build a CSV export.
+export interface TransactionReportExportQuery extends SalesReportCommonQuery {
+  status?: SalesReportStatus;
+  q?: string;
+}
+
+export interface TransactionReportExportResponse {
+  message: string;
+  data: {
+    filters: SalesReportFiltersInfo & {
+      status: SalesReportStatus | null;
+      q: string | null;
+    };
+    items: TransactionItem[];
+  };
+}
