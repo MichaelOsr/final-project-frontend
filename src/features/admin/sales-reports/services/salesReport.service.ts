@@ -11,6 +11,8 @@ import type {
   SalesTrendResponse,
 } from "../types/salesReport.types";
 import type {
+  TransactionReportExportQuery,
+  TransactionReportExportResponse,
   TransactionReportQuery,
   TransactionReportResponse,
 } from "../types/transactionReport.types";
@@ -22,6 +24,10 @@ export const salesReportService = {
     adminAxios.get<SalesTrendResponse>(BASE, { params }),
   transactions: (params: TransactionReportQuery) =>
     adminAxios.get<TransactionReportResponse>(`${BASE}/transactions`, { params }),
+  transactionsExport: (params: TransactionReportExportQuery) =>
+    adminAxios.get<TransactionReportExportResponse>(`${BASE}/transactions/export`, {
+      params,
+    }),
   categories: (params: SalesReportCommonQuery) =>
     adminAxios.get<CategorySalesResponse>(`${BASE}/categories`, { params }),
   categoryTrend: (categoryId: string, params: SalesReportCommonQuery) =>

@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ComponentProps, ComponentType, Ref } from "react";
 import { useSearchParams } from "react-router-dom";
-import { SearchIcon } from "lucide-react";
+import { DownloadIcon, Loader2Icon, SearchIcon } from "lucide-react";
+import { CSVLink } from "react-csv";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +22,29 @@ import { salesReportService } from "../services/salesReport.service";
 import type { SalesReportCommonQuery } from "../types/salesReport.types";
 import type { ResolvedRange } from "@/features/admin/shared/types/admin.types";
 import type { TransactionItem } from "../types/transactionReport.types";
+import {
+  getTransactionCsvFilename,
+  getTransactionCsvHeaders,
+  toTransactionCsvRows,
+} from "../utils/transactionCsv";
 import { TransactionsTable } from "./TransactionsTable";
 import { TransactionDetailDialog } from "./TransactionDetailDialog";
+import { ExportTransactionsDialog } from "./ExportTransactionsDialog";
+
+// react-csv's CSVLink builds its download href from the `data`/`headers` props
+// at render time. Feeding it fresh data requires: fetch -> setState -> wait
+// for the re-render to land -> then synthetically click the (hidden) link.
+// Clicking before the re-render would download the *previous* href.
+//
+// @types/react-csv's LinkProps extends the anchor element's HTML attributes
+// without omitting `ref`, so the JSX-inferred ref type is an unsatisfiable
+// intersection of the component-instance ref and the DOM-node ref. Re-typing
+// the component with the single ref shape we actually get at runtime (the
+// instance exposes `.link`, the underlying anchor) sidesteps that quirk.
+type CSVLinkHandle = { link: HTMLAnchorElement };
+const CSVLinkExport = CSVLink as unknown as ComponentType<
+  Omit<ComponentProps<typeof CSVLink>, "ref"> & { ref?: Ref<CSVLinkHandle> }
+>;
 
 const DEFAULT_META: PaginationMeta = { page: 1, limit: 10, total: 0, totalPages: 1 };
 
@@ -42,6 +67,19 @@ export function TransactionsTab({ query, isActive, forcedStoreId }: Transactions
   const [isLoading, setIsLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const csvLinkRef = useRef<CSVLinkHandle>(null);
+  const pendingDownloadRef = useRef(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportRows, setExportRows] = useState<TransactionItem[]>([]);
+  const [exportFilename, setExportFilename] = useState(
+    getTransactionCsvFilename(null),
+  );
+
+  // Flatten + quote-escape only when the fetched rows change, so the hidden
+  // CSVLink's href is rebuilt with RFC-compliant data right before we click it.
+  const csvData = useMemo(() => toTransactionCsvRows(exportRows), [exportRows]);
 
   const page = getPageParam(searchParams);
   const q = searchParams.get("q") ?? "";
@@ -80,8 +118,47 @@ export function TransactionsTab({ query, isActive, forcedStoreId }: Transactions
     load();
   }, [isActive, transactionQuery, handleError, start, isCurrent]);
 
+  // Fires only after `exportRows` has actually re-rendered into the hidden
+  // CSVLink below, so the link's href reflects the export we just fetched
+  // (not whatever was there before, and not before the fetch even started).
+  useEffect(() => {
+    if (pendingDownloadRef.current && exportRows.length > 0) {
+      pendingDownloadRef.current = false;
+      csvLinkRef.current?.link.click();
+      setIsExporting(false);
+      setIsExportDialogOpen(false);
+    }
+  }, [exportRows]);
+
   function update(updates: Record<string, string | number>) {
     setSearchParams(updateSearchParams(searchParams, updates));
+  }
+
+  async function handleExport() {
+    setIsExporting(true);
+    try {
+      const res = await salesReportService.transactionsExport({
+        ...query,
+        ...(q.trim() ? { q: q.trim() } : {}),
+      });
+      const { items: rows, filters } = res.data.data;
+      if (rows.length === 0) {
+        toast.info("No transactions to export for the selected filters.");
+        setIsExporting(false);
+        setIsExportDialogOpen(false);
+        return;
+      }
+      setExportFilename(getTransactionCsvFilename(filters.resolvedRange));
+      pendingDownloadRef.current = true;
+      setExportRows(rows);
+      // isExporting/isExportDialogOpen are cleared by the download effect
+      // above once the synthetic click actually fires, not here — otherwise
+      // the dialog would close before the file download kicks off.
+    } catch (error) {
+      if (handleError(error) === "forbidden") setForbidden(true);
+      setIsExporting(false);
+      setIsExportDialogOpen(false);
+    }
   }
 
   return (
@@ -102,6 +179,27 @@ export function TransactionsTab({ query, isActive, forcedStoreId }: Transactions
             />
           </div>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={() => setIsExportDialogOpen(true)}
+          disabled={isExporting}
+        >
+          {isExporting ? (
+            <Loader2Icon className="animate-spin" />
+          ) : (
+            <DownloadIcon />
+          )}
+          Export CSV
+        </Button>
+        <CSVLinkExport
+          ref={csvLinkRef}
+          className="hidden"
+          data={csvData}
+          headers={getTransactionCsvHeaders(!forcedStoreId)}
+          filename={exportFilename}
+        />
       </div>
 
       {forbidden ? (
@@ -127,6 +225,13 @@ export function TransactionsTab({ query, isActive, forcedStoreId }: Transactions
       <TransactionDetailDialog
         transactionId={selectedId}
         onClose={() => setSelectedId(null)}
+      />
+
+      <ExportTransactionsDialog
+        open={isExportDialogOpen}
+        isExporting={isExporting}
+        onOpenChange={setIsExportDialogOpen}
+        onConfirm={handleExport}
       />
     </div>
   );
